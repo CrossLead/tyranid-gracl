@@ -1,0 +1,5 @@
+{
+  "ambientDependencies": {
+    "tyranid": "github:tyranid-org/tyranid-typings"
+  }
+}
