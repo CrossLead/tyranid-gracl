@@ -18,7 +18,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "gracl": "git://github.com/crosslead/gracl.git#7e1f990b6c1173518a94c18031a67b2be54c3728",
+    "gracl": "git://github.com/crosslead/gracl.git#804497a0b7aec305669ca13eb584892b7c9101cc",
     "tyranid": "0.0.124"
   },
   "babel": {

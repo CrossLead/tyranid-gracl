@@ -8,131 +8,135 @@ declare module 'tyranid' {
   // default export is the tyr object
   export default Tyr;
 
-  export interface RawMongoDocument {
-    [key: string]: any;
-  }
-
-  export type MongoQuery = RawMongoDocument;
-  export type TyranidOrRawDocument = Document | RawMongoDocument;
-  export type LabelType = string;
-  export type IdType = string;
-  export type LabelList = { _id: IdType, [labelField: string]: string }[];
-  export type TyranidClass<T> = {  new (...args: any[]): T; };
-
-
-  /**
-   *  Generic tyranid document object.
-   */
-  export interface Document extends RawMongoDocument {
-    // arbitrary properties
-    [key: string]: any;
-
-    // universal properties
-    $id: IdType;
-    $model: Tyr.Collection;
-    $uid: string;
-
-    // methods
-    $clone(): Document;
-    $insert(): Promise<Document>;
-    $populate(fields: any, denormal: boolean): Promise<Document>;
-    $save(): Promise<Document>;
-    $toClient(): RawMongoDocument;
-    $update(): Promise<Document>;
-    $validate(): Tyr.ValidationError[];
-  }
-
-
-
-
-
-  /**
-   *  Hash of strings -> fields
-   */
-  export type TyranidFieldsObject = {
-    [fieldName: string]: TyranidFieldDefinition;
-  }
-
-
-  /**
-   *  TyranidCollectionDefinition options for tyranid collection
-   */
-  export type TyranidCollectionDefinition = {
-    id: IdType;
-    name: string;
-    dbName: string;
-    label?: LabelType;
-    help?: string;
-    note?: string;
-    enum?: boolean;
-    client?: boolean;
-    primaryKey?: {
-      field: TyranidFieldDefinition;
-      defaultMatchIdOnInsert?: boolean;
-    };
-    timestamps?: boolean;
-    express?: {
-      rest?: boolean;
-      get?: boolean;
-      post?: boolean;
-      put?: boolean;
-    };
-    fields?: TyranidFieldsObject;
-    methods?: {
-      [methodName: string]: {
-        fn: Function;
-        fnClient: Function;
-        fnServer: Function;
-      }
-    };
-    values?: string[][];
-  }
-
-
-  /**
-   *  Configuration definition for tyranid field.
-   */
-  export type TyranidFieldDefinition = {
-    is: IdType;
-    client?: boolean;
-    db?: boolean;
-    label?: LabelType;
-    pathLabel?: string;
-    help?: string;
-    note?: string;
-    required?: boolean;
-    defaultValue?: any;
-    of?: TyranidFieldDefinition;
-    fields?: TyranidFieldsObject;
-    keys?: TyranidFieldDefinition;
-    denormal?: any;
-    link?: string;
-    where?: any;
-    in?: string;
-    labelField?: boolean;
-    get?: Function;
-    getClient?: Function;
-    getServer?: Function;
-    set?: Function;
-    setClient?: Function;
-    setServer?: Function;
-  }
-
-
-  export type TyranidCollectionCurriedMethodReturn = Function | Promise<Document | Document[]>;
-
-
   // declare properties of Tyr object
   export namespace Tyr {
 
+    export type RawMongoDocument = {
+      [key: string]: any;
+    }
+
+    export type MongoQuery = RawMongoDocument;
+    export type TyranidOrRawDocument = Document | RawMongoDocument;
+    export type LabelType = string;
+    export type IdType = string;
+    export type LabelList = { _id: IdType, [labelField: string]: string }[];
+    export type TyranidClass<T> = {  new (...args: any[]): T; };
+
+
+    /**
+     *  Generic tyranid document object.
+     */
+    export interface Document {
+      // arbitrary properties
+      [key: string]: any;
+
+      // universal properties
+      $id: IdType;
+      $model: Tyr.CollectionInstance;
+      $uid: string;
+
+      // methods
+      $clone(): Document;
+      $insert(): Promise<Document>;
+      $populate(fields: any, denormal: boolean): Promise<Document>;
+      $save(): Promise<Document>;
+      $toClient(): RawMongoDocument;
+      $update(): Promise<Document>;
+      $validate(): Tyr.ValidationError[];
+    }
+
+
+
+
+
+    /**
+     *  Hash of strings -> fields
+     */
+    export type TyranidFieldsObject = {
+      [fieldName: string]: TyranidFieldDefinition;
+    }
+
+
+    /**
+     *  TyranidCollectionDefinition options for tyranid collection
+     */
+    export type TyranidCollectionDefinition = {
+      id: IdType;
+      name: string;
+      dbName: string;
+      label?: LabelType;
+      help?: string;
+      note?: string;
+      enum?: boolean;
+      client?: boolean;
+      primaryKey?: {
+        field: TyranidFieldDefinition;
+        defaultMatchIdOnInsert?: boolean;
+      };
+      timestamps?: boolean;
+      express?: {
+        rest?: boolean;
+        get?: boolean;
+        post?: boolean;
+        put?: boolean;
+      };
+      fields?: TyranidFieldsObject;
+      methods?: {
+        [methodName: string]: {
+          fn: Function;
+          fnClient: Function;
+          fnServer: Function;
+        }
+      };
+      values?: string[][];
+    }
+
+
+    /**
+     *  Configuration definition for tyranid field.
+     */
+    export type TyranidFieldDefinition = {
+      is: IdType;
+      client?: boolean;
+      db?: boolean;
+      label?: LabelType;
+      pathLabel?: string;
+      help?: string;
+      note?: string;
+      required?: boolean;
+      defaultValue?: any;
+      of?: TyranidFieldDefinition;
+      fields?: TyranidFieldsObject;
+      keys?: TyranidFieldDefinition;
+      denormal?: any;
+      link?: string;
+      where?: any;
+      in?: string;
+      labelField?: boolean;
+      get?: Function;
+      getClient?: Function;
+      getServer?: Function;
+      set?: Function;
+      setClient?: Function;
+      setServer?: Function;
+    }
+
+    export type TyranidCollectionCurriedMethodReturn = Function | Promise<Document | Document[]>;
+
     const $all: any;
-    const byId: { [key: string]: Collection };
-    const collections: Collection[];
+    const byId: { [key: string]: CollectionInstance };
+    const collections: CollectionInstance[];
     const documentPrototype: Document;
 
+    const local: {
+      user: Document;
+      req: Express.Request;
+      res: Express.Response;
+      define(propertyName: string): void;
+    };
 
     function U(text: string): Unit;
-    function parseUid(uid: string): { collection: Collection, id: IdType }
+    function parseUid(uid: string): { collection: CollectionInstance, id: IdType };
     function labelize(name: string): string;
     function config(opts: any): void;
     function byUid(uid: string): Promise<Document>;
@@ -164,6 +168,7 @@ declare module 'tyranid' {
       label: LabelType;
       labelField: Field;
       paths: { [key: string]: Field };
+      def: TyranidCollectionDefinition;
 
       byId(id: IdType): Promise<Document>;
       byIds(ids: IdType[]): Promise<Document[]>;
@@ -201,16 +206,16 @@ declare module 'tyranid' {
 
       // hook methods
       boot(stage: string, pass: number): string | string[];
-      plugin(fn: Function, opts: any): Collection;
-      pre(methods: string | string[], cb: Function): Collection;
-      unhook(methods: string | string[]): Collection;
+      plugin(fn: Function, opts: any): CollectionInstance;
+      pre(methods: string | string[], cb: Function): CollectionInstance;
+      unhook(methods: string | string[]): CollectionInstance;
     }
 
     /**
      *  Tyranid field
      */
     class Field {
-      collection: Collection;
+      collection: CollectionInstance;
       db: boolean;
       def: TyranidFieldDefinition;
       name: string;
@@ -222,7 +227,7 @@ declare module 'tyranid' {
       in: Units;
       keys: Field;
       label: LabelType;
-      link: Collection;
+      link: CollectionInstance;
       type: Type;
 
       labels(text?: string): LabelList;
