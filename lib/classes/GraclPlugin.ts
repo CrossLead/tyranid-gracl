@@ -1,20 +1,15 @@
-/// <reference path='../../typings/main.d.ts' />
 import Tyr from 'tyranid';
-import { Subject, Resource } from 'gracl/lib';
+import { Subject, Resource } from 'gracl/lib/index.ts';
 
-// various stages of bootstrap process
+
 type BootStage = 'compile' | 'link' | 'post-link';
-
-// parametric string -> any hash
-type Hash<T> = {
-  [key: string]: T;
-};
+type Hash<T> = { [key: string]: T; };
 
 
 const BaseCollection = new Tyr.Collection({
   id: 'gcp',
-  name: '_graclPermissions',
-  dbName: '_graclPermissions',
+  name: 'graclPermission',
+  dbName: 'graclPermissions',
   fields: {
     subjectId: { is: 'uid' },
     resourceId: { is: 'resourceId'},
@@ -29,21 +24,22 @@ const BaseCollection = new Tyr.Collection({
 });
 
 
-
 export class PermissionsModel extends BaseCollection {
 
-  setViewAccess(doc: Tyr.Document, access: boolean): Tyr.Document {
+  setAccess(doc: Tyr.Document, access: boolean): Tyr.Document {
+    // manage permissions
     return doc;
   }
 
 }
 
 
-
 export class GraclPlugin {
+
 
   resources: Hash<Resource> = {};
   subjects: Hash<Subject> = {};
+
 
   boot(stage: BootStage) {
     if (stage === 'post-link') {
@@ -55,6 +51,7 @@ export class GraclPlugin {
     }
   }
 
+
   /**
    *  Method for creating a specific query based on a schema object
    */
@@ -65,14 +62,31 @@ export class GraclPlugin {
     // if no user, no restriction...
     if (!user) return queryObj;
 
+    // extract subject and resource Gracl classes
     const resource = this.resources[collection.def.id],
           subject = this.subjects[user.$model.def.id];
 
-    const subjectId = subject.getId();
+    // get list of all ids in the subject and resource hierarchies,
+    // as well as the names of the subject and resource classes
+    const subjectHierarchyIds = await subject.getHierarchyIds(),
+          resourceHierarchyIds = await resource.getHierarchyIds(),
+          subjectType = subject.getName(),
+          resourceType = resource.getName();
 
-    const permissions = await PermissionsModel.find({ });
+    const permissions = await PermissionsModel.find({
+      subjectId: { $in: subjectHierarchyIds },
+      resourceId: { $in: resourceHierarchyIds },
+      resourceType,
+      subjectType
+    });
+
+    // with array of permissions, determine what types each uid is, and then
+    // create restrictions if that type is present on <collection>
+    // NOTE: -- do we need organizationId on everything then? or should this automatically
+    // recurse down the chain to determine what groups are within an organization and do a diff?
 
     return queryObj;
   }
+
 
 }
