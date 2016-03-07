@@ -1,4 +1,4 @@
-// Compiled using typings@0.6.8
+// Compiled using typings@0.6.10
 // Source: https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/0fa4e9e61385646ea6a4cba2aef357353d2ce77f/serve-static/serve-static.d.ts
 // Type definitions for serve-static 1.7.1
 // Project: https://github.com/expressjs/serve-static

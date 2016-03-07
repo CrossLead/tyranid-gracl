@@ -1,4 +1,4 @@
-// Compiled using typings@0.6.8
+// Compiled using typings@0.6.10
 // Source: https://raw.githubusercontent.com/tyranid-org/tyranid-typings/master/tyranid/index.d.ts
 /**
  *  Type definitions for tyranid.js
@@ -61,6 +61,7 @@ declare module 'tyranid' {
      *  TyranidCollectionDefinition options for tyranid collection
      */
     export type TyranidCollectionDefinition = {
+      [key: string]: any;
       id: IdType;
       name: string;
       dbName: string;
@@ -96,6 +97,7 @@ declare module 'tyranid' {
      *  Configuration definition for tyranid field.
      */
     export type TyranidFieldDefinition = {
+      [key: string]: any;
       is: IdType;
       client?: boolean;
       db?: boolean;
@@ -119,6 +121,7 @@ declare module 'tyranid' {
       set?: Function;
       setClient?: Function;
       setServer?: Function;
+      relate?: 'owns' | 'ownedBy' | 'associate';
     }
 
     export type TyranidCollectionCurriedMethodReturn = Function | Promise<Document | Document[]>;
@@ -156,10 +159,19 @@ declare module 'tyranid' {
       new(def: TyranidCollectionDefinition): CollectionInstance;
     }
 
+
+    interface Component {
+      boot(stage: string, pass: number): string | string[];
+      clientCode(code: string): string;
+      compileCollection(compiler, field: Collection): void;
+      compileField(compiler, field: Field): void;
+    }
+
+
     /**
      *  Tyranid collection class
      */
-    interface CollectionInstance {
+    interface CollectionInstance extends Component {
 
       // Collection instance constructor
       new(doc: RawMongoDocument): Document;
@@ -168,6 +180,7 @@ declare module 'tyranid' {
       label: LabelType;
       labelField: Field;
       paths: { [key: string]: Field };
+      def: TyranidCollectionDefinition;
 
       byId(id: IdType): Promise<Document>;
       byIds(ids: IdType[]): Promise<Document[]>;
@@ -189,6 +202,8 @@ declare module 'tyranid' {
       idToLabel(id: string): Promise<string>;
       insert(doc: TyranidOrRawDocument): Promise<Document>;
       isStatic(): boolean;
+
+      links(opts: any): Field[];
 
       labelFor(doc: TyranidOrRawDocument): string;
       labels(text: string): LabelList;
