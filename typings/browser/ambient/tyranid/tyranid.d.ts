@@ -163,8 +163,8 @@ declare module 'tyranid' {
     interface Component {
       boot(stage: string, pass: number): string | string[];
       clientCode(code: string): string;
-      compileCollection(compiler, field: Collection): void;
-      compileField(compiler, field: Field): void;
+      compileCollection(compiler: Compiler, field: Collection): void;
+      compileField(compiler: Compiler, field: Field): void;
     }
 
 

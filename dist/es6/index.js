@@ -1,2 +1,4 @@
-export { GraclPlugin } from './classes/GraclPlugin';
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi9saWIvaW5kZXgudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEsU0FBUyxXQUFXLFFBQVEsdUJBQXVCLENBQUMifQ==
+"use strict";
+var GraclPlugin_1 = require('./classes/GraclPlugin');
+exports.GraclPlugin = GraclPlugin_1.GraclPlugin;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi9saWIvaW5kZXgudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IjtBQUFBLDRCQUE0Qix1QkFBdUIsQ0FBQztBQUEzQyxnREFBMkMifQ==

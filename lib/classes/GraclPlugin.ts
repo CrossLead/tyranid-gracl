@@ -1,50 +1,25 @@
 /// <reference path='../../typings/main.d.ts' />
 
 import Tyr from 'tyranid';
-import { Subject, Resource, Graph, Repository } from 'gracl/lib/index.ts';
+import { PermissionsModel } from '../collections/PermissionsModel';
+import { Subject, Resource, Graph, Repository, SchemaNode } from 'gracl';
 
 
-type BootStage = 'compile' | 'link' | 'post-link';
-type Hash<T> = { [key: string]: T; };
+export type BootStage = 'compile' | 'link' | 'post-link';
+export type Hash<T> = { [key: string]: T; };
+export type TyrSchemaGraphObjects = {
+  links: Tyr.Field[];
+  parents: Tyr.CollectionInstance[];
+};
 
 
-
-const BaseCollection = new Tyr.Collection({
-  id: 'gcp',
-  name: 'graclPermission',
-  dbName: 'graclPermissions',
-  fields: {
-    subjectId: { is: 'uid' },
-    resourceId: { is: 'resourceId'},
-    subjectType: { is: 'string' },
-    resourceType: { is: 'string' },
-    access: {
-      is: 'object',
-      keys: { is: 'string' },
-      of: { is: 'boolean '}
-    }
-  }
-});
-
-
-
-
-
-export class PermissionsModel extends BaseCollection {
-
-  setAccess(doc: Tyr.Document, access: boolean): Tyr.Document {
-    // manage permissions
-    return doc;
-  }
-
-}
 
 
 export class GraclPlugin {
 
 
   // create a repository object for a given collection
-  static makeRepository(collection: Tyr.CollectionInstance): Repository {
+  static makeRepository(collection: Tyr.CollectionInstance) {
     return {
       async getEntity(id: string): Promise<Tyr.Document> {
         return await collection.byId(id);
@@ -65,13 +40,13 @@ export class GraclPlugin {
             nodeSet = new Set<string>();
 
       const schemaObjects = {
-        subjects: {
-          links: <Tyr.Field[]> [],
-          parents: <Tyr.CollectionInstance[]> []
+        subjects: <TyrSchemaGraphObjects> {
+          links: [],
+          parents: []
         },
-        resources: {
-          links: <Tyr.Field[]> [],
-          parents: <Tyr.CollectionInstance[]> []
+        resources: <TyrSchemaGraphObjects> {
+          links: [],
+          parents: []
         }
       };
 
@@ -113,26 +88,36 @@ export class GraclPlugin {
       });
 
       const schemaMaps = {
-        subjects: new Map<string, any>(),
-        resources: new Map<string, any>()
+        subjects: new Map<string, SchemaNode>(),
+        resources: new Map<string, SchemaNode>()
       };
 
       for (const type of ['subjects', 'resources']) {
-        const nodes = schemaMaps[type];
+        let nodes: Map<string, SchemaNode>,
+            tyrObjects: TyrSchemaGraphObjects;
 
-        for (const subject of schemaObjects[type].links) {
-          const name = subject.collection.def.name,
-                parentName = subject.link.def.name;
+        if (type === 'subjects') {
+          nodes = schemaMaps.subjects;
+          tyrObjects = schemaObjects.subjects;
+        } else {
+          nodes = schemaMaps.resources;
+          tyrObjects = schemaObjects.resources;
+        }
+
+        for (const node of tyrObjects.links) {
+          const name = node.collection.def.name,
+                parentName = node.link.def.name;
+
           nodes.set(name,
             { name,
               parent: parentName,
-              parentId: subject.name,
-              repository: GraclPlugin.makeRepository(subject.collection)
+              parentId: node.name,
+              repository: GraclPlugin.makeRepository(node.collection)
             }
           );
         }
 
-        for (const parent of schemaObjects[type].parents) {
+        for (const parent of tyrObjects.parents) {
           const name = parent.def.name;
           if (!nodes.has(name)) {
             nodes.set(name, {
