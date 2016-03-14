@@ -1,5 +1,6 @@
 /// <reference path='../../typings/main.d.ts' />
 import * as Tyr from 'tyranid';
+import { GraclPlugin } from '../classes/GraclPlugin';
 
 
 export const PermissionsBaseCollection = new Tyr.Collection({
@@ -21,6 +22,8 @@ export const PermissionsBaseCollection = new Tyr.Collection({
 });
 
 
+let graclPluginInstance: GraclPlugin;
+
 /**
   Collection to contain all permissions used by gracl
 
@@ -28,13 +31,21 @@ export const PermissionsBaseCollection = new Tyr.Collection({
  */
 export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseCollection) {
 
-  async setAccess(doc: Tyr.Document, access: boolean): Promise<Tyr.Document> {
+  static async setAccess(doc: Tyr.Document, access: boolean): Promise<Tyr.Document> {
     // manage permissions
     return doc;
   }
 
-  async deletePermissionsForSubject(doc: Tyr.Document) {
+  static async updatePermissions(doc: Tyr.Document, graclType: string) {
 
+  }
+
+  static async deletePermissions(doc: Tyr.Document, graclType: string) {
+
+  }
+
+  static getGraclPlugin() {
+    return graclPluginInstance || (graclPluginInstance = new GraclPlugin());
   }
 
 }

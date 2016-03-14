@@ -9,8 +9,7 @@ const TeamBaseCollection = new Tyr.Collection({
     name: { is: 'string' },
     organizationId: {
       link: 'organization',
-      relates: 'ownedBy',
-      direction: 'outgoing',
+      relate: 'ownedBy',
       graclType: 'subject'
     },
     permissions: { link: 'graclPermission' }

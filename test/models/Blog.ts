@@ -10,8 +10,7 @@ export const BlogBaseCollection = new Tyr.Collection({
     name: { is: 'string' },
     organizationId: {
       link: 'organization',
-      relates: 'ownedBy',
-      direction: 'outgoing',
+      relate: 'ownedBy',
       graclType: 'resource'
     },
     permissions: { link: 'graclPermission' }

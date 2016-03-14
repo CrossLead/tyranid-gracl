@@ -10,8 +10,7 @@ export const PostBaseCollection = new Tyr.Collection({
     text: { is: 'string' },
     blogId: {
       link: 'blog',
-      relates: 'ownedBy',
-      direction: 'outgoing',
+      relate: 'ownedBy',
       graclType: 'resource'
     },
     permissions: { link: 'graclPermission' }

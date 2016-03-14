@@ -1,4 +1,7 @@
 "use strict";
-var GraclPlugin_1 = require('./classes/GraclPlugin');
-exports.GraclPlugin = GraclPlugin_1.GraclPlugin;
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9saWIvaW5kZXgudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IjtBQUFBLDRCQUE0Qix1QkFBdUIsQ0FBQztBQUEzQyxnREFBMkMifQ==
+function __export(m) {
+    for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
+}
+__export(require('./classes/GraclPlugin'));
+__export(require('./collections/PermissionsModel'));
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiaW5kZXguanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi9saWIvaW5kZXgudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7OztBQUFBLGlCQUFjLHVCQUF1QixDQUFDLEVBQUE7QUFDdEMsaUJBQWMsZ0NBQWdDLENBQUMsRUFBQSJ9

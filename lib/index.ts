@@ -1,1 +1,2 @@
-export { GraclPlugin } from './classes/GraclPlugin';
+export * from './classes/GraclPlugin';
+export * from './collections/PermissionsModel';

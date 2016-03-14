@@ -12,8 +12,7 @@ const UserBaseCollection = new Tyr.Collection({
       is: 'array',
       of: {
         link: 'team',
-        relates: 'ownedBy',
-        direction: 'outgoing',
+        relate: 'ownedBy',
         graclType: 'subject'
       }
     },

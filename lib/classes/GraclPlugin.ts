@@ -16,10 +16,7 @@ export type TyrSchemaGraphObjects = {
 };
 
 export type LinkGraph = {
-  [collectionName: string]: {
-    incoming: string[];
-    outgoing: string[];
-  }
+  [collectionName: string]: Set<string>
 }
 
 
@@ -28,9 +25,9 @@ export type LinkGraph = {
  */
 export const collectionLinkCache: Hash<Tyr.Field[]> = {};
 export function getCollectionLinks(collection: Tyr.CollectionInstance, linkParams: any): Tyr.Field[] {
-  let paramHash = '';
-  if (linkParams.direction) paramHash += '_direction:' + linkParams.direction;
-  if (linkParams.relate) paramHash += '_relate:' + linkParams.relate;
+  let paramHash = '|collection:' + collection.name + '|';
+  if (linkParams.direction) paramHash += 'direction:' + linkParams.direction + '|';
+  if (linkParams.relate)    paramHash += 'relate:' + linkParams.relate + '|';
   if (collectionLinkCache[paramHash]) return collectionLinkCache[paramHash];
   return collectionLinkCache[paramHash] = collection.links(linkParams);
 }
@@ -69,6 +66,7 @@ export class GraclPlugin {
         );
       },
       async saveEntity(id: string, doc: Tyr.Document): Promise<Tyr.Document> {
+        await PermissionsModel.updatePermissions(doc, 'subject');
         return await doc.$save();
       }
     };
@@ -84,80 +82,72 @@ export class GraclPlugin {
     const g: LinkGraph = {};
 
     _.each(Tyr.collections, col => {
-      const links = getCollectionLinks(col, { direction: 'outgoing' }),
+      const links = getCollectionLinks(col, { relate: 'ownedBy', direction: 'outgoing' }),
             colName = col.name;
       _.each(links, linkField => {
-        const linkName = linkField.collection.name,
-              outgoingKey = `${colName}.outgoing`,
-              incomingKey = `${linkName}.incoming`;
+        const edges = _.get(g, colName, new Set()),
+              linkName = linkField.link.name;
 
-        const outgoing = _.get(g, outgoingKey, []),
-              incoming = _.get(g, incomingKey, []);
+        edges.add(linkName);
 
-        outgoing.push(linkName);
-        incoming.push(colName);
-
-        _.set(g, outgoingKey, outgoing);
-        _.set(g, incomingKey, incoming);
+        _.set(g, linkName, _.get(g, linkName, new Set()));
+        _.set(g, colName, edges);
       });
     });
 
     const dist: Hash<Hash<number>> = {},
-          next: Hash<Hash<string>> = {};
+          next: Hash<Hash<string>> = {},
+          paths: Hash<Hash<string[]>> = {},
+          keys = _.keys(g);
 
-    const keys = _.keys(g);
 
     // initialize dist and next matricies
     _.each(keys, a => {
       _.each(keys, b => {
-        if (a !== b) {
-          if (_.find(g[a].outgoing, b)) {
-            _.set(dist, `${a}.${b}`, 1);
-            _.set(next, `${a}.${b}`, b);
-          } else {
-            _.set(dist, `${a}.${b}`, Infinity);
-          }
+        _.set(dist, `${a}.${b}`, Infinity);
+      });
+    });
+
+    _.each(keys, a => {
+      _.set(dist, `${a}.${a}`, 0);
+    });
+
+    _.each(keys, a => {
+      _.each(keys, b => {
+        if (g[a].has(b)) {
+          _.set(dist, `${a}.${b}`, 1);
+          _.set(next, `${a}.${b}`, b);
         }
       });
     });
 
     // Floyd–Warshall Algorithm with path reconstruction
     _.each(keys, a => {
-      _(keys)
-        .filter(k => k !== a)
-        .each(b => {
-          _(keys)
-            .filter(k => k !== a && k !== b)
-            .each(c => {
-              if ((dist[b][a] + dist[a][c]) < dist[b][c]) {
-                dist[b][c] = dist[b][a] + dist[a][c];
-                next[b][c] = next[b][a];
-              }
-            })
-            .value();
-        })
-        .value();
+      _.each(keys, b => {
+        _.each(keys, c => {
+          if (dist[b][c] > dist[b][a] + dist[a][c]) {
+            dist[b][c] = dist[b][a] + dist[a][c];
+            next[b][c] = next[b][a];
+          }
+        });
+      });
     });
-
-    const paths: Hash<Hash<string[]>> = {};
 
     // compute and store collection paths between all collections via outgoing links
     _.each(keys, a => {
-      _(keys)
-        .filter(k => k !== a)
-        .each(b => {
-          const path: string[] = [];
-          if (!next[a][b]) return _.set(paths, `${a}.${b}`, path);
+      _.each(keys, b => {
+        const originalEdge = `${a}.${b}`;
+        if (!_.get(next, originalEdge)) return;
+        const path: string[] = [ a ];
 
-          while (a !== b) {
-            path.push(a);
-            a = next[a][b];
-            if (!a) return _.set(paths, `${a}.${b}`, []);
-          }
+        while (a !== b) {
+          a = <string> _.get(next, `${a}.${b}`);
+          if (!a) return;
+          path.push(a);
+        }
 
-          return _.set(paths, `${a}.${b}`, path);
-        })
-        .value();
+        return _.set(paths, originalEdge, path);
+      });
     });
 
     return paths;
@@ -167,6 +157,17 @@ export class GraclPlugin {
   graclHierarchy: gracl.Graph;
   shortestLinkPaths: Hash<Hash<string[]>>;
 
+  constructor(public verbose = false) {
+
+  };
+
+
+  log(message: string) {
+    if (this.verbose) {
+      console.log(`tyranid-gracl: ${message}`);
+    }
+    return this;
+  }
 
   /**
     Create Gracl class hierarchy from tyranid schemas,
@@ -174,6 +175,8 @@ export class GraclPlugin {
    */
   boot(stage: Tyr.BootStage) {
     if (stage === 'post-link') {
+      this.log(`starting boot.`);
+
       const collections = Tyr.collections,
             nodeSet = new Set<string>();
 
@@ -267,8 +270,10 @@ export class GraclPlugin {
 
       }
 
+      this.log(`creating link graph.`);
       this.shortestLinkPaths = GraclPlugin.buildLinkGraph();
 
+      this.log(`creating gracl hierarchy`);
       this.graclHierarchy = new gracl.Graph({
         subjects: Array.from(schemaMaps.subjects.values()),
         resources: Array.from(schemaMaps.resources.values())
@@ -388,9 +393,7 @@ export class GraclPlugin {
           );
         }
 
-        for (const pathCollection of path) {
-
-        }
+        console.log(`NEED TO IMPLEMENT PATH COLLECTION FOR QUERY`);
       }
       if (!queryRestrictionSet) {
         throw new Error(
