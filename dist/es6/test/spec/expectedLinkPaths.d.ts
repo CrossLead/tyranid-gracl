@@ -1,15 +1,6 @@
-declare var _default: {
-    'Blog': {
-        'Organization': string[];
-    };
-    'Post': {
-        'Blog': string[];
-    };
-    'Team': {
-        'Organization': string[];
-    };
-    'User': {
-        'Organization': string[];
+declare const linkPaths: {
+    [k: string]: {
+        [k: string]: string[];
     };
 };
-export default _default;
+export default linkPaths;

@@ -2,22 +2,23 @@
   "name": "tyranid-gracl",
   "version": "0.0.0",
   "description": "tyranid.js plugin for gracl",
-  "main": "./dist/es6/lib/index.js",
+  "main": "./dist/es5/lib/index.js",
   "typings": "./dist/es6/lib/index.d.ts",
   "scripts": {
-    "build": "npm run typings && npm run tscompile",
-    "pretest": "npm run tscompile",
-    "test": "npm run lint && mocha dist/es6/test/spec/**/*.js --require babel-polyfill --compilers js:babel-core/register",
+    "build": "npm run typings && npm run tscompile && npm run babel",
+    "pretest": "npm run build && npm run lint",
+    "test": "./node_modules/mocha/bin/mocha dist/es6/test/spec/**/*.js --require babel-polyfill --compilers js:babel-core/register",
     "tscompile": "./node_modules/typescript/bin/tsc -d -p ./",
+    "babel":  "./node_modules/.bin/babel ./dist/es6 --out-dir ./dist/es5",
     "typings": "./node_modules/typings/dist/bin/typings.js install",
     "docs": "rm -rf ./docs/ && ./node_modules/typedoc/bin/typedoc --mode file --theme default --experimentalAsyncFunctions --target es6 --out ./docs/ ./lib/ && touch ./docs/.nojekyll",
     "gh-pages": "npm run docs && ./node_modules/gh-pages/bin/gh-pages --dotfiles true -d ./docs/",
-    "lint": "./node_modules/tslint/bin/tslint -c ./tslint.json ./{test,lib}/**/*.ts"
+    "lint": "./node_modules/tslint/bin/tslint -c ./tslint.json ./{test,lib}/**/*.ts && echo 'linter passed!'"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "gracl": "git://github.com/crosslead/gracl.git#2f72599af36a85f4bee3e0974d2e199990fcfb32",
+    "gracl": "git://github.com/crosslead/gracl.git#d9f11308191c450a82a45f246d8a0379c4c3bffd",
     "lodash": "^4.6.1",
     "tyranid": "0.0.131"
   },
@@ -42,7 +43,6 @@
     "gulp": "^3.9.1",
     "jasmine-core": "^2.4.1",
     "mocha": "^2.4.5",
-    "mocha-babel": "^3.0.3",
     "tpmongo": "0.0.6",
     "ts-node": "^0.5.5",
     "tslint": "^3.5.0",

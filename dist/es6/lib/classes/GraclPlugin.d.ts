@@ -11,17 +11,16 @@ export declare type TyrSchemaGraphObjects = {
 export declare type LinkGraph = {
     [collectionName: string]: Set<string>;
 };
-export declare const collectionLinkCache: Hash<Tyr.Field[]>;
-export declare function getCollectionLinks(collection: Tyr.CollectionInstance, linkParams: any): Tyr.Field[];
 export declare function createInQueries(map: Map<string, string[]>, queriedCollection: Tyr.CollectionInstance, key: string): {};
 export declare class GraclPlugin {
     verbose: boolean;
     static makeRepository(collection: Tyr.CollectionInstance): gracl.Repository;
-    static buildLinkGraph(): Hash<Hash<string[]>>;
+    static buildLinkGraph(): Hash<Hash<string>>;
     graclHierarchy: gracl.Graph;
-    shortestLinkPaths: Hash<Hash<string[]>>;
+    shortestLinkPaths: Hash<Hash<string>>;
     constructor(verbose?: boolean);
     log(message: string): this;
+    getShortestPath(colA: Tyr.CollectionInstance, colB: Tyr.CollectionInstance): string[];
     boot(stage: Tyr.BootStage): void;
     query(queriedCollection: Tyr.CollectionInstance, permissionType: string, user?: Tyr.Document): Promise<boolean | {}>;
 }

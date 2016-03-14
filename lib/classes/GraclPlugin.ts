@@ -19,20 +19,6 @@ export type LinkGraph = {
   [collectionName: string]: Set<string>
 }
 
-
-/**
- *  Memoized function to get links for a given collection
- */
-export const collectionLinkCache: Hash<Tyr.Field[]> = {};
-export function getCollectionLinks(collection: Tyr.CollectionInstance, linkParams: any): Tyr.Field[] {
-  let paramHash = '|collection:' + collection.name + '|';
-  if (linkParams.direction) paramHash += 'direction:' + linkParams.direction + '|';
-  if (linkParams.relate)    paramHash += 'relate:' + linkParams.relate + '|';
-  if (collectionLinkCache[paramHash]) return collectionLinkCache[paramHash];
-  return collectionLinkCache[paramHash] = collection.links(linkParams);
-}
-
-
 export function createInQueries(
                   map: Map<string, string[]>,
                   queriedCollection: Tyr.CollectionInstance,
@@ -78,11 +64,11 @@ export class GraclPlugin {
       compute shortest paths between all edges (if exist)
       using Floyd–Warshall Algorithm with path reconstruction
    */
-  static buildLinkGraph(): Hash<Hash<string[]>> {
+  static buildLinkGraph(): Hash<Hash<string>> {
     const g: LinkGraph = {};
 
     _.each(Tyr.collections, col => {
-      const links = getCollectionLinks(col, { relate: 'ownedBy', direction: 'outgoing' }),
+      const links = col.links({ relate: 'ownedBy', direction: 'outgoing' }),
             colName = col.name;
       _.each(links, linkField => {
         const edges = _.get(g, colName, new Set()),
@@ -97,7 +83,6 @@ export class GraclPlugin {
 
     const dist: Hash<Hash<number>> = {},
           next: Hash<Hash<string>> = {},
-          paths: Hash<Hash<string[]>> = {},
           keys = _.keys(g);
 
 
@@ -134,32 +119,14 @@ export class GraclPlugin {
     });
 
     // compute and store collection paths between all collections via outgoing links
-    _.each(keys, a => {
-      _.each(keys, b => {
-        const originalEdge = `${a}.${b}`;
-        if (!_.get(next, originalEdge)) return;
-        const path: string[] = [ a ];
-
-        while (a !== b) {
-          a = <string> _.get(next, `${a}.${b}`);
-          if (!a) return;
-          path.push(a);
-        }
-
-        return _.set(paths, originalEdge, path);
-      });
-    });
-
-    return paths;
+    return next;
   }
 
 
   graclHierarchy: gracl.Graph;
-  shortestLinkPaths: Hash<Hash<string[]>>;
+  shortestLinkPaths: Hash<Hash<string>>;
 
-  constructor(public verbose = false) {
-
-  };
+  constructor(public verbose = false) {};
 
 
   log(message: string) {
@@ -168,6 +135,26 @@ export class GraclPlugin {
     }
     return this;
   }
+
+
+  getShortestPath(colA: Tyr.CollectionInstance, colB: Tyr.CollectionInstance) {
+    let a = colA.name,
+        b = colB.name,
+        originalEdge = `${a}.${b}`,
+        next = this.shortestLinkPaths;
+
+    if (!_.get(next, originalEdge)) return [];
+    const path: string[] = [ a ];
+
+    while (a !== b) {
+      a = <string> _.get(next, `${a}.${b}`);
+      if (!a) return [];
+      path.push(a);
+    }
+
+    return path;
+  }
+
 
   /**
     Create Gracl class hierarchy from tyranid schemas,
@@ -195,7 +182,7 @@ export class GraclPlugin {
       // loop through all collections, retrieve
       // ownedBy links
       collections.forEach(col => {
-        const linkFields = getCollectionLinks(col, { relate: 'ownedBy', direction: 'outgoing' }),
+        const linkFields = col.links({ relate: 'ownedBy', direction: 'outgoing' }),
               collectionName = col.def.name;
 
         if (!linkFields.length) return;
