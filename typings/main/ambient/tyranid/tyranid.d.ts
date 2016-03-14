@@ -100,7 +100,7 @@ declare module 'tyranid' {
      */
     export type TyranidFieldDefinition = {
       [key: string]: any;
-      is: IdType;
+      is?: IdType;
       client?: boolean;
       db?: boolean;
       label?: LabelType;

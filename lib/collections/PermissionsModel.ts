@@ -27,9 +27,13 @@ export const PermissionsBaseCollection = new Tyr.Collection({
  */
 export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseCollection) {
 
-  setAccess(doc: Tyr.Document, access: boolean): Tyr.Document {
+  async setAccess(doc: Tyr.Document, access: boolean): Promise<Tyr.Document> {
     // manage permissions
     return doc;
+  }
+
+  async deletePermissionsForSubject(doc: Tyr.Document) {
+
   }
 
 }

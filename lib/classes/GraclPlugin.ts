@@ -3,6 +3,7 @@
 import Tyr from 'tyranid';
 import { PermissionsModel } from '../collections/PermissionsModel';
 import * as gracl from 'gracl';
+import * as _ from 'lodash';
 
 
 export type Hash<T> = {
@@ -13,6 +14,26 @@ export type TyrSchemaGraphObjects = {
   links: Tyr.Field[];
   parents: Tyr.CollectionInstance[];
 };
+
+export type LinkGraph = {
+  [collectionName: string]: {
+    incoming: string[];
+    outgoing: string[];
+  }
+}
+
+
+/**
+ *  Memoized function to get links for a given collection
+ */
+export const collectionLinkCache: Hash<Tyr.Field[]> = {};
+export function getCollectionLinks(collection: Tyr.CollectionInstance, linkParams: any): Tyr.Field[] {
+  let paramHash = '';
+  if (linkParams.direction) paramHash += '_direction:' + linkParams.direction;
+  if (linkParams.relate) paramHash += '_relate:' + linkParams.relate;
+  if (collectionLinkCache[paramHash]) return collectionLinkCache[paramHash];
+  return collectionLinkCache[paramHash] = collection.links(linkParams);
+}
 
 
 export function createInQueries(
@@ -26,7 +47,7 @@ export function createInQueries(
       if (col === queriedCollection.name) {
         col = queriedCollection.def.primaryKey.field;
       }
-      out[col] = { [key]: uids.map(Tyr.parseUid) };
+      out[col] = { [key]: uids.map((u: string) => Tyr.parseUid(u).id) };
       return out;
     }, {});
 };
@@ -40,7 +61,12 @@ export class GraclPlugin {
   static makeRepository(collection: Tyr.CollectionInstance): gracl.Repository {
     return {
       async getEntity(id: string): Promise<Tyr.Document> {
-        return await collection.byId(id);
+        return <Tyr.Document> (
+          await collection.populate(
+            'permissions',
+            await collection.byId(id)
+          )
+        );
       },
       async saveEntity(id: string, doc: Tyr.Document): Promise<Tyr.Document> {
         return await doc.$save();
@@ -49,7 +75,96 @@ export class GraclPlugin {
   }
 
 
-  graph: gracl.Graph;
+  /**
+   *  Create graph of outgoing links to collections and
+      compute shortest paths between all edges (if exist)
+      using Floyd–Warshall Algorithm with path reconstruction
+   */
+  static buildLinkGraph(): Hash<Hash<string[]>> {
+    const g: LinkGraph = {};
+
+    _.each(Tyr.collections, col => {
+      const links = getCollectionLinks(col, { direction: 'outgoing' }),
+            colName = col.name;
+      _.each(links, linkField => {
+        const linkName = linkField.collection.name,
+              outgoingKey = `${colName}.outgoing`,
+              incomingKey = `${linkName}.incoming`;
+
+        const outgoing = _.get(g, outgoingKey, []),
+              incoming = _.get(g, incomingKey, []);
+
+        outgoing.push(linkName);
+        incoming.push(colName);
+
+        _.set(g, outgoingKey, outgoing);
+        _.set(g, incomingKey, incoming);
+      });
+    });
+
+    const dist: Hash<Hash<number>> = {},
+          next: Hash<Hash<string>> = {};
+
+    const keys = _.keys(g);
+
+    // initialize dist and next matricies
+    _.each(keys, a => {
+      _.each(keys, b => {
+        if (a !== b) {
+          if (_.find(g[a].outgoing, b)) {
+            _.set(dist, `${a}.${b}`, 1);
+            _.set(next, `${a}.${b}`, b);
+          } else {
+            _.set(dist, `${a}.${b}`, Infinity);
+          }
+        }
+      });
+    });
+
+    _.each(keys, a => {
+      _(keys)
+        .filter(k => k !== a)
+        .each(b => {
+          _(keys)
+            .filter(k => k !== a && k !== b)
+            .each(c => {
+              if ((dist[b][a] + dist[a][c]) < dist[b][c]) {
+                dist[b][c] = dist[b][a] + dist[a][c];
+                next[b][c] = next[b][a];
+              }
+            })
+            .value();
+        })
+        .value();
+    });
+
+    const paths: Hash<Hash<string[]>> = {};
+
+    // compute and store collection paths between all collections via outgoing links
+    _.each(keys, a => {
+      _(keys)
+        .filter(k => k !== a)
+        .each(b => {
+          const path: string[] = [];
+          if (!next[a][b]) return _.set(paths, `${a}.${b}`, path);
+
+          while (a !== b) {
+            path.push(a);
+            a = next[a][b];
+            if (!a) return _.set(paths, `${a}.${b}`, []);
+          }
+
+          return _.set(paths, `${a}.${b}`, path);
+        })
+        .value();
+    });
+
+    return paths;
+  }
+
+
+  graclHierarchy: gracl.Graph;
+  shortestLinkPaths: Hash<Hash<string[]>>;
 
 
   /**
@@ -76,7 +191,7 @@ export class GraclPlugin {
       // loop through all collections, retrieve
       // ownedBy links
       collections.forEach(col => {
-        const linkFields = col.links({ relate: 'ownedBy', direction: 'outgoing' }),
+        const linkFields = getCollectionLinks(col, { relate: 'ownedBy', direction: 'outgoing' }),
               collectionName = col.def.name;
 
         if (!linkFields.length) return;
@@ -151,13 +266,16 @@ export class GraclPlugin {
 
       }
 
-      this.graph = new gracl.Graph({
+      this.shortestLinkPaths = GraclPlugin.buildLinkGraph();
+
+      this.graclHierarchy = new gracl.Graph({
         subjects: Array.from(schemaMaps.subjects.values()),
         resources: Array.from(schemaMaps.resources.values())
       });
 
     }
   }
+
 
 
   /**
@@ -167,18 +285,23 @@ export class GraclPlugin {
               permissionType: string,
               user = Tyr.local.user): Promise<boolean | {}> {
 
-    if (!this.graph) {
-      throw new Error(`Must call this.boot() before using query method!`);
+    if (!this.graclHierarchy) {
+      throw new Error(`Must call this.boot() before using this.query()!`);
     }
 
     // if no user, no restriction...
     if (!user) return false;
 
     // extract subject and resource Gracl classes
-    const ResourceClass = this.graph.getResource(queriedCollection.def.name),
-          SubjectClass = this.graph.getSubject(user.$model.def.name);
+    const ResourceClass = this.graclHierarchy.getResource(queriedCollection.def.name),
+          SubjectClass = this.graclHierarchy.getSubject(user.$model.def.name);
 
     const subject = new SubjectClass(user);
+
+    const errorMessageHeader = (
+      `Unable to construct query object for ${queriedCollection.name} ` +
+      `from the perspective of ${subject.toString()}`
+    );
 
     // get list of all ids in the subject hierarchy,
     // as well as the names of the classes in the resource hierarchy
@@ -232,6 +355,7 @@ export class GraclPlugin {
 
     // extract all collections that have a relevant permission set for the requested resource
     for (const [ collectionName, { collection, permissions } ] of resourceMap) {
+      let queryRestrictionSet = false;
       // check to see if the collection we are querying has a field linked to <collectionName>
       if (queriedCollectionLinkFields.has(collectionName)) {
         for (const permission of permissions.values()) {
@@ -241,27 +365,39 @@ export class GraclPlugin {
             case true:
             case false:
               const key = (access ? 'positive' : 'negative');
-              if (!queryMaps[<string> key].has(collectionName)) {
-                queryMaps[<string> key].set(collectionName, [ permission.resourceId ]);
+              if (!queryMaps[key].has(collectionName)) {
+                queryMaps[key].set(collectionName, [ permission.resourceId ]);
               } else {
-                queryMaps[<string> key].get(collectionName).push(permission.resourceId);
+                queryMaps[key].get(collectionName).push(permission.resourceId);
               }
               break;
           }
+          queryRestrictionSet = true;
         }
       }
       // otherwise, we need determine how to restricting a query of this object by
       // permissions concerning parents of this object...
       else {
-        for (let link of queriedCollectionLinkFields.values()) {
-          let parentLinks = link.collection.links({ direction: 'outgoing' });
-          while (parentLinks.length) {
+        // get computed shortest path between the two collections
+        const path = this.shortestLinkPaths[queriedCollection.name][collectionName];
+        if (!path) {
+          throw new Error(
+            `${errorMessageHeader}, as there is no path between ` +
+            `collections ${queriedCollection.name} and ${collectionName} in the schema.`
+          );
+        }
 
-          }
+        for (const pathCollection of path) {
+
         }
       }
+      if (!queryRestrictionSet) {
+        throw new Error(
+          `${errorMessageHeader}, unable to set query restriction ` +
+          `to satisfy permissions relating to collection ${collectionName}`
+        );
+      }
     }
-
 
     return {
       $and: [

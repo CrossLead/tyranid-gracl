@@ -1,0 +1,4 @@
+"use strict";
+const tyranid_1 = require('tyranid');
+exports.BlogBaseCollection = new tyranid_1.default.Collection({});
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiQmxvZ1Jlc291cmNlLmpzIiwic291cmNlUm9vdCI6IiIsInNvdXJjZXMiOlsiLi4vLi4vLi4vLi4vdGVzdC9jbGFzc2VzL0Jsb2dSZXNvdXJjZS50cyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiO0FBQUEsMEJBQWdCLFNBQVMsQ0FBQyxDQUFBO0FBS2IsMEJBQWtCLEdBQUcsSUFBSSxpQkFBRyxDQUFDLFVBQVUsQ0FBQyxFQUVwRCxDQUFDLENBQUMifQ==

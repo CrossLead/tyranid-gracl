@@ -1,0 +1,10 @@
+"use strict";
+const gracl_1 = require('gracl');
+const TeamSubject_1 = require('./TeamSubject');
+exports.userModel = new gracl_1.MemoryRepository();
+class UserSubject extends TeamSubject_1.TeamSubject {
+}
+UserSubject.repository = exports.userModel;
+UserSubject.parentId = 'teamIds';
+exports.UserSubject = UserSubject;
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiVXNlclN1YmplY3QuanMiLCJzb3VyY2VSb290IjoiIiwic291cmNlcyI6WyIuLi8uLi8uLi8uLi90ZXN0L2NsYXNzZXMvVXNlclN1YmplY3QudHMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IjtBQUFBLHdCQUF5QyxPQUFPLENBQUMsQ0FBQTtBQUNqRCw4QkFBNEIsZUFBZSxDQUFDLENBQUE7QUFFL0IsaUJBQVMsR0FBRyxJQUFJLHdCQUFJLEVBQUUsQ0FBQztBQUVwQywwQkFBaUMseUJBQVc7QUFHNUMsQ0FBQztBQUZRLHNCQUFVLEdBQUcsaUJBQVMsQ0FBQztBQUN2QixvQkFBUSxHQUFHLFNBQVMsQ0FBQztBQUZqQixtQkFBVyxjQUd2QixDQUFBIn0=
