@@ -1,5 +1,5 @@
 /// <reference path='../../typings/main.d.ts' />
-import Tyr from 'tyranid';
+import * as Tyr from 'tyranid';
 
 
 export const PermissionsBaseCollection = new Tyr.Collection({
@@ -7,14 +7,15 @@ export const PermissionsBaseCollection = new Tyr.Collection({
   name: 'graclPermission',
   dbName: 'graclPermissions',
   fields: {
+    _id: { is: 'mongoid' },
     subjectId: { is: 'uid' },
-    resourceId: { is: 'resourceId'},
+    resourceId: { is: 'uid' },
     subjectType: { is: 'string' },
     resourceType: { is: 'string' },
     access: {
       is: 'object',
       keys: { is: 'string' },
-      of: { is: 'boolean '}
+      of: { is: 'boolean' }
     }
   }
 });

@@ -1,5 +1,5 @@
 /// <reference path="../../../../typings/main.d.ts" />
-import Tyr from 'tyranid';
+import * as Tyr from 'tyranid';
 import * as gracl from 'gracl';
 export declare type Hash<T> = {
     [key: string]: T;

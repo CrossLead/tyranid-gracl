@@ -43,6 +43,7 @@
     "jasmine-core": "^2.4.1",
     "mocha": "^2.4.5",
     "mocha-babel": "^3.0.3",
+    "tpmongo": "0.0.6",
     "ts-node": "^0.5.5",
     "tslint": "^3.5.0",
     "typedoc": "^0.3.12",

@@ -1,4 +1,4 @@
-import Tyr from 'tyranid';
+import * as Tyr from 'tyranid';
 import { Post } from './Post';
 
 export const BlogBaseCollection = new Tyr.Collection({
@@ -6,8 +6,10 @@ export const BlogBaseCollection = new Tyr.Collection({
   name: 'blog',
   dbName: 'blogs',
   fields: {
+    _id: { is: 'mongoid' },
+    name: { is: 'string' },
     organizationId: {
-      link: 'organzization',
+      link: 'organization',
       relates: 'ownedBy',
       direction: 'outgoing',
       graclType: 'resource'

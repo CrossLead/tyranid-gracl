@@ -1,8 +1,10 @@
 {
   "ambientDependencies": {
+    "chai": "github:DefinitelyTyped/DefinitelyTyped/chai/chai.d.ts#1914a00b3c740348dae407ee0d2be89b0b58ad7f",
     "express": "github:DefinitelyTyped/DefinitelyTyped/express/express.d.ts#dd638012d63e069f2c99d06ef4dcc9616a943ee4",
     "lodash": "github:DefinitelyTyped/DefinitelyTyped/lodash/lodash-3.10.d.ts#3d572e1ee3e6492983ef01f8b7adf6150d345b11",
     "mime": "github:DefinitelyTyped/DefinitelyTyped/mime/mime.d.ts#cb5206a8ac1c9a3ddfd126f5ecea6729b2361452",
+    "mocha": "github:DefinitelyTyped/DefinitelyTyped/mocha/mocha.d.ts#d6dd320291705694ba8e1a79497a908e9f5e6617",
     "node": "github:DefinitelyTyped/DefinitelyTyped/node/node.d.ts#48c1e3c1d6baefa4f1a126f188c27c4fefd36bff",
     "serve-static": "github:DefinitelyTyped/DefinitelyTyped/serve-static/serve-static.d.ts#0fa4e9e61385646ea6a4cba2aef357353d2ce77f",
     "tyranid": "github:tyranid-org/tyranid-typings"

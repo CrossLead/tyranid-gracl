@@ -1,4 +1,4 @@
-import Tyr from 'tyranid';
+import * as Tyr from 'tyranid';
 
 
 const UserBaseCollection = new Tyr.Collection({
@@ -6,6 +6,7 @@ const UserBaseCollection = new Tyr.Collection({
   name: 'user',
   dbName: 'users',
   fields: {
+    _id: { is: 'mongoid' },
     name: { is: 'string' },
     teamIds: {
       is: 'array',

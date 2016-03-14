@@ -5,11 +5,10 @@
  */
 declare module 'tyranid' {
 
-  // default export is the tyr object
-  export default Tyr;
+  export = Tyr;
 
   // declare properties of Tyr object
-  export namespace Tyr {
+  namespace Tyr {
 
     export type RawMongoDocument = {
       [key: string]: any;

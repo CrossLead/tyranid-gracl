@@ -1,6 +1,6 @@
 /// <reference path='../../typings/main.d.ts' />
 
-import Tyr from 'tyranid';
+import * as Tyr from 'tyranid';
 import { PermissionsModel } from '../collections/PermissionsModel';
 import * as gracl from 'gracl';
 import * as _ from 'lodash';
@@ -121,6 +121,7 @@ export class GraclPlugin {
       });
     });
 
+    // Floyd–Warshall Algorithm with path reconstruction
     _.each(keys, a => {
       _(keys)
         .filter(k => k !== a)
