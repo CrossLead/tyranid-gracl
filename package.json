@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "description": "tyranid.js plugin for gracl",
   "main": "./dist/es6/lib/index.js",
+  "typings": "./dist/es6/lib/index.d.ts",
   "scripts": {
     "build": "npm run typings && npm run tscompile",
     "pretest": "npm run tscompile",
@@ -16,7 +17,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "gracl": "git://github.com/crosslead/gracl.git#3cab192a805aff9406196ba805b3761c56119ed4",
+    "gracl": "git://github.com/crosslead/gracl.git#5273fccd75e37a8f00f7348ab8fbdcd07c087a94",
     "tyranid": "0.0.129"
   },
   "babel": {

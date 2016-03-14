@@ -20,6 +20,11 @@ export const PermissionsBaseCollection = new Tyr.Collection({
 });
 
 
+/**
+  Collection to contain all permissions used by gracl
+
+  Note: requires explicit cast to tyr.collectioninstance for tsc to pass
+ */
 export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseCollection) {
 
   setAccess(doc: Tyr.Document, access: boolean): Tyr.Document {

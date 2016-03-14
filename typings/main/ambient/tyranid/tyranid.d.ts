@@ -21,6 +21,8 @@ declare module 'tyranid' {
     export type IdType = string;
     export type LabelList = { _id: IdType, [labelField: string]: string }[];
     export type TyranidClass<T> = {  new (...args: any[]): T; };
+    export type BootStage = 'compile' | 'link' | 'post-link';
+
 
 
     /**
@@ -71,7 +73,7 @@ declare module 'tyranid' {
       enum?: boolean;
       client?: boolean;
       primaryKey?: {
-        field: TyranidFieldDefinition;
+        field: string;
         defaultMatchIdOnInsert?: boolean;
       };
       timestamps?: boolean;
@@ -128,6 +130,7 @@ declare module 'tyranid' {
 
     const $all: any;
     const byId: { [key: string]: CollectionInstance };
+    const byName: { [key: string]: CollectionInstance };
     const collections: CollectionInstance[];
     const documentPrototype: Document;
 
@@ -176,7 +179,7 @@ declare module 'tyranid' {
       // Collection instance constructor
       new(doc: RawMongoDocument): Document;
 
-      fields: TyranidFieldsObject;
+      fields: { [key: string]: Field };
       label: LabelType;
       labelField: Field;
       paths: { [key: string]: Field };

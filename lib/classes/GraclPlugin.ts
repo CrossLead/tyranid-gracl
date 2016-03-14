@@ -2,16 +2,34 @@
 
 import Tyr from 'tyranid';
 import { PermissionsModel } from '../collections/PermissionsModel';
-import { Subject, Resource, Graph, Repository, SchemaNode } from 'gracl';
+import * as gracl from 'gracl';
 
 
-export type BootStage = 'compile' | 'link' | 'post-link';
-export type Hash<T> = { [key: string]: T; };
+export type Hash<T> = {
+  [key: string]: T;
+};
+
 export type TyrSchemaGraphObjects = {
   links: Tyr.Field[];
   parents: Tyr.CollectionInstance[];
 };
 
+
+export function createInQueries(
+                  map: Map<string, string[]>,
+                  queriedCollection: Tyr.CollectionInstance,
+                  key: string
+                ) {
+  return Array.from(map.entries())
+    .reduce((out: Hash<Hash<string[]>>, [col, uids]) => {
+      // if the collection is the same as the one being queried, use the primary id field
+      if (col === queriedCollection.name) {
+        col = queriedCollection.def.primaryKey.field;
+      }
+      out[col] = { [key]: uids.map(Tyr.parseUid) };
+      return out;
+    }, {});
+};
 
 
 
@@ -19,7 +37,7 @@ export class GraclPlugin {
 
 
   // create a repository object for a given collection
-  static makeRepository(collection: Tyr.CollectionInstance) {
+  static makeRepository(collection: Tyr.CollectionInstance): gracl.Repository {
     return {
       async getEntity(id: string): Promise<Tyr.Document> {
         return await collection.byId(id);
@@ -31,10 +49,14 @@ export class GraclPlugin {
   }
 
 
-  graph: Graph;
+  graph: gracl.Graph;
 
 
-  boot(stage: BootStage) {
+  /**
+    Create Gracl class hierarchy from tyranid schemas,
+    needs to be called after all the tyranid collections are validated
+   */
+  boot(stage: Tyr.BootStage) {
     if (stage === 'post-link') {
       const collections = Tyr.collections,
             nodeSet = new Set<string>();
@@ -88,12 +110,12 @@ export class GraclPlugin {
       });
 
       const schemaMaps = {
-        subjects: new Map<string, SchemaNode>(),
-        resources: new Map<string, SchemaNode>()
+        subjects: new Map<string, gracl.SchemaNode>(),
+        resources: new Map<string, gracl.SchemaNode>()
       };
 
       for (const type of ['subjects', 'resources']) {
-        let nodes: Map<string, SchemaNode>,
+        let nodes: Map<string, gracl.SchemaNode>,
             tyrObjects: TyrSchemaGraphObjects;
 
         if (type === 'subjects') {
@@ -129,7 +151,7 @@ export class GraclPlugin {
 
       }
 
-      this.graph = new Graph({
+      this.graph = new gracl.Graph({
         subjects: Array.from(schemaMaps.subjects.values()),
         resources: Array.from(schemaMaps.resources.values())
       });
@@ -141,56 +163,112 @@ export class GraclPlugin {
   /**
    *  Method for creating a specific query based on a schema object
    */
-  async query(collection: Tyr.CollectionInstance, permission: string, user = Tyr.local.user): Promise<boolean | {}> {
+  async query(queriedCollection: Tyr.CollectionInstance,
+              permissionType: string,
+              user = Tyr.local.user): Promise<boolean | {}> {
+
     if (!this.graph) {
       throw new Error(`Must call this.boot() before using query method!`);
     }
-
-    const queryObj = {};
 
     // if no user, no restriction...
     if (!user) return false;
 
     // extract subject and resource Gracl classes
-    const ResourceClass = this.graph.getResource(collection.def.name),
+    const ResourceClass = this.graph.getResource(queriedCollection.def.name),
           SubjectClass = this.graph.getSubject(user.$model.def.name);
 
     const subject = new SubjectClass(user);
 
-    // get list of all ids in the subject and resource hierarchies,
-    // as well as the names of the subject and resource classes
+    // get list of all ids in the subject hierarchy,
+    // as well as the names of the classes in the resource hierarchy
     const subjectHierarchyIds = await subject.getHierarchyIds(),
-          subjectType = subject.getName(),
-          resourceType = ResourceClass.displayName;
+          resourceHierarchyClasses = ResourceClass.getHierarchyClassNames();
 
     const permissions = await PermissionsModel.find({
-      subjectId: { $in: subjectHierarchyIds },
-      resourceType
+      subjectId:    { $in: subjectHierarchyIds },
+      resourceType: { $in: resourceHierarchyClasses }
     });
 
-    // with array of permissions, determine what types each uid is, and then
-    // create restrictions if that type is present on <collection>
-    // NOTE: -- do we need organizationId on everything then? or should this automatically
-    // recurse down the chain to determine what groups are within an organization and do a diff?
+    if (!Array.isArray(permissions)) return false;
 
-    /**
-      access AT component
+    type resourceMapEntries = {
+      permissions: Map<string, any>,
+      collection: Tyr.CollectionInstance
+    };
+    const resourceMap = new Map<string, resourceMapEntries>();
 
-      - collection == AlignmentTriangleComponent collection
+    for (const perm of permissions) {
+      const resourceCollectionName = <string> perm['resourceType'],
+            resourceId = <string> perm['resourceId'];
 
-      1. Find all the permissions with this user as the subject and the resource being
-          one type within the AlignmentTriangleComponent resource hierarchy (component, team, org...)
+      if (!resourceMap.has(resourceCollectionName)) {
+        resourceMap.set(resourceCollectionName, {
+          collection: Tyr.byName[resourceCollectionName],
+          permissions: new Map
+        });
+      }
 
-      2. Loop through permissions and build query object
-        if found org for example
-          determine property on AT component schema that relates to org
+      resourceMap
+        .get(resourceCollectionName)
+        .permissions
+        .set(resourceId, perm);
+    }
 
-          query {
-            teamId:
+    // loop through all the fields in the collection that we are
+    // building the query string for, grabbing all fields that are links
+    // and storing them in a map of (linkFieldCollection => Field)
+    const queriedCollectionLinkFields = new Map<string, Tyr.Field>();
+    queriedCollection
+      .links({ direction: 'outgoing' })
+      .forEach(field => {
+        queriedCollectionLinkFields.set(field.def.link, field);
+      });
+
+    const queryMaps: Hash<Map<string, string[]>> = {
+      positive: new Map<string, string[]>(),
+      negative: new Map<string, string[]>()
+    };
+
+    // extract all collections that have a relevant permission set for the requested resource
+    for (const [ collectionName, { collection, permissions } ] of resourceMap) {
+      // check to see if the collection we are querying has a field linked to <collectionName>
+      if (queriedCollectionLinkFields.has(collectionName)) {
+        for (const permission of permissions.values()) {
+          const access = permission.access[permissionType];
+          switch (access) {
+            // access needs to be exactly true or false
+            case true:
+            case false:
+              const key = (access ? 'positive' : 'negative');
+              if (!queryMaps[<string> key].has(collectionName)) {
+                queryMaps[<string> key].set(collectionName, [ permission.resourceId ]);
+              } else {
+                queryMaps[<string> key].get(collectionName).push(permission.resourceId);
+              }
+              break;
           }
-    */
+        }
+      }
+      // otherwise, we need determine how to restricting a query of this object by
+      // permissions concerning parents of this object...
+      else {
+        for (let link of queriedCollectionLinkFields.values()) {
+          let parentLinks = link.collection.links({ direction: 'outgoing' });
+          while (parentLinks.length) {
 
-    return queryObj;
+          }
+        }
+      }
+    }
+
+
+    return {
+      $and: [
+        createInQueries(queryMaps['positive'], queriedCollection, '$in'),
+        createInQueries(queryMaps['negative'], queriedCollection, '$nin')
+      ]
+    };
   }
 
 
