@@ -1,17 +1,17 @@
 "use strict";
 
 var linkPaths = {
-    'Blog': {
-        'Organization': ['Blog', 'Organization']
+    'blog': {
+        'organization': ['blog', 'organization']
     },
-    'Post': {
-        'Blog': ['Post', 'Blog']
+    'post': {
+        'blog': ['post', 'blog']
     },
-    'Team': {
-        'Organization': ['Team', 'Organization']
+    'team': {
+        'organization': ['team', 'organization']
     },
-    'User': {
-        'Organization': ['User', 'Team', 'Organization']
+    'user': {
+        'organization': ['user', 'organization']
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });

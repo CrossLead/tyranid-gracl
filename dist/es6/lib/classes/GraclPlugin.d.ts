@@ -17,7 +17,7 @@ export declare class GraclPlugin {
     static makeRepository(collection: Tyr.CollectionInstance): gracl.Repository;
     static buildLinkGraph(): Hash<Hash<string>>;
     graclHierarchy: gracl.Graph;
-    shortestLinkPaths: Hash<Hash<string>>;
+    outgoingLinkPaths: Hash<Hash<string>>;
     constructor(verbose?: boolean);
     log(message: string): this;
     getShortestPath(colA: Tyr.CollectionInstance, colB: Tyr.CollectionInstance): string[];

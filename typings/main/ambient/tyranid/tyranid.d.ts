@@ -239,6 +239,7 @@ declare module 'tyranid' {
       of: Field;
       parent: Field;
       pathLabel: string;
+      path: string;
       spath: string;
       in: Units;
       keys: Field;

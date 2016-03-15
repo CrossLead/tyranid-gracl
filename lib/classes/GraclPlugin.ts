@@ -27,7 +27,7 @@ export function createInQueries(
   return Array.from(map.entries())
     .reduce((out: Hash<Hash<string[]>>, [col, uids]) => {
       // if the collection is the same as the one being queried, use the primary id field
-      if (col === queriedCollection.name) {
+      if (col === queriedCollection.def.name) {
         col = queriedCollection.def.primaryKey.field;
       }
       out[col] = { [key]: uids.map((u: string) => Tyr.parseUid(u).id) };
@@ -68,11 +68,11 @@ export class GraclPlugin {
     const g: LinkGraph = {};
 
     _.each(Tyr.collections, col => {
-      const links = col.links({ relate: 'ownedBy', direction: 'outgoing' }),
-            colName = col.name;
+      const links = col.links({ direction: 'outgoing' }),
+            colName = col.def.name;
       _.each(links, linkField => {
         const edges = _.get(g, colName, new Set()),
-              linkName = linkField.link.name;
+              linkName = linkField.link.def.name;
 
         edges.add(linkName);
 
@@ -118,13 +118,12 @@ export class GraclPlugin {
       });
     });
 
-    // compute and store collection paths between all collections via outgoing links
     return next;
   }
 
 
   graclHierarchy: gracl.Graph;
-  shortestLinkPaths: Hash<Hash<string>>;
+  outgoingLinkPaths: Hash<Hash<string>>;
 
   constructor(public verbose = false) {};
 
@@ -138,12 +137,13 @@ export class GraclPlugin {
 
 
   getShortestPath(colA: Tyr.CollectionInstance, colB: Tyr.CollectionInstance) {
-    let a = colA.name,
-        b = colB.name,
+    let a = colA.def.name,
+        b = colB.def.name,
         originalEdge = `${a}.${b}`,
-        next = this.shortestLinkPaths;
+        next = this.outgoingLinkPaths;
 
     if (!_.get(next, originalEdge)) return [];
+
     const path: string[] = [ a ];
 
     while (a !== b) {
@@ -239,7 +239,10 @@ export class GraclPlugin {
           nodes.set(name,
             { name,
               parent: parentName,
-              parentId: node.name,
+              // TODO: ask ted if there is a cleaner way to do this
+              parentId: node.name === node.path ?
+                node.name :
+                node.path.split('.')[0],
               repository: GraclPlugin.makeRepository(node.collection)
             }
           );
@@ -258,7 +261,7 @@ export class GraclPlugin {
       }
 
       this.log(`creating link graph.`);
-      this.shortestLinkPaths = GraclPlugin.buildLinkGraph();
+      this.outgoingLinkPaths = GraclPlugin.buildLinkGraph();
 
       this.log(`creating gracl hierarchy`);
       this.graclHierarchy = new gracl.Graph({
@@ -335,6 +338,7 @@ export class GraclPlugin {
     // building the query string for, grabbing all fields that are links
     // and storing them in a map of (linkFieldCollection => Field)
     const queriedCollectionLinkFields = new Map<string, Tyr.Field>();
+
     queriedCollection
       .links({ direction: 'outgoing' })
       .forEach(field => {
@@ -372,15 +376,20 @@ export class GraclPlugin {
       // permissions concerning parents of this object...
       else {
         // get computed shortest path between the two collections
-        const path = this.shortestLinkPaths[queriedCollection.name][collectionName];
-        if (!path) {
+        const path = this.getShortestPath(queriedCollection, collection);
+        if (!path.length) {
           throw new Error(
             `${errorMessageHeader}, as there is no path between ` +
-            `collections ${queriedCollection.name} and ${collectionName} in the schema.`
+            `collections ${queriedCollection.def.name} and ${collectionName} in the schema.`
           );
         }
 
-        console.log(`NEED TO IMPLEMENT PATH COLLECTION FOR QUERY`);
+        let pathCollectionName: string;
+        while (pathCollectionName = path.pop()) {
+          const pathCollection = Tyr.byName[pathCollectionName];
+        }
+
+
       }
       if (!queryRestrictionSet) {
         throw new Error(

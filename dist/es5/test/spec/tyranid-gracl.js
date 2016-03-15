@@ -22,10 +22,10 @@ describe('tyranid-gracl', function () {
     });
     it('Cached link paths should be correctly constructed', function () {
         var checkPair = function checkPair(a, b) {
-            chai_1.expect(secure.getShortestPath(Tyr.byName[a.toLowerCase()], Tyr.byName[b.toLowerCase()])).to.deep.equal(expectedLinkPaths_1.default[a][b] || []);
+            chai_1.expect(secure.getShortestPath(Tyr.byName[a], Tyr.byName[b])).to.deep.equal(expectedLinkPaths_1.default[a][b] || []);
         };
-        checkPair('Post', 'Blog');
-        checkPair('Blog', 'Organization');
-        checkPair('User', 'Organization');
+        checkPair('post', 'blog');
+        checkPair('blog', 'organization');
+        checkPair('user', 'organization');
     });
 });

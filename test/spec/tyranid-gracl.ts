@@ -34,13 +34,13 @@ describe('tyranid-gracl', () => {
 
   it('Cached link paths should be correctly constructed', () => {
     const checkPair = (a: string, b: string) => {
-      expect(secure.getShortestPath(Tyr.byName[a.toLowerCase()], Tyr.byName[b.toLowerCase()]))
+      expect(secure.getShortestPath(Tyr.byName[a], Tyr.byName[b]))
         .to.deep.equal(expectedLinkPaths[a][b] || []);
     };
 
-    checkPair('Post', 'Blog');
-    checkPair('Blog', 'Organization');
-    checkPair('User', 'Organization');
+    checkPair('post', 'blog');
+    checkPair('blog', 'organization');
+    checkPair('user', 'organization');
   });
 
 });

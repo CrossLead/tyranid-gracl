@@ -43,7 +43,7 @@ function createInQueries(map, queriedCollection, key) {
         var col = _ref2[0];
         var uids = _ref2[1];
 
-        if (col === queriedCollection.name) {
+        if (col === queriedCollection.def.name) {
             col = queriedCollection.def.primaryKey.field;
         }
         out[col] = _defineProperty({}, key, uids.map(function (u) {
@@ -75,10 +75,10 @@ var GraclPlugin = function () {
     }, {
         key: 'getShortestPath',
         value: function getShortestPath(colA, colB) {
-            var a = colA.name,
-                b = colB.name,
+            var a = colA.def.name,
+                b = colB.def.name,
                 originalEdge = a + '.' + b,
-                next = this.shortestLinkPaths;
+                next = this.outgoingLinkPaths;
             if (!_.get(next, originalEdge)) return [];
             var path = [a];
             while (a !== b) {
@@ -162,7 +162,7 @@ var GraclPlugin = function () {
                                     parentName = node.link.def.name;
                                 nodes.set(name, { name: name,
                                     parent: parentName,
-                                    parentId: node.name,
+                                    parentId: node.name === node.path ? node.name : node.path.split('.')[0],
                                     repository: GraclPlugin.makeRepository(node.collection)
                                 });
                             }
@@ -213,7 +213,7 @@ var GraclPlugin = function () {
                         }
                     }
                     _this.log('creating link graph.');
-                    _this.shortestLinkPaths = GraclPlugin.buildLinkGraph();
+                    _this.outgoingLinkPaths = GraclPlugin.buildLinkGraph();
                     _this.log('creating gracl hierarchy');
                     _this.graclHierarchy = new gracl.Graph({
                         subjects: Array.from(schemaMaps.subjects.values()),
@@ -228,7 +228,7 @@ var GraclPlugin = function () {
             var user = arguments.length <= 2 || arguments[2] === undefined ? Tyr.local.user : arguments[2];
 
             return __awaiter(this, void 0, Promise, regeneratorRuntime.mark(function _callee() {
-                var ResourceClass, SubjectClass, subject, errorMessageHeader, subjectHierarchyIds, resourceHierarchyClasses, permissions, resourceMap, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, perm, resourceCollectionName, resourceId, queriedCollectionLinkFields, queryMaps, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, _step4$value, _collectionName, _step4$value$, collection, _permissions, queryRestrictionSet, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, permission, access, key, path;
+                var ResourceClass, SubjectClass, subject, errorMessageHeader, subjectHierarchyIds, resourceHierarchyClasses, permissions, resourceMap, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, perm, resourceCollectionName, resourceId, queriedCollectionLinkFields, queryMaps, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, _step4$value, _collectionName, _step4$value$, collection, _permissions, queryRestrictionSet, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, permission, access, key, path, pathCollectionName, pathCollection;
 
                 return regeneratorRuntime.wrap(function _callee$(_context) {
                     while (1) {
@@ -345,7 +345,7 @@ var GraclPlugin = function () {
 
                             case 44:
                                 if (_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done) {
-                                    _context.next = 95;
+                                    _context.next = 96;
                                     break;
                                 }
 
@@ -432,80 +432,84 @@ var GraclPlugin = function () {
                                 return _context.finish(76);
 
                             case 84:
-                                _context.next = 90;
+                                _context.next = 91;
                                 break;
 
                             case 86:
-                                path = this.shortestLinkPaths[queriedCollection.name][_collectionName];
+                                path = this.getShortestPath(queriedCollection, collection);
 
-                                if (path) {
+                                if (path.length) {
                                     _context.next = 89;
                                     break;
                                 }
 
-                                throw new Error(errorMessageHeader + ', as there is no path between ' + ('collections ' + queriedCollection.name + ' and ' + _collectionName + ' in the schema.'));
+                                throw new Error(errorMessageHeader + ', as there is no path between ' + ('collections ' + queriedCollection.def.name + ' and ' + _collectionName + ' in the schema.'));
 
                             case 89:
-                                console.log('NEED TO IMPLEMENT PATH COLLECTION FOR QUERY');
+                                pathCollectionName = void 0;
 
-                            case 90:
+                                while (pathCollectionName = path.pop()) {
+                                    pathCollection = Tyr.byName[pathCollectionName];
+                                }
+
+                            case 91:
                                 if (queryRestrictionSet) {
-                                    _context.next = 92;
+                                    _context.next = 93;
                                     break;
                                 }
 
                                 throw new Error(errorMessageHeader + ', unable to set query restriction ' + ('to satisfy permissions relating to collection ' + _collectionName));
 
-                            case 92:
+                            case 93:
                                 _iteratorNormalCompletion4 = true;
                                 _context.next = 44;
                                 break;
 
-                            case 95:
-                                _context.next = 101;
+                            case 96:
+                                _context.next = 102;
                                 break;
 
-                            case 97:
-                                _context.prev = 97;
+                            case 98:
+                                _context.prev = 98;
                                 _context.t3 = _context['catch'](42);
                                 _didIteratorError4 = true;
                                 _iteratorError4 = _context.t3;
 
-                            case 101:
-                                _context.prev = 101;
+                            case 102:
                                 _context.prev = 102;
+                                _context.prev = 103;
 
                                 if (!_iteratorNormalCompletion4 && _iterator4.return) {
                                     _iterator4.return();
                                 }
 
-                            case 104:
-                                _context.prev = 104;
+                            case 105:
+                                _context.prev = 105;
 
                                 if (!_didIteratorError4) {
-                                    _context.next = 107;
+                                    _context.next = 108;
                                     break;
                                 }
 
                                 throw _iteratorError4;
 
-                            case 107:
-                                return _context.finish(104);
-
                             case 108:
-                                return _context.finish(101);
+                                return _context.finish(105);
 
                             case 109:
+                                return _context.finish(102);
+
+                            case 110:
                                 return _context.abrupt('return', {
                                     $and: [createInQueries(queryMaps['positive'], queriedCollection, '$in'), createInQueries(queryMaps['negative'], queriedCollection, '$nin')]
                                 });
 
-                            case 110:
+                            case 111:
                             case 'end':
                                 return _context.stop();
                         }
                     }
-                }, _callee, this, [[20, 24, 28, 36], [29,, 31, 35], [42, 97, 101, 109], [55, 72, 76, 84], [77,, 79, 83], [102,, 104, 108]]);
+                }, _callee, this, [[20, 24, 28, 36], [29,, 31, 35], [42, 98, 102, 110], [55, 72, 76, 84], [77,, 79, 83], [103,, 105, 109]]);
             }));
         }
     }], [{
@@ -569,11 +573,11 @@ var GraclPlugin = function () {
         value: function buildLinkGraph() {
             var g = {};
             _.each(Tyr.collections, function (col) {
-                var links = col.links({ relate: 'ownedBy', direction: 'outgoing' }),
-                    colName = col.name;
+                var links = col.links({ direction: 'outgoing' }),
+                    colName = col.def.name;
                 _.each(links, function (linkField) {
                     var edges = _.get(g, colName, new Set()),
-                        linkName = linkField.link.name;
+                        linkName = linkField.link.def.name;
                     edges.add(linkName);
                     _.set(g, linkName, _.get(g, linkName, new Set()));
                     _.set(g, colName, edges);
