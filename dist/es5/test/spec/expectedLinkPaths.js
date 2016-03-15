@@ -5,7 +5,8 @@ var linkPaths = {
         'organization': ['blog', 'organization']
     },
     'post': {
-        'blog': ['post', 'blog']
+        'blog': ['post', 'blog'],
+        'organization': ['post', 'blog', 'organization']
     },
     'team': {
         'organization': ['team', 'organization']

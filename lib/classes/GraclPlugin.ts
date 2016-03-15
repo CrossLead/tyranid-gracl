@@ -129,6 +129,10 @@ export class GraclPlugin {
   }
 
 
+  /**
+   *  Construct a path from collection a to collection b using
+      the pre-computed paths in GraclPlugin.outgoingLinkPaths
+   */
   getShortestPath(colA: Tyr.CollectionInstance, colB: Tyr.CollectionInstance) {
     let a = colA.def.name,
         b = colB.def.name,
@@ -280,6 +284,12 @@ export class GraclPlugin {
               permissionType: string,
               user = Tyr.local.user): Promise<boolean | {}> {
 
+    this.log(
+      `tyranid-gracl: restricting query for collection = ${queriedCollection.def.name} ` +
+      `permissionType = ${permissionType} ` +
+      `user = ${user}`
+    );
+
     if (!permissionType) {
       throw new Error(`No permissionType given to GraclPlugin.query()!`);
     }
@@ -290,7 +300,7 @@ export class GraclPlugin {
 
     // if no user, no restriction...
     if (!user) {
-      console.warn(`No user passed to GraclPlugin.query() (or found on Tyr.local) -- no restriction enforced!`);
+      this.log(`No user passed to GraclPlugin.query() (or found on Tyr.local) -- no restriction enforced!`);
       return false;
     }
 
@@ -316,7 +326,10 @@ export class GraclPlugin {
     });
 
     // no permissions found, return no restriction
-    if (!Array.isArray(permissions) || permissions.length === 0) return false;
+    if (!Array.isArray(permissions) || permissions.length === 0) {
+      this.log(`No permissions found, returning false!`);
+      return false;
+    }
 
     type resourceMapEntries = {
       permissions: Map<string, any>,
@@ -382,6 +395,34 @@ export class GraclPlugin {
       // otherwise, we need determine how to restricting a query of this object by
       // permissions concerning parents of this object...
       else {
+        /**
+          Example:
+
+          SETUP: want to query for all posts from database, have permissions
+            set for access to posts on posts, blogs, and organizations...
+
+          - for the permissions set on posts specifically, we can just add something like...
+
+            {
+              _id: { $in: [ <post-ids>... ] }
+            }
+
+          - for the blog permissions, since there is a "blogId" link property on posts,
+            we can just add...
+
+            {
+              _id: { $in: [ <postIds>... ] },
+              blogId: { $in: [ <blogIds>... ] }
+            }
+
+          - for the organizations, as there is no organiationId property on the posts,
+            we need to find a "path" between posts and organiations (using the pre-computed paths)
+
+              - take all organizationIds present on permissions
+              - find all blogs in all those organizations, store in $BLOGS
+              - add $BLOGS to query, not overriding permissions set above
+        */
+
         // get computed shortest path between the two collections
         const path = this.getShortestPath(queriedCollection, collection);
 
@@ -405,9 +446,7 @@ export class GraclPlugin {
           }
         }
 
-        let pathCollectionName: string,
-            resultCollection = _.first(path);
-
+        let pathCollectionName: string;
         while (pathCollectionName = path.pop()) {
           if (pathCollectionName === queriedCollection.def.name) break;
 
@@ -472,6 +511,8 @@ export class GraclPlugin {
             queryMaps['negative'].get(collectionName).add(id);
           }
         });
+
+        queryRestrictionSet = true;
       }
 
       if (!queryRestrictionSet) {

@@ -13,6 +13,11 @@ const linkPaths: { [k: string]: { [k: string]: string[] } } = {
     'blog': [
       'post',
       'blog'
+    ],
+    'organization': [
+      'post',
+      'blog',
+      'organization'
     ]
   },
   'team': {

@@ -238,62 +238,65 @@ var GraclPlugin = function () {
                     while (1) {
                         switch (_context3.prev = _context3.next) {
                             case 0:
+                                this.log('tyranid-gracl: restricting query for collection = ' + queriedCollection.def.name + ' ' + ('permissionType = ' + permissionType + ' ') + ('user = ' + user));
+
                                 if (permissionType) {
-                                    _context3.next = 2;
+                                    _context3.next = 3;
                                     break;
                                 }
 
                                 throw new Error('No permissionType given to GraclPlugin.query()!');
 
-                            case 2:
+                            case 3:
                                 if (this.graclHierarchy) {
-                                    _context3.next = 4;
+                                    _context3.next = 5;
                                     break;
                                 }
 
                                 throw new Error('Must call GraclPlugin.boot() before using GraclPlugin.query()!');
 
-                            case 4:
+                            case 5:
                                 if (user) {
-                                    _context3.next = 7;
+                                    _context3.next = 8;
                                     break;
                                 }
 
-                                console.warn('No user passed to GraclPlugin.query() (or found on Tyr.local) -- no restriction enforced!');
+                                this.log('No user passed to GraclPlugin.query() (or found on Tyr.local) -- no restriction enforced!');
                                 return _context3.abrupt('return', false);
 
-                            case 7:
+                            case 8:
                                 ResourceClass = this.graclHierarchy.getResource(queriedCollection.def.name), SubjectClass = this.graclHierarchy.getSubject(user.$model.def.name);
                                 subject = new SubjectClass(user);
                                 errorMessageHeader = 'Unable to construct query object for ' + queriedCollection.name + ' ' + ('from the perspective of ' + subject.toString());
-                                _context3.next = 12;
+                                _context3.next = 13;
                                 return subject.getHierarchyIds();
 
-                            case 12:
+                            case 13:
                                 subjectHierarchyIds = _context3.sent;
                                 resourceHierarchyClasses = ResourceClass.getHierarchyClassNames();
-                                _context3.next = 16;
+                                _context3.next = 17;
                                 return PermissionsModel_1.PermissionsModel.find({
                                     subjectId: { $in: subjectHierarchyIds },
                                     resourceType: { $in: resourceHierarchyClasses }
                                 });
 
-                            case 16:
+                            case 17:
                                 permissions = _context3.sent;
 
                                 if (!(!Array.isArray(permissions) || permissions.length === 0)) {
-                                    _context3.next = 19;
+                                    _context3.next = 21;
                                     break;
                                 }
 
+                                this.log('No permissions found, returning false!');
                                 return _context3.abrupt('return', false);
 
-                            case 19:
+                            case 21:
                                 resourceMap = new Map();
                                 _iteratorNormalCompletion3 = true;
                                 _didIteratorError3 = false;
                                 _iteratorError3 = undefined;
-                                _context3.prev = 23;
+                                _context3.prev = 25;
 
                                 for (_iterator3 = permissions[Symbol.iterator](); !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
                                     perm = _step3.value;
@@ -307,40 +310,40 @@ var GraclPlugin = function () {
                                     }
                                     resourceMap.get(resourceCollectionName).permissions.set(resourceId, perm);
                                 }
-                                _context3.next = 31;
+                                _context3.next = 33;
                                 break;
 
-                            case 27:
-                                _context3.prev = 27;
-                                _context3.t0 = _context3['catch'](23);
+                            case 29:
+                                _context3.prev = 29;
+                                _context3.t0 = _context3['catch'](25);
                                 _didIteratorError3 = true;
                                 _iteratorError3 = _context3.t0;
 
-                            case 31:
-                                _context3.prev = 31;
-                                _context3.prev = 32;
+                            case 33:
+                                _context3.prev = 33;
+                                _context3.prev = 34;
 
                                 if (!_iteratorNormalCompletion3 && _iterator3.return) {
                                     _iterator3.return();
                                 }
 
-                            case 34:
-                                _context3.prev = 34;
+                            case 36:
+                                _context3.prev = 36;
 
                                 if (!_didIteratorError3) {
-                                    _context3.next = 37;
+                                    _context3.next = 39;
                                     break;
                                 }
 
                                 throw _iteratorError3;
 
-                            case 37:
-                                return _context3.finish(34);
-
-                            case 38:
-                                return _context3.finish(31);
-
                             case 39:
+                                return _context3.finish(36);
+
+                            case 40:
+                                return _context3.finish(33);
+
+                            case 41:
                                 queriedCollectionLinkFields = new Map();
 
                                 queriedCollection.links({ direction: 'outgoing' }).forEach(function (field) {
@@ -353,9 +356,9 @@ var GraclPlugin = function () {
                                 _iteratorNormalCompletion4 = true;
                                 _didIteratorError4 = false;
                                 _iteratorError4 = undefined;
-                                _context3.prev = 45;
+                                _context3.prev = 47;
                                 _loop = regeneratorRuntime.mark(function _loop() {
-                                    var _step4$value, collectionName, _step4$value$, collection, permissions, queryRestrictionSet, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, permission, access, key, path, positiveIds, negativeIds, _iteratorNormalCompletion6, _didIteratorError6, _iteratorError6, _iterator6, _step6, _permission, _access, pathCollectionName, resultCollection, _loop2, _ret3;
+                                    var _step4$value, collectionName, _step4$value$, collection, permissions, queryRestrictionSet, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, permission, access, key, path, positiveIds, negativeIds, _iteratorNormalCompletion6, _didIteratorError6, _iteratorError6, _iterator6, _step6, _permission, _access, pathCollectionName, _loop2, _ret3;
 
                                     return regeneratorRuntime.wrap(function _loop$(_context2) {
                                         while (1) {
@@ -443,7 +446,7 @@ var GraclPlugin = function () {
                                                     return _context2.finish(32);
 
                                                 case 40:
-                                                    _context2.next = 89;
+                                                    _context2.next = 90;
                                                     break;
 
                                                 case 42:
@@ -524,7 +527,7 @@ var GraclPlugin = function () {
                                                     return _context2.finish(70);
 
                                                 case 78:
-                                                    pathCollectionName = void 0, resultCollection = _.first(path);
+                                                    pathCollectionName = void 0;
                                                     _loop2 = regeneratorRuntime.mark(function _loop2() {
                                                         var pathCollection, nextCollection, collectionIdField, pathCollectionLinks, nextCollectionField, nextCollectionFieldName;
                                                         return regeneratorRuntime.wrap(function _loop2$(_context) {
@@ -615,16 +618,17 @@ var GraclPlugin = function () {
                                                             queryMaps['negative'].get(collectionName).add(id);
                                                         }
                                                     });
+                                                    queryRestrictionSet = true;
 
-                                                case 89:
+                                                case 90:
                                                     if (queryRestrictionSet) {
-                                                        _context2.next = 91;
+                                                        _context2.next = 92;
                                                         break;
                                                     }
 
                                                     throw new Error(errorMessageHeader + ', unable to set query restriction ' + ('to satisfy permissions relating to collection ' + collectionName));
 
-                                                case 91:
+                                                case 92:
                                                 case 'end':
                                                     return _context2.stop();
                                             }
@@ -633,64 +637,64 @@ var GraclPlugin = function () {
                                 });
                                 _iterator4 = resourceMap[Symbol.iterator]();
 
-                            case 48:
+                            case 50:
                                 if (_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done) {
-                                    _context3.next = 53;
+                                    _context3.next = 55;
                                     break;
                                 }
 
-                                return _context3.delegateYield(_loop(), 't1', 50);
+                                return _context3.delegateYield(_loop(), 't1', 52);
 
-                            case 50:
+                            case 52:
                                 _iteratorNormalCompletion4 = true;
-                                _context3.next = 48;
-                                break;
-
-                            case 53:
-                                _context3.next = 59;
+                                _context3.next = 50;
                                 break;
 
                             case 55:
-                                _context3.prev = 55;
-                                _context3.t2 = _context3['catch'](45);
+                                _context3.next = 61;
+                                break;
+
+                            case 57:
+                                _context3.prev = 57;
+                                _context3.t2 = _context3['catch'](47);
                                 _didIteratorError4 = true;
                                 _iteratorError4 = _context3.t2;
 
-                            case 59:
-                                _context3.prev = 59;
-                                _context3.prev = 60;
+                            case 61:
+                                _context3.prev = 61;
+                                _context3.prev = 62;
 
                                 if (!_iteratorNormalCompletion4 && _iterator4.return) {
                                     _iterator4.return();
                                 }
 
-                            case 62:
-                                _context3.prev = 62;
+                            case 64:
+                                _context3.prev = 64;
 
                                 if (!_didIteratorError4) {
-                                    _context3.next = 65;
+                                    _context3.next = 67;
                                     break;
                                 }
 
                                 throw _iteratorError4;
 
-                            case 65:
-                                return _context3.finish(62);
-
-                            case 66:
-                                return _context3.finish(59);
-
                             case 67:
+                                return _context3.finish(64);
+
+                            case 68:
+                                return _context3.finish(61);
+
+                            case 69:
                                 return _context3.abrupt('return', {
                                     $and: [createInQueries(queryMaps['positive'], queriedCollection, '$in'), createInQueries(queryMaps['negative'], queriedCollection, '$nin')]
                                 });
 
-                            case 68:
+                            case 70:
                             case 'end':
                                 return _context3.stop();
                         }
                     }
-                }, _callee, this, [[23, 27, 31, 39], [32,, 34, 38], [45, 55, 59, 67], [60,, 62, 66]]);
+                }, _callee, this, [[25, 29, 33, 41], [34,, 36, 40], [47, 57, 61, 69], [62,, 64, 68]]);
             }));
         }
     }], [{
