@@ -234,12 +234,12 @@ var GraclPlugin = function () {
 
                 var ResourceClass, SubjectClass, subject, errorMessageHeader, subjectHierarchyIds, resourceHierarchyClasses, permissions, resourceMap, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, perm, resourceCollectionName, resourceId, queriedCollectionLinkFields, queryMaps, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _loop, _iterator4, _step4;
 
-                return regeneratorRuntime.wrap(function _callee$(_context2) {
+                return regeneratorRuntime.wrap(function _callee$(_context3) {
                     while (1) {
-                        switch (_context2.prev = _context2.next) {
+                        switch (_context3.prev = _context3.next) {
                             case 0:
                                 if (permissionType) {
-                                    _context2.next = 2;
+                                    _context3.next = 2;
                                     break;
                                 }
 
@@ -247,7 +247,7 @@ var GraclPlugin = function () {
 
                             case 2:
                                 if (this.graclHierarchy) {
-                                    _context2.next = 4;
+                                    _context3.next = 4;
                                     break;
                                 }
 
@@ -255,45 +255,45 @@ var GraclPlugin = function () {
 
                             case 4:
                                 if (user) {
-                                    _context2.next = 7;
+                                    _context3.next = 7;
                                     break;
                                 }
 
                                 console.warn('No user passed to GraclPlugin.query() (or found on Tyr.local) -- no restriction enforced!');
-                                return _context2.abrupt('return', false);
+                                return _context3.abrupt('return', false);
 
                             case 7:
                                 ResourceClass = this.graclHierarchy.getResource(queriedCollection.def.name), SubjectClass = this.graclHierarchy.getSubject(user.$model.def.name);
                                 subject = new SubjectClass(user);
                                 errorMessageHeader = 'Unable to construct query object for ' + queriedCollection.name + ' ' + ('from the perspective of ' + subject.toString());
-                                _context2.next = 12;
+                                _context3.next = 12;
                                 return subject.getHierarchyIds();
 
                             case 12:
-                                subjectHierarchyIds = _context2.sent;
+                                subjectHierarchyIds = _context3.sent;
                                 resourceHierarchyClasses = ResourceClass.getHierarchyClassNames();
-                                _context2.next = 16;
+                                _context3.next = 16;
                                 return PermissionsModel_1.PermissionsModel.find({
                                     subjectId: { $in: subjectHierarchyIds },
                                     resourceType: { $in: resourceHierarchyClasses }
                                 });
 
                             case 16:
-                                permissions = _context2.sent;
+                                permissions = _context3.sent;
 
                                 if (!(!Array.isArray(permissions) || permissions.length === 0)) {
-                                    _context2.next = 19;
+                                    _context3.next = 19;
                                     break;
                                 }
 
-                                return _context2.abrupt('return', false);
+                                return _context3.abrupt('return', false);
 
                             case 19:
                                 resourceMap = new Map();
                                 _iteratorNormalCompletion3 = true;
                                 _didIteratorError3 = false;
                                 _iteratorError3 = undefined;
-                                _context2.prev = 23;
+                                _context3.prev = 23;
 
                                 for (_iterator3 = permissions[Symbol.iterator](); !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
                                     perm = _step3.value;
@@ -307,38 +307,38 @@ var GraclPlugin = function () {
                                     }
                                     resourceMap.get(resourceCollectionName).permissions.set(resourceId, perm);
                                 }
-                                _context2.next = 31;
+                                _context3.next = 31;
                                 break;
 
                             case 27:
-                                _context2.prev = 27;
-                                _context2.t0 = _context2['catch'](23);
+                                _context3.prev = 27;
+                                _context3.t0 = _context3['catch'](23);
                                 _didIteratorError3 = true;
-                                _iteratorError3 = _context2.t0;
+                                _iteratorError3 = _context3.t0;
 
                             case 31:
-                                _context2.prev = 31;
-                                _context2.prev = 32;
+                                _context3.prev = 31;
+                                _context3.prev = 32;
 
                                 if (!_iteratorNormalCompletion3 && _iterator3.return) {
                                     _iterator3.return();
                                 }
 
                             case 34:
-                                _context2.prev = 34;
+                                _context3.prev = 34;
 
                                 if (!_didIteratorError3) {
-                                    _context2.next = 37;
+                                    _context3.next = 37;
                                     break;
                                 }
 
                                 throw _iteratorError3;
 
                             case 37:
-                                return _context2.finish(34);
+                                return _context3.finish(34);
 
                             case 38:
-                                return _context2.finish(31);
+                                return _context3.finish(31);
 
                             case 39:
                                 queriedCollectionLinkFields = new Map();
@@ -353,13 +353,13 @@ var GraclPlugin = function () {
                                 _iteratorNormalCompletion4 = true;
                                 _didIteratorError4 = false;
                                 _iteratorError4 = undefined;
-                                _context2.prev = 45;
+                                _context3.prev = 45;
                                 _loop = regeneratorRuntime.mark(function _loop() {
-                                    var _step4$value, collectionName, _step4$value$, collection, permissions, queryRestrictionSet, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, permission, access, key, path, positiveIds, negativeIds, _iteratorNormalCompletion6, _didIteratorError6, _iteratorError6, _iterator6, _step6, _permission, _access, pathCollectionName, resultCollection, pathCollection, collectionIdField;
+                                    var _step4$value, collectionName, _step4$value$, collection, permissions, queryRestrictionSet, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, permission, access, key, path, positiveIds, negativeIds, _iteratorNormalCompletion6, _didIteratorError6, _iteratorError6, _iterator6, _step6, _permission, _access, pathCollectionName, resultCollection, _loop2, _ret3;
 
-                                    return regeneratorRuntime.wrap(function _loop$(_context) {
+                                    return regeneratorRuntime.wrap(function _loop$(_context2) {
                                         while (1) {
-                                            switch (_context.prev = _context.next) {
+                                            switch (_context2.prev = _context2.next) {
                                                 case 0:
                                                     _step4$value = _slicedToArray(_step4.value, 2);
                                                     collectionName = _step4$value[0];
@@ -369,26 +369,26 @@ var GraclPlugin = function () {
                                                     queryRestrictionSet = false;
 
                                                     if (!queriedCollectionLinkFields.has(collectionName)) {
-                                                        _context.next = 42;
+                                                        _context2.next = 42;
                                                         break;
                                                     }
 
                                                     _iteratorNormalCompletion5 = true;
                                                     _didIteratorError5 = false;
                                                     _iteratorError5 = undefined;
-                                                    _context.prev = 10;
+                                                    _context2.prev = 10;
                                                     _iterator5 = permissions.values()[Symbol.iterator]();
 
                                                 case 12:
                                                     if (_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done) {
-                                                        _context.next = 26;
+                                                        _context2.next = 26;
                                                         break;
                                                     }
 
                                                     permission = _step5.value;
                                                     access = permission.access[permissionType];
-                                                    _context.t0 = access;
-                                                    _context.next = _context.t0 === true ? 18 : _context.t0 === false ? 18 : 22;
+                                                    _context2.t0 = access;
+                                                    _context2.next = _context2.t0 === true ? 18 : _context2.t0 === false ? 18 : 22;
                                                     break;
 
                                                 case 18:
@@ -398,59 +398,59 @@ var GraclPlugin = function () {
                                                         queryMaps[key].set(collectionName, new Set());
                                                     }
                                                     queryMaps[key].get(collectionName).add(permission.resourceId);
-                                                    return _context.abrupt('break', 22);
+                                                    return _context2.abrupt('break', 22);
 
                                                 case 22:
                                                     queryRestrictionSet = true;
 
                                                 case 23:
                                                     _iteratorNormalCompletion5 = true;
-                                                    _context.next = 12;
+                                                    _context2.next = 12;
                                                     break;
 
                                                 case 26:
-                                                    _context.next = 32;
+                                                    _context2.next = 32;
                                                     break;
 
                                                 case 28:
-                                                    _context.prev = 28;
-                                                    _context.t1 = _context['catch'](10);
+                                                    _context2.prev = 28;
+                                                    _context2.t1 = _context2['catch'](10);
                                                     _didIteratorError5 = true;
-                                                    _iteratorError5 = _context.t1;
+                                                    _iteratorError5 = _context2.t1;
 
                                                 case 32:
-                                                    _context.prev = 32;
-                                                    _context.prev = 33;
+                                                    _context2.prev = 32;
+                                                    _context2.prev = 33;
 
                                                     if (!_iteratorNormalCompletion5 && _iterator5.return) {
                                                         _iterator5.return();
                                                     }
 
                                                 case 35:
-                                                    _context.prev = 35;
+                                                    _context2.prev = 35;
 
                                                     if (!_didIteratorError5) {
-                                                        _context.next = 38;
+                                                        _context2.next = 38;
                                                         break;
                                                     }
 
                                                     throw _iteratorError5;
 
                                                 case 38:
-                                                    return _context.finish(35);
+                                                    return _context2.finish(35);
 
                                                 case 39:
-                                                    return _context.finish(32);
+                                                    return _context2.finish(32);
 
                                                 case 40:
-                                                    _context.next = 101;
+                                                    _context2.next = 89;
                                                     break;
 
                                                 case 42:
                                                     path = _this2.getShortestPath(queriedCollection, collection);
 
                                                     if (path.length) {
-                                                        _context.next = 45;
+                                                        _context2.next = 45;
                                                         break;
                                                     }
 
@@ -461,115 +461,144 @@ var GraclPlugin = function () {
                                                     _iteratorNormalCompletion6 = true;
                                                     _didIteratorError6 = false;
                                                     _iteratorError6 = undefined;
-                                                    _context.prev = 49;
+                                                    _context2.prev = 49;
                                                     _iterator6 = permissions.values()[Symbol.iterator]();
 
                                                 case 51:
                                                     if (_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done) {
-                                                        _context.next = 64;
+                                                        _context2.next = 64;
                                                         break;
                                                     }
 
                                                     _permission = _step6.value;
                                                     _access = _permission.access[permissionType];
-                                                    _context.t2 = _access;
-                                                    _context.next = _context.t2 === true ? 57 : _context.t2 === false ? 59 : 61;
+                                                    _context2.t2 = _access;
+                                                    _context2.next = _context2.t2 === true ? 57 : _context2.t2 === false ? 59 : 61;
                                                     break;
 
                                                 case 57:
                                                     positiveIds.push(_permission.resourceId);
-                                                    return _context.abrupt('break', 61);
+                                                    return _context2.abrupt('break', 61);
 
                                                 case 59:
                                                     negativeIds.push(_permission.resourceId);
-                                                    return _context.abrupt('break', 61);
+                                                    return _context2.abrupt('break', 61);
 
                                                 case 61:
                                                     _iteratorNormalCompletion6 = true;
-                                                    _context.next = 51;
+                                                    _context2.next = 51;
                                                     break;
 
                                                 case 64:
-                                                    _context.next = 70;
+                                                    _context2.next = 70;
                                                     break;
 
                                                 case 66:
-                                                    _context.prev = 66;
-                                                    _context.t3 = _context['catch'](49);
+                                                    _context2.prev = 66;
+                                                    _context2.t3 = _context2['catch'](49);
                                                     _didIteratorError6 = true;
-                                                    _iteratorError6 = _context.t3;
+                                                    _iteratorError6 = _context2.t3;
 
                                                 case 70:
-                                                    _context.prev = 70;
-                                                    _context.prev = 71;
+                                                    _context2.prev = 70;
+                                                    _context2.prev = 71;
 
                                                     if (!_iteratorNormalCompletion6 && _iterator6.return) {
                                                         _iterator6.return();
                                                     }
 
                                                 case 73:
-                                                    _context.prev = 73;
+                                                    _context2.prev = 73;
 
                                                     if (!_didIteratorError6) {
-                                                        _context.next = 76;
+                                                        _context2.next = 76;
                                                         break;
                                                     }
 
                                                     throw _iteratorError6;
 
                                                 case 76:
-                                                    return _context.finish(73);
+                                                    return _context2.finish(73);
 
                                                 case 77:
-                                                    return _context.finish(70);
+                                                    return _context2.finish(70);
 
                                                 case 78:
                                                     pathCollectionName = void 0, resultCollection = _.first(path);
+                                                    _loop2 = regeneratorRuntime.mark(function _loop2() {
+                                                        var pathCollection, nextCollection, collectionIdField, pathCollectionLinks, nextCollectionField, nextCollectionFieldName;
+                                                        return regeneratorRuntime.wrap(function _loop2$(_context) {
+                                                            while (1) {
+                                                                switch (_context.prev = _context.next) {
+                                                                    case 0:
+                                                                        if (!(pathCollectionName === queriedCollection.def.name)) {
+                                                                            _context.next = 2;
+                                                                            break;
+                                                                        }
 
-                                                case 79:
+                                                                        return _context.abrupt('return', 'break');
+
+                                                                    case 2:
+                                                                        pathCollection = Tyr.byName[pathCollectionName], nextCollection = Tyr.byName[_.last(path)], collectionIdField = pathCollection.def.primaryKey.field, pathCollectionLinks = pathCollection.links({ direction: 'outgoing' });
+                                                                        nextCollectionField = _.find(pathCollectionLinks, function (link) {
+                                                                            return link.collection.def.name === nextCollection.def.name;
+                                                                        });
+                                                                        nextCollectionFieldName = nextCollectionField.name === nextCollectionField.path ? nextCollectionField.name : nextCollectionField.path.split('.')[0];
+                                                                        _context.t0 = _;
+                                                                        _context.next = 8;
+                                                                        return pathCollection.byIds(positiveIds);
+
+                                                                    case 8:
+                                                                        _context.t1 = _context.sent;
+                                                                        _context.t2 = nextCollectionFieldName;
+                                                                        positiveIds = _context.t0.chain.call(_context.t0, _context.t1).map(_context.t2).flatten().value();
+                                                                        _context.t3 = _;
+                                                                        _context.next = 14;
+                                                                        return pathCollection.byIds(negativeIds);
+
+                                                                    case 14:
+                                                                        _context.t4 = _context.sent;
+                                                                        _context.t5 = nextCollectionFieldName;
+                                                                        negativeIds = _context.t3.chain.call(_context.t3, _context.t4).map(_context.t5).flatten().value();
+
+                                                                        if (pathCollection) {
+                                                                            _context.next = 19;
+                                                                            break;
+                                                                        }
+
+                                                                        throw new Error(errorMessageHeader + ', invalid collection name given in path! collection: ' + pathCollectionName);
+
+                                                                    case 19:
+                                                                    case 'end':
+                                                                        return _context.stop();
+                                                                }
+                                                            }
+                                                        }, _loop2, _this2);
+                                                    });
+
+                                                case 80:
                                                     if (!(pathCollectionName = path.pop())) {
-                                                        _context.next = 99;
+                                                        _context2.next = 87;
                                                         break;
                                                     }
 
-                                                    if (!(pathCollectionName === queriedCollection.def.name)) {
-                                                        _context.next = 82;
-                                                        break;
-                                                    }
-
-                                                    return _context.abrupt('break', 99);
+                                                    return _context2.delegateYield(_loop2(), 't4', 82);
 
                                                 case 82:
-                                                    pathCollection = Tyr.byName[pathCollectionName], collectionIdField = pathCollection.def.primaryKey.field;
-                                                    _context.t4 = _;
-                                                    _context.next = 86;
-                                                    return pathCollection.byIds(positiveIds);
+                                                    _ret3 = _context2.t4;
 
-                                                case 86:
-                                                    _context.t5 = _context.sent;
-                                                    _context.t6 = collectionIdField;
-                                                    positiveIds = _context.t4.map.call(_context.t4, _context.t5, _context.t6);
-                                                    _context.t7 = _;
-                                                    _context.next = 92;
-                                                    return pathCollection.byIds(negativeIds);
-
-                                                case 92:
-                                                    _context.t8 = _context.sent;
-                                                    _context.t9 = collectionIdField;
-                                                    negativeIds = _context.t7.map.call(_context.t7, _context.t8, _context.t9);
-
-                                                    if (pathCollection) {
-                                                        _context.next = 97;
+                                                    if (!(_ret3 === 'break')) {
+                                                        _context2.next = 85;
                                                         break;
                                                     }
 
-                                                    throw new Error(errorMessageHeader + ', invalid collection name given in path! collection: ' + pathCollectionName);
+                                                    return _context2.abrupt('break', 87);
 
-                                                case 97:
-                                                    _context.next = 79;
+                                                case 85:
+                                                    _context2.next = 80;
                                                     break;
 
-                                                case 99:
+                                                case 87:
                                                     _.each(positiveIds, function (id) {
                                                         if (!queryMaps['positive'].has(collectionName)) {
                                                             queryMaps['positive'].set(collectionName, new Set());
@@ -589,17 +618,17 @@ var GraclPlugin = function () {
                                                         queryMaps['negative'].get(collectionName).add(id);
                                                     });
 
-                                                case 101:
+                                                case 89:
                                                     if (queryRestrictionSet) {
-                                                        _context.next = 103;
+                                                        _context2.next = 91;
                                                         break;
                                                     }
 
                                                     throw new Error(errorMessageHeader + ', unable to set query restriction ' + ('to satisfy permissions relating to collection ' + collectionName));
 
-                                                case 103:
+                                                case 91:
                                                 case 'end':
-                                                    return _context.stop();
+                                                    return _context2.stop();
                                             }
                                         }
                                     }, _loop, _this2, [[10, 28, 32, 40], [33,, 35, 39], [49, 66, 70, 78], [71,, 73, 77]]);
@@ -608,59 +637,59 @@ var GraclPlugin = function () {
 
                             case 48:
                                 if (_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done) {
-                                    _context2.next = 53;
+                                    _context3.next = 53;
                                     break;
                                 }
 
-                                return _context2.delegateYield(_loop(), 't1', 50);
+                                return _context3.delegateYield(_loop(), 't1', 50);
 
                             case 50:
                                 _iteratorNormalCompletion4 = true;
-                                _context2.next = 48;
+                                _context3.next = 48;
                                 break;
 
                             case 53:
-                                _context2.next = 59;
+                                _context3.next = 59;
                                 break;
 
                             case 55:
-                                _context2.prev = 55;
-                                _context2.t2 = _context2['catch'](45);
+                                _context3.prev = 55;
+                                _context3.t2 = _context3['catch'](45);
                                 _didIteratorError4 = true;
-                                _iteratorError4 = _context2.t2;
+                                _iteratorError4 = _context3.t2;
 
                             case 59:
-                                _context2.prev = 59;
-                                _context2.prev = 60;
+                                _context3.prev = 59;
+                                _context3.prev = 60;
 
                                 if (!_iteratorNormalCompletion4 && _iterator4.return) {
                                     _iterator4.return();
                                 }
 
                             case 62:
-                                _context2.prev = 62;
+                                _context3.prev = 62;
 
                                 if (!_didIteratorError4) {
-                                    _context2.next = 65;
+                                    _context3.next = 65;
                                     break;
                                 }
 
                                 throw _iteratorError4;
 
                             case 65:
-                                return _context2.finish(62);
+                                return _context3.finish(62);
 
                             case 66:
-                                return _context2.finish(59);
+                                return _context3.finish(59);
 
                             case 67:
-                                return _context2.abrupt('return', {
+                                return _context3.abrupt('return', {
                                     $and: [createInQueries(queryMaps['positive'], queriedCollection, '$in'), createInQueries(queryMaps['negative'], queriedCollection, '$nin')]
                                 });
 
                             case 68:
                             case 'end':
-                                return _context2.stop();
+                                return _context3.stop();
                         }
                     }
                 }, _callee, this, [[23, 27, 31, 39], [32,, 34, 38], [45, 55, 59, 67], [60,, 62, 66]]);
@@ -672,25 +701,25 @@ var GraclPlugin = function () {
             return {
                 getEntity: function getEntity(id) {
                     return __awaiter(this, void 0, Promise, regeneratorRuntime.mark(function _callee2() {
-                        return regeneratorRuntime.wrap(function _callee2$(_context3) {
+                        return regeneratorRuntime.wrap(function _callee2$(_context4) {
                             while (1) {
-                                switch (_context3.prev = _context3.next) {
+                                switch (_context4.prev = _context4.next) {
                                     case 0:
-                                        _context3.t0 = collection;
-                                        _context3.next = 3;
+                                        _context4.t0 = collection;
+                                        _context4.next = 3;
                                         return collection.byId(id);
 
                                     case 3:
-                                        _context3.t1 = _context3.sent;
-                                        _context3.next = 6;
-                                        return _context3.t0.populate.call(_context3.t0, 'permissions', _context3.t1);
+                                        _context4.t1 = _context4.sent;
+                                        _context4.next = 6;
+                                        return _context4.t0.populate.call(_context4.t0, 'permissions', _context4.t1);
 
                                     case 6:
-                                        return _context3.abrupt('return', _context3.sent);
+                                        return _context4.abrupt('return', _context4.sent);
 
                                     case 7:
                                     case 'end':
-                                        return _context3.stop();
+                                        return _context4.stop();
                                 }
                             }
                         }, _callee2, this);
@@ -698,23 +727,23 @@ var GraclPlugin = function () {
                 },
                 saveEntity: function saveEntity(id, doc) {
                     return __awaiter(this, void 0, Promise, regeneratorRuntime.mark(function _callee3() {
-                        return regeneratorRuntime.wrap(function _callee3$(_context4) {
+                        return regeneratorRuntime.wrap(function _callee3$(_context5) {
                             while (1) {
-                                switch (_context4.prev = _context4.next) {
+                                switch (_context5.prev = _context5.next) {
                                     case 0:
-                                        _context4.next = 2;
+                                        _context5.next = 2;
                                         return PermissionsModel_1.PermissionsModel.updatePermissions(doc, 'subject');
 
                                     case 2:
-                                        _context4.next = 4;
+                                        _context5.next = 4;
                                         return doc.$save();
 
                                     case 4:
-                                        return _context4.abrupt('return', _context4.sent);
+                                        return _context5.abrupt('return', _context5.sent);
 
                                     case 5:
                                     case 'end':
-                                        return _context4.stop();
+                                        return _context5.stop();
                                 }
                             }
                         }, _callee3, this);

@@ -409,15 +409,36 @@ export class GraclPlugin {
             resultCollection = _.first(path);
 
         while (pathCollectionName = path.pop()) {
-          if (pathCollectionName === queriedCollection.def.name) {
-            break;
-          }
+          if (pathCollectionName === queriedCollection.def.name) break;
 
           const pathCollection = Tyr.byName[pathCollectionName],
-                collectionIdField = pathCollection.def.primaryKey.field;
+                nextCollection = Tyr.byName[_.last(path)],
+                collectionIdField = pathCollection.def.primaryKey.field,
+                pathCollectionLinks = pathCollection.links({ direction: 'outgoing' });
 
-          positiveIds = <string[]> _.map(await pathCollection.byIds(positiveIds), collectionIdField);
-          negativeIds = <string[]> _.map(await pathCollection.byIds(negativeIds), collectionIdField);
+          // find the field in the current path collection which we need to get
+          // for the ids of the next path collection
+          const nextCollectionField = _.find(pathCollectionLinks, link => {
+            return link.collection.def.name === nextCollection.def.name;
+          });
+
+          const nextCollectionFieldName = nextCollectionField.name === nextCollectionField.path
+            ? nextCollectionField.name
+            : nextCollectionField.path.split('.')[0];
+
+          /**
+           * we need to recursively collect objects along the path,
+             until we reach a collection that linked to the queriedCollection
+           */
+          positiveIds = <string[]> _.chain(await pathCollection.byIds(positiveIds))
+            .map(nextCollectionFieldName)
+            .flatten()
+            .value();
+
+          negativeIds = <string[]> _.chain(await pathCollection.byIds(negativeIds))
+            .map(nextCollectionFieldName)
+            .flatten()
+            .value();
 
           if (!pathCollection) {
             throw new Error(
