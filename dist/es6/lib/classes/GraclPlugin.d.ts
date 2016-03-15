@@ -4,14 +4,7 @@ import * as gracl from 'gracl';
 export declare type Hash<T> = {
     [key: string]: T;
 };
-export declare type TyrSchemaGraphObjects = {
-    links: Tyr.Field[];
-    parents: Tyr.CollectionInstance[];
-};
-export declare type LinkGraph = {
-    [collectionName: string]: Set<string>;
-};
-export declare function createInQueries(map: Map<string, string[]>, queriedCollection: Tyr.CollectionInstance, key: string): {};
+export declare function createInQueries(map: Map<string, Set<string>>, queriedCollection: Tyr.CollectionInstance, key: string): {};
 export declare class GraclPlugin {
     verbose: boolean;
     static makeRepository(collection: Tyr.CollectionInstance): gracl.Repository;

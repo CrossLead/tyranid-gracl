@@ -10,17 +10,9 @@ export type Hash<T> = {
   [key: string]: T;
 };
 
-export type TyrSchemaGraphObjects = {
-  links: Tyr.Field[];
-  parents: Tyr.CollectionInstance[];
-};
-
-export type LinkGraph = {
-  [collectionName: string]: Set<string>
-}
 
 export function createInQueries(
-                  map: Map<string, string[]>,
+                  map: Map<string, Set<string>>,
                   queriedCollection: Tyr.CollectionInstance,
                   key: string
                 ) {
@@ -30,7 +22,7 @@ export function createInQueries(
       if (col === queriedCollection.def.name) {
         col = queriedCollection.def.primaryKey.field;
       }
-      out[col] = { [key]: uids.map((u: string) => Tyr.parseUid(u).id) };
+      out[col] = { [key]: [...uids].map((u: string) => Tyr.parseUid(u).id) };
       return out;
     }, {});
 };
@@ -65,11 +57,12 @@ export class GraclPlugin {
       using Floyd–Warshall Algorithm with path reconstruction
    */
   static buildLinkGraph(): Hash<Hash<string>> {
-    const g: LinkGraph = {};
+    const g: Hash<Set<string>> = {};
 
     _.each(Tyr.collections, col => {
       const links = col.links({ direction: 'outgoing' }),
             colName = col.def.name;
+
       _.each(links, linkField => {
         const edges = _.get(g, colName, new Set()),
               linkName = linkField.link.def.name;
@@ -163,6 +156,12 @@ export class GraclPlugin {
   boot(stage: Tyr.BootStage) {
     if (stage === 'post-link') {
       this.log(`starting boot.`);
+
+      // type alias for convienience
+      type TyrSchemaGraphObjects = {
+        links: Tyr.Field[];
+        parents: Tyr.CollectionInstance[];
+      };
 
       const collections = Tyr.collections,
             nodeSet = new Set<string>();
@@ -281,12 +280,19 @@ export class GraclPlugin {
               permissionType: string,
               user = Tyr.local.user): Promise<boolean | {}> {
 
+    if (!permissionType) {
+      throw new Error(`No permissionType given to GraclPlugin.query()!`);
+    }
+
     if (!this.graclHierarchy) {
-      throw new Error(`Must call this.boot() before using this.query()!`);
+      throw new Error(`Must call GraclPlugin.boot() before using GraclPlugin.query()!`);
     }
 
     // if no user, no restriction...
-    if (!user) return false;
+    if (!user) {
+      console.warn(`No user passed to GraclPlugin.query() (or found on Tyr.local) -- no restriction enforced!`);
+      return false;
+    }
 
     // extract subject and resource Gracl classes
     const ResourceClass = this.graclHierarchy.getResource(queriedCollection.def.name),
@@ -309,7 +315,8 @@ export class GraclPlugin {
       resourceType: { $in: resourceHierarchyClasses }
     });
 
-    if (!Array.isArray(permissions)) return false;
+    // no permissions found, return no restriction
+    if (!Array.isArray(permissions) || permissions.length === 0) return false;
 
     type resourceMapEntries = {
       permissions: Map<string, any>,
@@ -324,7 +331,7 @@ export class GraclPlugin {
       if (!resourceMap.has(resourceCollectionName)) {
         resourceMap.set(resourceCollectionName, {
           collection: Tyr.byName[resourceCollectionName],
-          permissions: new Map
+          permissions: new Map()
         });
       }
 
@@ -345,9 +352,9 @@ export class GraclPlugin {
         queriedCollectionLinkFields.set(field.def.link, field);
       });
 
-    const queryMaps: Hash<Map<string, string[]>> = {
-      positive: new Map<string, string[]>(),
-      negative: new Map<string, string[]>()
+    const queryMaps: Hash<Map<string, Set<string>>> = {
+      positive: new Map<string, Set<string>>(),
+      negative: new Map<string, Set<string>>()
     };
 
     // extract all collections that have a relevant permission set for the requested resource
@@ -356,6 +363,7 @@ export class GraclPlugin {
       // check to see if the collection we are querying has a field linked to <collectionName>
       if (queriedCollectionLinkFields.has(collectionName)) {
         for (const permission of permissions.values()) {
+          // grab access boolean for given permissionType
           const access = permission.access[permissionType];
           switch (access) {
             // access needs to be exactly true or false
@@ -363,10 +371,9 @@ export class GraclPlugin {
             case false:
               const key = (access ? 'positive' : 'negative');
               if (!queryMaps[key].has(collectionName)) {
-                queryMaps[key].set(collectionName, [ permission.resourceId ]);
-              } else {
-                queryMaps[key].get(collectionName).push(permission.resourceId);
+                queryMaps[key].set(collectionName, new Set());
               }
+              queryMaps[key].get(collectionName).add(permission.resourceId);
               break;
           }
           queryRestrictionSet = true;
@@ -377,6 +384,7 @@ export class GraclPlugin {
       else {
         // get computed shortest path between the two collections
         const path = this.getShortestPath(queriedCollection, collection);
+
         if (!path.length) {
           throw new Error(
             `${errorMessageHeader}, as there is no path between ` +
@@ -384,13 +392,71 @@ export class GraclPlugin {
           );
         }
 
-        let pathCollectionName: string;
-        while (pathCollectionName = path.pop()) {
-          const pathCollection = Tyr.byName[pathCollectionName];
+        let positiveIds: string[] = [],
+            negativeIds: string[] = [];
+
+        for (const permission of permissions.values()) {
+          // grab access boolean for given permissionType
+          const access = permission.access[permissionType];
+          switch (access) {
+            // access needs to be exactly true or false
+            case true:  positiveIds.push(permission.resourceId); break;
+            case false: negativeIds.push(permission.resourceId); break;
+          }
         }
 
+        let pathCollectionName: string,
+            resultCollection = _.first(path);
 
+        while (pathCollectionName = path.pop()) {
+          if (pathCollectionName === queriedCollection.def.name) {
+            break;
+          }
+
+          const pathCollection = Tyr.byName[pathCollectionName],
+                collectionIdField = pathCollection.def.primaryKey.field;
+
+          positiveIds = <string[]> _.map(await pathCollection.byIds(positiveIds), collectionIdField);
+          negativeIds = <string[]> _.map(await pathCollection.byIds(negativeIds), collectionIdField);
+
+          if (!pathCollection) {
+            throw new Error(
+              `${errorMessageHeader}, invalid collection name given in path! collection: ${pathCollectionName}`
+            );
+          }
+        }
+
+        _.each(positiveIds, id => {
+          if (!queryMaps['positive'].has(collectionName)) {
+            queryMaps['positive'].set(collectionName, new Set());
+          }
+
+          // if the id was set previously, by a lower level link,
+          // we need to remove that edge from negative and add to positive
+          if (queryMaps['negative'].has(collectionName) &&
+              queryMaps['negative'].get(collectionName).has(id)) {
+            queryMaps['negative'].get(collectionName).delete(id);
+          }
+          queryMaps['positive'].get(collectionName).add(id);
+        });
+
+
+        _.each(negativeIds, id => {
+          if (!queryMaps['negative'].has(collectionName)) {
+            queryMaps['negative'].set(collectionName, new Set());
+          }
+
+          // if the id was set previously, by a lower level link,
+          // we need to remove that edge from negative and add to negative
+          if (queryMaps['positive'].has(collectionName) &&
+              queryMaps['positive'].get(collectionName).has(id)) {
+            queryMaps['positive'].get(collectionName).delete(id);
+          }
+
+          queryMaps['negative'].get(collectionName).add(id);
+        });
       }
+
       if (!queryRestrictionSet) {
         throw new Error(
           `${errorMessageHeader}, unable to set query restriction ` +

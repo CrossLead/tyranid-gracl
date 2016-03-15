@@ -8,6 +8,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 var __awaiter = undefined && undefined.__awaiter || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) {
@@ -46,7 +48,7 @@ function createInQueries(map, queriedCollection, key) {
         if (col === queriedCollection.def.name) {
             col = queriedCollection.def.primaryKey.field;
         }
-        out[col] = _defineProperty({}, key, uids.map(function (u) {
+        out[col] = _defineProperty({}, key, [].concat(_toConsumableArray(uids)).map(function (u) {
             return Tyr.parseUid(u).id;
         }));
         return out;
@@ -228,59 +230,70 @@ var GraclPlugin = function () {
             var user = arguments.length <= 2 || arguments[2] === undefined ? Tyr.local.user : arguments[2];
 
             return __awaiter(this, void 0, Promise, regeneratorRuntime.mark(function _callee() {
-                var ResourceClass, SubjectClass, subject, errorMessageHeader, subjectHierarchyIds, resourceHierarchyClasses, permissions, resourceMap, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, perm, resourceCollectionName, resourceId, queriedCollectionLinkFields, queryMaps, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, _step4$value, _collectionName, _step4$value$, collection, _permissions, queryRestrictionSet, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, permission, access, key, path, pathCollectionName, pathCollection;
+                var _this2 = this;
 
-                return regeneratorRuntime.wrap(function _callee$(_context) {
+                var ResourceClass, SubjectClass, subject, errorMessageHeader, subjectHierarchyIds, resourceHierarchyClasses, permissions, resourceMap, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, perm, resourceCollectionName, resourceId, queriedCollectionLinkFields, queryMaps, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _loop, _iterator4, _step4;
+
+                return regeneratorRuntime.wrap(function _callee$(_context2) {
                     while (1) {
-                        switch (_context.prev = _context.next) {
+                        switch (_context2.prev = _context2.next) {
                             case 0:
-                                if (this.graclHierarchy) {
-                                    _context.next = 2;
+                                if (permissionType) {
+                                    _context2.next = 2;
                                     break;
                                 }
 
-                                throw new Error('Must call this.boot() before using this.query()!');
+                                throw new Error('No permissionType given to GraclPlugin.query()!');
 
                             case 2:
-                                if (user) {
-                                    _context.next = 4;
+                                if (this.graclHierarchy) {
+                                    _context2.next = 4;
                                     break;
                                 }
 
-                                return _context.abrupt('return', false);
+                                throw new Error('Must call GraclPlugin.boot() before using GraclPlugin.query()!');
 
                             case 4:
+                                if (user) {
+                                    _context2.next = 7;
+                                    break;
+                                }
+
+                                console.warn('No user passed to GraclPlugin.query() (or found on Tyr.local) -- no restriction enforced!');
+                                return _context2.abrupt('return', false);
+
+                            case 7:
                                 ResourceClass = this.graclHierarchy.getResource(queriedCollection.def.name), SubjectClass = this.graclHierarchy.getSubject(user.$model.def.name);
                                 subject = new SubjectClass(user);
                                 errorMessageHeader = 'Unable to construct query object for ' + queriedCollection.name + ' ' + ('from the perspective of ' + subject.toString());
-                                _context.next = 9;
+                                _context2.next = 12;
                                 return subject.getHierarchyIds();
 
-                            case 9:
-                                subjectHierarchyIds = _context.sent;
+                            case 12:
+                                subjectHierarchyIds = _context2.sent;
                                 resourceHierarchyClasses = ResourceClass.getHierarchyClassNames();
-                                _context.next = 13;
+                                _context2.next = 16;
                                 return PermissionsModel_1.PermissionsModel.find({
                                     subjectId: { $in: subjectHierarchyIds },
                                     resourceType: { $in: resourceHierarchyClasses }
                                 });
 
-                            case 13:
-                                permissions = _context.sent;
+                            case 16:
+                                permissions = _context2.sent;
 
-                                if (Array.isArray(permissions)) {
-                                    _context.next = 16;
+                                if (!(!Array.isArray(permissions) || permissions.length === 0)) {
+                                    _context2.next = 19;
                                     break;
                                 }
 
-                                return _context.abrupt('return', false);
+                                return _context2.abrupt('return', false);
 
-                            case 16:
+                            case 19:
                                 resourceMap = new Map();
                                 _iteratorNormalCompletion3 = true;
                                 _didIteratorError3 = false;
                                 _iteratorError3 = undefined;
-                                _context.prev = 20;
+                                _context2.prev = 23;
 
                                 for (_iterator3 = permissions[Symbol.iterator](); !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
                                     perm = _step3.value;
@@ -294,40 +307,40 @@ var GraclPlugin = function () {
                                     }
                                     resourceMap.get(resourceCollectionName).permissions.set(resourceId, perm);
                                 }
-                                _context.next = 28;
+                                _context2.next = 31;
                                 break;
 
-                            case 24:
-                                _context.prev = 24;
-                                _context.t0 = _context['catch'](20);
+                            case 27:
+                                _context2.prev = 27;
+                                _context2.t0 = _context2['catch'](23);
                                 _didIteratorError3 = true;
-                                _iteratorError3 = _context.t0;
+                                _iteratorError3 = _context2.t0;
 
-                            case 28:
-                                _context.prev = 28;
-                                _context.prev = 29;
+                            case 31:
+                                _context2.prev = 31;
+                                _context2.prev = 32;
 
                                 if (!_iteratorNormalCompletion3 && _iterator3.return) {
                                     _iterator3.return();
                                 }
 
-                            case 31:
-                                _context.prev = 31;
+                            case 34:
+                                _context2.prev = 34;
 
                                 if (!_didIteratorError3) {
-                                    _context.next = 34;
+                                    _context2.next = 37;
                                     break;
                                 }
 
                                 throw _iteratorError3;
 
-                            case 34:
-                                return _context.finish(31);
+                            case 37:
+                                return _context2.finish(34);
 
-                            case 35:
-                                return _context.finish(28);
+                            case 38:
+                                return _context2.finish(31);
 
-                            case 36:
+                            case 39:
                                 queriedCollectionLinkFields = new Map();
 
                                 queriedCollection.links({ direction: 'outgoing' }).forEach(function (field) {
@@ -340,176 +353,317 @@ var GraclPlugin = function () {
                                 _iteratorNormalCompletion4 = true;
                                 _didIteratorError4 = false;
                                 _iteratorError4 = undefined;
-                                _context.prev = 42;
+                                _context2.prev = 45;
+                                _loop = regeneratorRuntime.mark(function _loop() {
+                                    var _step4$value, collectionName, _step4$value$, collection, permissions, queryRestrictionSet, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, permission, access, key, path, positiveIds, negativeIds, _iteratorNormalCompletion6, _didIteratorError6, _iteratorError6, _iterator6, _step6, _permission, _access, pathCollectionName, resultCollection, pathCollection, collectionIdField;
+
+                                    return regeneratorRuntime.wrap(function _loop$(_context) {
+                                        while (1) {
+                                            switch (_context.prev = _context.next) {
+                                                case 0:
+                                                    _step4$value = _slicedToArray(_step4.value, 2);
+                                                    collectionName = _step4$value[0];
+                                                    _step4$value$ = _step4$value[1];
+                                                    collection = _step4$value$.collection;
+                                                    permissions = _step4$value$.permissions;
+                                                    queryRestrictionSet = false;
+
+                                                    if (!queriedCollectionLinkFields.has(collectionName)) {
+                                                        _context.next = 42;
+                                                        break;
+                                                    }
+
+                                                    _iteratorNormalCompletion5 = true;
+                                                    _didIteratorError5 = false;
+                                                    _iteratorError5 = undefined;
+                                                    _context.prev = 10;
+                                                    _iterator5 = permissions.values()[Symbol.iterator]();
+
+                                                case 12:
+                                                    if (_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done) {
+                                                        _context.next = 26;
+                                                        break;
+                                                    }
+
+                                                    permission = _step5.value;
+                                                    access = permission.access[permissionType];
+                                                    _context.t0 = access;
+                                                    _context.next = _context.t0 === true ? 18 : _context.t0 === false ? 18 : 22;
+                                                    break;
+
+                                                case 18:
+                                                    key = access ? 'positive' : 'negative';
+
+                                                    if (!queryMaps[key].has(collectionName)) {
+                                                        queryMaps[key].set(collectionName, new Set());
+                                                    }
+                                                    queryMaps[key].get(collectionName).add(permission.resourceId);
+                                                    return _context.abrupt('break', 22);
+
+                                                case 22:
+                                                    queryRestrictionSet = true;
+
+                                                case 23:
+                                                    _iteratorNormalCompletion5 = true;
+                                                    _context.next = 12;
+                                                    break;
+
+                                                case 26:
+                                                    _context.next = 32;
+                                                    break;
+
+                                                case 28:
+                                                    _context.prev = 28;
+                                                    _context.t1 = _context['catch'](10);
+                                                    _didIteratorError5 = true;
+                                                    _iteratorError5 = _context.t1;
+
+                                                case 32:
+                                                    _context.prev = 32;
+                                                    _context.prev = 33;
+
+                                                    if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                                                        _iterator5.return();
+                                                    }
+
+                                                case 35:
+                                                    _context.prev = 35;
+
+                                                    if (!_didIteratorError5) {
+                                                        _context.next = 38;
+                                                        break;
+                                                    }
+
+                                                    throw _iteratorError5;
+
+                                                case 38:
+                                                    return _context.finish(35);
+
+                                                case 39:
+                                                    return _context.finish(32);
+
+                                                case 40:
+                                                    _context.next = 101;
+                                                    break;
+
+                                                case 42:
+                                                    path = _this2.getShortestPath(queriedCollection, collection);
+
+                                                    if (path.length) {
+                                                        _context.next = 45;
+                                                        break;
+                                                    }
+
+                                                    throw new Error(errorMessageHeader + ', as there is no path between ' + ('collections ' + queriedCollection.def.name + ' and ' + collectionName + ' in the schema.'));
+
+                                                case 45:
+                                                    positiveIds = [], negativeIds = [];
+                                                    _iteratorNormalCompletion6 = true;
+                                                    _didIteratorError6 = false;
+                                                    _iteratorError6 = undefined;
+                                                    _context.prev = 49;
+                                                    _iterator6 = permissions.values()[Symbol.iterator]();
+
+                                                case 51:
+                                                    if (_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done) {
+                                                        _context.next = 64;
+                                                        break;
+                                                    }
+
+                                                    _permission = _step6.value;
+                                                    _access = _permission.access[permissionType];
+                                                    _context.t2 = _access;
+                                                    _context.next = _context.t2 === true ? 57 : _context.t2 === false ? 59 : 61;
+                                                    break;
+
+                                                case 57:
+                                                    positiveIds.push(_permission.resourceId);
+                                                    return _context.abrupt('break', 61);
+
+                                                case 59:
+                                                    negativeIds.push(_permission.resourceId);
+                                                    return _context.abrupt('break', 61);
+
+                                                case 61:
+                                                    _iteratorNormalCompletion6 = true;
+                                                    _context.next = 51;
+                                                    break;
+
+                                                case 64:
+                                                    _context.next = 70;
+                                                    break;
+
+                                                case 66:
+                                                    _context.prev = 66;
+                                                    _context.t3 = _context['catch'](49);
+                                                    _didIteratorError6 = true;
+                                                    _iteratorError6 = _context.t3;
+
+                                                case 70:
+                                                    _context.prev = 70;
+                                                    _context.prev = 71;
+
+                                                    if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                                                        _iterator6.return();
+                                                    }
+
+                                                case 73:
+                                                    _context.prev = 73;
+
+                                                    if (!_didIteratorError6) {
+                                                        _context.next = 76;
+                                                        break;
+                                                    }
+
+                                                    throw _iteratorError6;
+
+                                                case 76:
+                                                    return _context.finish(73);
+
+                                                case 77:
+                                                    return _context.finish(70);
+
+                                                case 78:
+                                                    pathCollectionName = void 0, resultCollection = _.first(path);
+
+                                                case 79:
+                                                    if (!(pathCollectionName = path.pop())) {
+                                                        _context.next = 99;
+                                                        break;
+                                                    }
+
+                                                    if (!(pathCollectionName === queriedCollection.def.name)) {
+                                                        _context.next = 82;
+                                                        break;
+                                                    }
+
+                                                    return _context.abrupt('break', 99);
+
+                                                case 82:
+                                                    pathCollection = Tyr.byName[pathCollectionName], collectionIdField = pathCollection.def.primaryKey.field;
+                                                    _context.t4 = _;
+                                                    _context.next = 86;
+                                                    return pathCollection.byIds(positiveIds);
+
+                                                case 86:
+                                                    _context.t5 = _context.sent;
+                                                    _context.t6 = collectionIdField;
+                                                    positiveIds = _context.t4.map.call(_context.t4, _context.t5, _context.t6);
+                                                    _context.t7 = _;
+                                                    _context.next = 92;
+                                                    return pathCollection.byIds(negativeIds);
+
+                                                case 92:
+                                                    _context.t8 = _context.sent;
+                                                    _context.t9 = collectionIdField;
+                                                    negativeIds = _context.t7.map.call(_context.t7, _context.t8, _context.t9);
+
+                                                    if (pathCollection) {
+                                                        _context.next = 97;
+                                                        break;
+                                                    }
+
+                                                    throw new Error(errorMessageHeader + ', invalid collection name given in path! collection: ' + pathCollectionName);
+
+                                                case 97:
+                                                    _context.next = 79;
+                                                    break;
+
+                                                case 99:
+                                                    _.each(positiveIds, function (id) {
+                                                        if (!queryMaps['positive'].has(collectionName)) {
+                                                            queryMaps['positive'].set(collectionName, new Set());
+                                                        }
+                                                        if (queryMaps['negative'].has(collectionName) && queryMaps['negative'].get(collectionName).has(id)) {
+                                                            queryMaps['negative'].get(collectionName).delete(id);
+                                                        }
+                                                        queryMaps['positive'].get(collectionName).add(id);
+                                                    });
+                                                    _.each(negativeIds, function (id) {
+                                                        if (!queryMaps['negative'].has(collectionName)) {
+                                                            queryMaps['negative'].set(collectionName, new Set());
+                                                        }
+                                                        if (queryMaps['positive'].has(collectionName) && queryMaps['positive'].get(collectionName).has(id)) {
+                                                            queryMaps['positive'].get(collectionName).delete(id);
+                                                        }
+                                                        queryMaps['negative'].get(collectionName).add(id);
+                                                    });
+
+                                                case 101:
+                                                    if (queryRestrictionSet) {
+                                                        _context.next = 103;
+                                                        break;
+                                                    }
+
+                                                    throw new Error(errorMessageHeader + ', unable to set query restriction ' + ('to satisfy permissions relating to collection ' + collectionName));
+
+                                                case 103:
+                                                case 'end':
+                                                    return _context.stop();
+                                            }
+                                        }
+                                    }, _loop, _this2, [[10, 28, 32, 40], [33,, 35, 39], [49, 66, 70, 78], [71,, 73, 77]]);
+                                });
                                 _iterator4 = resourceMap[Symbol.iterator]();
 
-                            case 44:
+                            case 48:
                                 if (_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done) {
-                                    _context.next = 96;
+                                    _context2.next = 53;
                                     break;
                                 }
 
-                                _step4$value = _slicedToArray(_step4.value, 2);
-                                _collectionName = _step4$value[0];
-                                _step4$value$ = _step4$value[1];
-                                collection = _step4$value$.collection;
-                                _permissions = _step4$value$.permissions;
-                                queryRestrictionSet = false;
+                                return _context2.delegateYield(_loop(), 't1', 50);
 
-                                if (!queriedCollectionLinkFields.has(_collectionName)) {
-                                    _context.next = 86;
-                                    break;
-                                }
-
-                                _iteratorNormalCompletion5 = true;
-                                _didIteratorError5 = false;
-                                _iteratorError5 = undefined;
-                                _context.prev = 55;
-                                _iterator5 = _permissions.values()[Symbol.iterator]();
-
-                            case 57:
-                                if (_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done) {
-                                    _context.next = 70;
-                                    break;
-                                }
-
-                                permission = _step5.value;
-                                access = permission.access[permissionType];
-                                _context.t1 = access;
-                                _context.next = _context.t1 === true ? 63 : _context.t1 === false ? 63 : 66;
-                                break;
-
-                            case 63:
-                                key = access ? 'positive' : 'negative';
-
-                                if (!queryMaps[key].has(_collectionName)) {
-                                    queryMaps[key].set(_collectionName, [permission.resourceId]);
-                                } else {
-                                    queryMaps[key].get(_collectionName).push(permission.resourceId);
-                                }
-                                return _context.abrupt('break', 66);
-
-                            case 66:
-                                queryRestrictionSet = true;
-
-                            case 67:
-                                _iteratorNormalCompletion5 = true;
-                                _context.next = 57;
-                                break;
-
-                            case 70:
-                                _context.next = 76;
-                                break;
-
-                            case 72:
-                                _context.prev = 72;
-                                _context.t2 = _context['catch'](55);
-                                _didIteratorError5 = true;
-                                _iteratorError5 = _context.t2;
-
-                            case 76:
-                                _context.prev = 76;
-                                _context.prev = 77;
-
-                                if (!_iteratorNormalCompletion5 && _iterator5.return) {
-                                    _iterator5.return();
-                                }
-
-                            case 79:
-                                _context.prev = 79;
-
-                                if (!_didIteratorError5) {
-                                    _context.next = 82;
-                                    break;
-                                }
-
-                                throw _iteratorError5;
-
-                            case 82:
-                                return _context.finish(79);
-
-                            case 83:
-                                return _context.finish(76);
-
-                            case 84:
-                                _context.next = 91;
-                                break;
-
-                            case 86:
-                                path = this.getShortestPath(queriedCollection, collection);
-
-                                if (path.length) {
-                                    _context.next = 89;
-                                    break;
-                                }
-
-                                throw new Error(errorMessageHeader + ', as there is no path between ' + ('collections ' + queriedCollection.def.name + ' and ' + _collectionName + ' in the schema.'));
-
-                            case 89:
-                                pathCollectionName = void 0;
-
-                                while (pathCollectionName = path.pop()) {
-                                    pathCollection = Tyr.byName[pathCollectionName];
-                                }
-
-                            case 91:
-                                if (queryRestrictionSet) {
-                                    _context.next = 93;
-                                    break;
-                                }
-
-                                throw new Error(errorMessageHeader + ', unable to set query restriction ' + ('to satisfy permissions relating to collection ' + _collectionName));
-
-                            case 93:
+                            case 50:
                                 _iteratorNormalCompletion4 = true;
-                                _context.next = 44;
+                                _context2.next = 48;
                                 break;
 
-                            case 96:
-                                _context.next = 102;
+                            case 53:
+                                _context2.next = 59;
                                 break;
 
-                            case 98:
-                                _context.prev = 98;
-                                _context.t3 = _context['catch'](42);
+                            case 55:
+                                _context2.prev = 55;
+                                _context2.t2 = _context2['catch'](45);
                                 _didIteratorError4 = true;
-                                _iteratorError4 = _context.t3;
+                                _iteratorError4 = _context2.t2;
 
-                            case 102:
-                                _context.prev = 102;
-                                _context.prev = 103;
+                            case 59:
+                                _context2.prev = 59;
+                                _context2.prev = 60;
 
                                 if (!_iteratorNormalCompletion4 && _iterator4.return) {
                                     _iterator4.return();
                                 }
 
-                            case 105:
-                                _context.prev = 105;
+                            case 62:
+                                _context2.prev = 62;
 
                                 if (!_didIteratorError4) {
-                                    _context.next = 108;
+                                    _context2.next = 65;
                                     break;
                                 }
 
                                 throw _iteratorError4;
 
-                            case 108:
-                                return _context.finish(105);
+                            case 65:
+                                return _context2.finish(62);
 
-                            case 109:
-                                return _context.finish(102);
+                            case 66:
+                                return _context2.finish(59);
 
-                            case 110:
-                                return _context.abrupt('return', {
+                            case 67:
+                                return _context2.abrupt('return', {
                                     $and: [createInQueries(queryMaps['positive'], queriedCollection, '$in'), createInQueries(queryMaps['negative'], queriedCollection, '$nin')]
                                 });
 
-                            case 111:
+                            case 68:
                             case 'end':
-                                return _context.stop();
+                                return _context2.stop();
                         }
                     }
-                }, _callee, this, [[20, 24, 28, 36], [29,, 31, 35], [42, 98, 102, 110], [55, 72, 76, 84], [77,, 79, 83], [103,, 105, 109]]);
+                }, _callee, this, [[23, 27, 31, 39], [32,, 34, 38], [45, 55, 59, 67], [60,, 62, 66]]);
             }));
         }
     }], [{
@@ -518,25 +672,25 @@ var GraclPlugin = function () {
             return {
                 getEntity: function getEntity(id) {
                     return __awaiter(this, void 0, Promise, regeneratorRuntime.mark(function _callee2() {
-                        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+                        return regeneratorRuntime.wrap(function _callee2$(_context3) {
                             while (1) {
-                                switch (_context2.prev = _context2.next) {
+                                switch (_context3.prev = _context3.next) {
                                     case 0:
-                                        _context2.t0 = collection;
-                                        _context2.next = 3;
+                                        _context3.t0 = collection;
+                                        _context3.next = 3;
                                         return collection.byId(id);
 
                                     case 3:
-                                        _context2.t1 = _context2.sent;
-                                        _context2.next = 6;
-                                        return _context2.t0.populate.call(_context2.t0, 'permissions', _context2.t1);
+                                        _context3.t1 = _context3.sent;
+                                        _context3.next = 6;
+                                        return _context3.t0.populate.call(_context3.t0, 'permissions', _context3.t1);
 
                                     case 6:
-                                        return _context2.abrupt('return', _context2.sent);
+                                        return _context3.abrupt('return', _context3.sent);
 
                                     case 7:
                                     case 'end':
-                                        return _context2.stop();
+                                        return _context3.stop();
                                 }
                             }
                         }, _callee2, this);
@@ -544,23 +698,23 @@ var GraclPlugin = function () {
                 },
                 saveEntity: function saveEntity(id, doc) {
                     return __awaiter(this, void 0, Promise, regeneratorRuntime.mark(function _callee3() {
-                        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+                        return regeneratorRuntime.wrap(function _callee3$(_context4) {
                             while (1) {
-                                switch (_context3.prev = _context3.next) {
+                                switch (_context4.prev = _context4.next) {
                                     case 0:
-                                        _context3.next = 2;
+                                        _context4.next = 2;
                                         return PermissionsModel_1.PermissionsModel.updatePermissions(doc, 'subject');
 
                                     case 2:
-                                        _context3.next = 4;
+                                        _context4.next = 4;
                                         return doc.$save();
 
                                     case 4:
-                                        return _context3.abrupt('return', _context3.sent);
+                                        return _context4.abrupt('return', _context4.sent);
 
                                     case 5:
                                     case 'end':
-                                        return _context3.stop();
+                                        return _context4.stop();
                                 }
                             }
                         }, _callee3, this);
