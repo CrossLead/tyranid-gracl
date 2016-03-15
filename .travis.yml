@@ -15,6 +15,7 @@ before_script:
   - sudo ./mongodb-linux-x86_64-ubuntu1204-3.2.0/bin/mongod --dbpath=./mongo/db --fork --logpath=./mongo/log/test.log
   - sleep 5
   - mongo --eval 'rs.initiate()'
+  - npm -g install npm@latest-2
 cache:
   directories:
     - node_modules
