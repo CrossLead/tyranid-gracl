@@ -1,32 +1,16 @@
 /// <reference path='../../typings/main.d.ts' />
-
 import * as Tyr from 'tyranid';
 import { PermissionsModel } from '../collections/PermissionsModel';
 import * as gracl from 'gracl';
 import * as _ from 'lodash';
 
-
-export type Hash<T> = {
-  [key: string]: T;
-};
-
-
-export function createInQueries(
-                  map: Map<string, Set<string>>,
-                  queriedCollection: Tyr.CollectionInstance,
-                  key: string
-                ) {
-  return Array.from(map.entries())
-    .reduce((out: Hash<Hash<string[]>>, [col, uids]) => {
-      // if the collection is the same as the one being queried, use the primary id field
-      if (col === queriedCollection.def.name) {
-        col = queriedCollection.def.primaryKey.field;
-      }
-      out[col] = { [key]: [...uids].map((u: string) => Tyr.parseUid(u).id) };
-      return out;
-    }, {});
-};
-
+import {
+  Hash,
+  findLinkInCollection,
+  getCollectionLinksSorted,
+  createInQueries,
+  stepThroughCollectionPath
+} from '../util';
 
 
 export class GraclPlugin {
@@ -335,40 +319,38 @@ export class GraclPlugin {
       permissions: Map<string, any>,
       collection: Tyr.CollectionInstance
     };
-    const resourceMap = new Map<string, resourceMapEntries>();
 
-    for (const perm of permissions) {
+    const resourceMap = permissions.reduce((map, perm) => {
       const resourceCollectionName = <string> perm['resourceType'],
             resourceId = <string> perm['resourceId'];
 
-      if (!resourceMap.has(resourceCollectionName)) {
-        resourceMap.set(resourceCollectionName, {
+      if (!map.has(resourceCollectionName)) {
+        map.set(resourceCollectionName, {
           collection: Tyr.byName[resourceCollectionName],
           permissions: new Map()
         });
       }
 
-      resourceMap
-        .get(resourceCollectionName)
-        .permissions
-        .set(resourceId, perm);
-    }
+      map.get(resourceCollectionName).permissions.set(resourceId, perm);
+      return map;
+    }, new Map<string, resourceMapEntries>());
+
 
     // loop through all the fields in the collection that we are
     // building the query string for, grabbing all fields that are links
     // and storing them in a map of (linkFieldCollection => Field)
-    const queriedCollectionLinkFields = new Map<string, Tyr.Field>();
-
-    queriedCollection
-      .links({ direction: 'outgoing' })
-      .forEach(field => {
-        queriedCollectionLinkFields.set(field.def.link, field);
-      });
+    const queriedCollectionLinkFields = getCollectionLinksSorted(queriedCollection)
+      .reduce((map, field) => {
+        map.set(field.def.link, field);
+        return map;
+      }, new Map<string, Tyr.Field>());
 
     const queryMaps: Hash<Map<string, Set<string>>> = {
       positive: new Map<string, Set<string>>(),
       negative: new Map<string, Set<string>>()
     };
+
+
 
     // extract all collections that have a relevant permission set for the requested resource
     for (const [ collectionName, { collection, permissions } ] of resourceMap) {
@@ -433,6 +415,25 @@ export class GraclPlugin {
           );
         }
 
+        // remove end of path (which should equal the collection of interest on the permission)
+        const pathEndCollectionName = path.pop();
+
+        if (collectionName !== pathEndCollectionName) {
+          throw new Error(
+            `Path returned for collection pair ${queriedCollection.def.name} and ${collectionName} is invalid!`
+          );
+        }
+
+        // assert that the penultimate path collection exists as a link on the queriedCollection
+        if (!queriedCollectionLinkFields.has(path[1])) {
+          throw new Error(
+            `Path returned for collection pair ${queriedCollection.def.name} and ${collectionName} ` +
+            `must have the penultimate path exist as a link on the collection being queried, ` +
+            `the penultimate collection path between ${queriedCollection.def.name} and ${collectionName} ` +
+            `is ${path[1]}, which is not linked to by ${queriedCollection.def.name}`
+          );
+        }
+
         let positiveIds: string[] = [],
             negativeIds: string[] = [];
 
@@ -441,77 +442,65 @@ export class GraclPlugin {
           const access = permission.access[permissionType];
           switch (access) {
             // access needs to be exactly true or false
-            case true:  positiveIds.push(permission.resourceId); break;
-            case false: negativeIds.push(permission.resourceId); break;
+            case true:  positiveIds.push(Tyr.parseUid(permission.resourceId).id); break;
+            case false: negativeIds.push(Tyr.parseUid(permission.resourceId).id); break;
           }
         }
 
-        let pathCollectionName: string;
-        while (pathCollectionName = path.pop()) {
-          if (pathCollectionName === queriedCollection.def.name) break;
+        const pathEndCollection = Tyr.byName[pathEndCollectionName],
+              nextCollection = Tyr.byName[_.last(path)];
 
-          const pathCollection = Tyr.byName[pathCollectionName],
-                nextCollection = Tyr.byName[_.last(path)],
-                collectionIdField = pathCollection.def.primaryKey.field,
-                pathCollectionLinks = pathCollection.links({ direction: 'outgoing' });
+        positiveIds = await stepThroughCollectionPath(positiveIds, pathEndCollection, nextCollection);
+        negativeIds = await stepThroughCollectionPath(negativeIds, pathEndCollection, nextCollection);
 
-          // find the field in the current path collection which we need to get
-          // for the ids of the next path collection
-          const nextCollectionField = _.find(pathCollectionLinks, link => {
-            return link.collection.def.name === nextCollection.def.name;
-          });
-
-          const nextCollectionFieldName = nextCollectionField.name === nextCollectionField.path
-            ? nextCollectionField.name
-            : nextCollectionField.path.split('.')[0];
-
-          /**
-           * we need to recursively collect objects along the path,
-             until we reach a collection that linked to the queriedCollection
-           */
-          positiveIds = <string[]> _.chain(await pathCollection.byIds(positiveIds))
-            .map(nextCollectionFieldName)
-            .flatten()
-            .value();
-
-          negativeIds = <string[]> _.chain(await pathCollection.byIds(negativeIds))
-            .map(nextCollectionFieldName)
-            .flatten()
-            .value();
+        // the remaining path collection is equal to the collection we are trying to query,
+        // we don't need to do another link in the path, as the current path collection
+        // has a link that exists on the queried collection
+        let pathCollectionName: string,
+            nextCollectionName: string;
+        while (path.length > 2) {
+          const pathCollection = Tyr.byName[pathCollectionName = path.pop()],
+                nextCollection = Tyr.byName[nextCollectionName = _.last(path)];
 
           if (!pathCollection) {
             throw new Error(
               `${errorMessageHeader}, invalid collection name given in path! collection: ${pathCollectionName}`
             );
           }
+
+          /**
+           * we need to recursively collect objects along the path,
+             until we reach a collection that linked to the queriedCollection
+           */
+          positiveIds = await stepThroughCollectionPath(positiveIds, pathCollection, nextCollection);
+          negativeIds = await stepThroughCollectionPath(negativeIds, pathCollection, nextCollection);
         }
 
-        _.each(positiveIds, id => {
-          if (!queryMaps['positive'].has(collectionName)) {
-            queryMaps['positive'].set(collectionName, new Set());
+        // now, "nextCollectionName" should be referencing a collection
+        // that is directly linked to by queriedCollection,
+        // and positive / negativeIds should contain ids of documents
+        // from <nextCollectionName>
+        const linkedCollectionName = nextCollectionName;
+
+        const addIdsToQueryMap = (access: boolean) => (id: string) => {
+          const accessString    = access ? 'positive' : 'negative',
+                altAccessString = access ? 'negative' : 'positive';
+
+          if (!queryMaps[accessString].has(linkedCollectionName)) {
+            queryMaps[accessString].set(linkedCollectionName, new Set());
           }
 
           // if the id was set previously, by a lower level link,
           // dont override the lower level
-          if (!queryMaps['negative'].has(collectionName) ||
-              queryMaps['negative'].get(collectionName).has(id)) {
-            queryMaps['positive'].get(collectionName).add(id);
+          if (!queryMaps[altAccessString].has(linkedCollectionName) ||
+              !queryMaps[altAccessString].get(linkedCollectionName).has(id)) {
+            queryMaps[accessString].get(linkedCollectionName).add(id);
           }
-        });
+        };
 
-        _.each(negativeIds, id => {
-          if (!queryMaps['negative'].has(collectionName)) {
-            queryMaps['negative'].set(collectionName, new Set());
-          }
-
-          // if the id was set previously, by a lower level link,
-          // dont override the lower level
-          if (!queryMaps['positive'].has(collectionName) ||
-              !queryMaps['positive'].get(collectionName).has(id)) {
-            queryMaps['negative'].get(collectionName).add(id);
-          }
-        });
-
+        // add the ids to the query maps
+        _.each(positiveIds, addIdsToQueryMap(true));
+        _.each(negativeIds, addIdsToQueryMap(false));
         queryRestrictionSet = true;
       }
 

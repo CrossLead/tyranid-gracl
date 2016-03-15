@@ -1,10 +1,7 @@
 /// <reference path="../../../../typings/main.d.ts" />
 import * as Tyr from 'tyranid';
 import * as gracl from 'gracl';
-export declare type Hash<T> = {
-    [key: string]: T;
-};
-export declare function createInQueries(map: Map<string, Set<string>>, queriedCollection: Tyr.CollectionInstance, key: string): {};
+import { Hash } from '../util';
 export declare class GraclPlugin {
     verbose: boolean;
     static makeRepository(collection: Tyr.CollectionInstance): gracl.Repository;
