@@ -6,7 +6,16 @@ node_js:
   - "4"
   - "5"
 before_script:
-  - npm run build
+  - echo "replSet = myReplSetName" | sudo tee -a /etc/mongodb.conf
+  - curl https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.2.0.tgz -O -#
+  - tar -xzvf mongodb-linux-x86_64-ubuntu1204-3.2.0.tgz
+  - mkdir -p mongo/db
+  - mkdir -p mongo/log
+  - sudo ./mongodb-linux-x86_64-ubuntu1204-3.2.0/bin/mongod --dbpath=./mongo/db --fork --logpath=./mongo/log/test.log
+  - sleep 5
+  - mongo --eval 'rs.initiate()'
 cache:
   directories:
     - node_modules
+  files:
+    - mongodb-linux-x86_64-ubuntu1204-3.2.0.tgz
