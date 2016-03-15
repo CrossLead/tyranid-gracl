@@ -453,14 +453,12 @@ export class GraclPlugin {
           }
 
           // if the id was set previously, by a lower level link,
-          // we need to remove that edge from negative and add to positive
-          if (queryMaps['negative'].has(collectionName) &&
+          // dont override the lower level
+          if (!queryMaps['negative'].has(collectionName) ||
               queryMaps['negative'].get(collectionName).has(id)) {
-            queryMaps['negative'].get(collectionName).delete(id);
+            queryMaps['positive'].get(collectionName).add(id);
           }
-          queryMaps['positive'].get(collectionName).add(id);
         });
-
 
         _.each(negativeIds, id => {
           if (!queryMaps['negative'].has(collectionName)) {
@@ -468,13 +466,11 @@ export class GraclPlugin {
           }
 
           // if the id was set previously, by a lower level link,
-          // we need to remove that edge from negative and add to negative
-          if (queryMaps['positive'].has(collectionName) &&
-              queryMaps['positive'].get(collectionName).has(id)) {
-            queryMaps['positive'].get(collectionName).delete(id);
+          // dont override the lower level
+          if (!queryMaps['positive'].has(collectionName) ||
+              !queryMaps['positive'].get(collectionName).has(id)) {
+            queryMaps['negative'].get(collectionName).add(id);
           }
-
-          queryMaps['negative'].get(collectionName).add(id);
         });
       }
 

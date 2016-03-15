@@ -603,19 +603,17 @@ var GraclPlugin = function () {
                                                         if (!queryMaps['positive'].has(collectionName)) {
                                                             queryMaps['positive'].set(collectionName, new Set());
                                                         }
-                                                        if (queryMaps['negative'].has(collectionName) && queryMaps['negative'].get(collectionName).has(id)) {
-                                                            queryMaps['negative'].get(collectionName).delete(id);
+                                                        if (!queryMaps['negative'].has(collectionName) || queryMaps['negative'].get(collectionName).has(id)) {
+                                                            queryMaps['positive'].get(collectionName).add(id);
                                                         }
-                                                        queryMaps['positive'].get(collectionName).add(id);
                                                     });
                                                     _.each(negativeIds, function (id) {
                                                         if (!queryMaps['negative'].has(collectionName)) {
                                                             queryMaps['negative'].set(collectionName, new Set());
                                                         }
-                                                        if (queryMaps['positive'].has(collectionName) && queryMaps['positive'].get(collectionName).has(id)) {
-                                                            queryMaps['positive'].get(collectionName).delete(id);
+                                                        if (!queryMaps['positive'].has(collectionName) || !queryMaps['positive'].get(collectionName).has(id)) {
+                                                            queryMaps['negative'].get(collectionName).add(id);
                                                         }
-                                                        queryMaps['negative'].get(collectionName).add(id);
                                                     });
 
                                                 case 89:
