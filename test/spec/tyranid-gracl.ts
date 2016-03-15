@@ -17,6 +17,8 @@ describe('tyranid-gracl', () => {
   before(async function() {
     this.timeout(10000);
 
+    secure.verbose = true;
+
     Tyr.config({
       db: db,
       validate: [
@@ -25,9 +27,6 @@ describe('tyranid-gracl', () => {
       ],
       secure: secure
     });
-
-    // hack -- manually call boot now
-    secure.boot('post-link');
 
     await createTestData();
   });

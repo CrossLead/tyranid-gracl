@@ -41,12 +41,12 @@ describe('tyranid-gracl', function () {
                     switch (_context.prev = _context.next) {
                         case 0:
                             this.timeout(10000);
+                            secure.verbose = true;
                             Tyr.config({
                                 db: db,
                                 validate: [{ dir: root + '/test/models', fileMatch: '[a-z].js' }, { dir: root + '/lib/collections', fileMatch: '[a-z].js' }],
                                 secure: secure
                             });
-                            secure.boot('post-link');
                             _context.next = 5;
                             return createTestData_1.createTestData();
 
