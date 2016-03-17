@@ -1,6 +1,6 @@
 /// <reference path='../../typings/main.d.ts' />
 import * as Tyr from 'tyranid';
-import { PermissionsModel } from '../collections/PermissionsModel';
+import { PermissionsModel } from '../models/PermissionsModel';
 import * as gracl from 'gracl';
 import * as _ from 'lodash';
 

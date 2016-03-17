@@ -3,6 +3,7 @@ import { Post } from '../models/Post';
 import { User } from '../models/User';
 import { Team } from '../models/Team';
 import { Organization } from '../models/Organization';
+import { PermissionsModel } from '../../lib/models/PermissionsModel';
 
 export async function createTestData() {
   // nuke old data...
@@ -35,7 +36,6 @@ export async function createTestData() {
     Blog.insert({ name: 'Salads are great', organizationId: chopped['_id'] }),
     Blog.insert({ name: 'Spinach + Lentils', organizationId: cava['_id'] })
   ]);
-
 
   console.log(await Blog.find({}));
 }

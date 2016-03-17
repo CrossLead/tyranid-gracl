@@ -63,7 +63,7 @@ var __awaiter = undefined && undefined.__awaiter || function (thisArg, _argument
     });
 };
 var Tyr = require('tyranid');
-var PermissionsModel_1 = require('../collections/PermissionsModel');
+var PermissionsModel_1 = require('../models/PermissionsModel');
 var gracl = require('gracl');
 var _ = require('lodash');
 var util_1 = require('../util');

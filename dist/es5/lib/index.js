@@ -6,5 +6,5 @@ function __export(m) {
     }
 }
 __export(require('./classes/GraclPlugin'));
-__export(require('./collections/PermissionsModel'));
+__export(require('./models/PermissionsModel'));
 __export(require('./util'));

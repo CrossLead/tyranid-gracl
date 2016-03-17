@@ -1,3 +1,3 @@
 export * from './classes/GraclPlugin';
-export * from './collections/PermissionsModel';
+export * from './models/PermissionsModel';
 export * from './util';
