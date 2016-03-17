@@ -1,6 +1,5 @@
-declare const linkPaths: {
+export declare const expectedLinkPaths: {
     [k: string]: {
         [k: string]: string[];
     };
 };
-export default linkPaths;

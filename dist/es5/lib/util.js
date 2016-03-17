@@ -1,13 +1,33 @@
 "use strict";
 
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+var _regenerator = require('babel-runtime/regenerator');
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+var _regenerator2 = _interopRequireDefault(_regenerator);
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+var _defineProperty2 = require('babel-runtime/helpers/defineProperty');
+
+var _defineProperty3 = _interopRequireDefault(_defineProperty2);
+
+var _toConsumableArray2 = require('babel-runtime/helpers/toConsumableArray');
+
+var _toConsumableArray3 = _interopRequireDefault(_toConsumableArray2);
+
+var _slicedToArray2 = require('babel-runtime/helpers/slicedToArray');
+
+var _slicedToArray3 = _interopRequireDefault(_slicedToArray2);
+
+var _from = require('babel-runtime/core-js/array/from');
+
+var _from2 = _interopRequireDefault(_from);
+
+var _promise = require('babel-runtime/core-js/promise');
+
+var _promise2 = _interopRequireDefault(_promise);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var __awaiter = undefined && undefined.__awaiter || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
+    return new (P || (P = _promise2.default))(function (resolve, reject) {
         function fulfilled(value) {
             try {
                 step(generator.next(value));
@@ -61,8 +81,8 @@ function findLinkInCollection(col, linkCollection) {
 }
 exports.findLinkInCollection = findLinkInCollection;
 function createInQueries(map, queriedCollection, key) {
-    return Array.from(map.entries()).reduce(function (out, _ref) {
-        var _ref2 = _slicedToArray(_ref, 2);
+    return (0, _from2.default)(map.entries()).reduce(function (out, _ref) {
+        var _ref2 = (0, _slicedToArray3.default)(_ref, 2);
 
         var col = _ref2[0];
         var uids = _ref2[1];
@@ -71,7 +91,7 @@ function createInQueries(map, queriedCollection, key) {
             col = queriedCollection.def.primaryKey.field;
         }
         var collectionLinkField = _.find(col.fields({ direction: 'outgoing' }), function (field) {});
-        out[col] = _defineProperty({}, key, [].concat(_toConsumableArray(uids)).map(function (u) {
+        out[col] = (0, _defineProperty3.default)({}, key, [].concat((0, _toConsumableArray3.default)(uids)).map(function (u) {
             return Tyr.parseUid(u).id;
         }));
         return out;
@@ -80,9 +100,9 @@ function createInQueries(map, queriedCollection, key) {
 exports.createInQueries = createInQueries;
 ;
 function stepThroughCollectionPath(ids, previousCollection, nextCollection) {
-    return __awaiter(this, void 0, void 0, regeneratorRuntime.mark(function _callee() {
+    return __awaiter(this, void 0, void 0, _regenerator2.default.mark(function _callee() {
         var nextCollectionLinkField;
-        return regeneratorRuntime.wrap(function _callee$(_context) {
+        return _regenerator2.default.wrap(function _callee$(_context) {
             while (1) {
                 switch (_context.prev = _context.next) {
                     case 0:
@@ -98,7 +118,7 @@ function stepThroughCollectionPath(ids, previousCollection, nextCollection) {
                     case 3:
                         _context.t0 = _;
                         _context.next = 6;
-                        return nextCollection.find(_defineProperty({}, nextCollectionLinkField.spath, { $in: ids }));
+                        return nextCollection.find((0, _defineProperty3.default)({}, nextCollectionLinkField.spath, { $in: ids }));
 
                     case 6:
                         _context.t1 = _context.sent;

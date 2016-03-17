@@ -35,4 +35,7 @@ export async function createTestData() {
     Blog.insert({ name: 'Salads are great', organizationId: chopped['_id'] }),
     Blog.insert({ name: 'Spinach + Lentils', organizationId: cava['_id'] })
   ]);
+
+
+  console.log(await Blog.find({}));
 }

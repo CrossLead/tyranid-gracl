@@ -1,13 +1,45 @@
 "use strict";
 
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+var _regenerator = require('babel-runtime/regenerator');
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+var _regenerator2 = _interopRequireDefault(_regenerator);
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+var _getIterator2 = require('babel-runtime/core-js/get-iterator');
+
+var _getIterator3 = _interopRequireDefault(_getIterator2);
+
+var _from = require('babel-runtime/core-js/array/from');
+
+var _from2 = _interopRequireDefault(_from);
+
+var _map = require('babel-runtime/core-js/map');
+
+var _map2 = _interopRequireDefault(_map);
+
+var _slicedToArray2 = require('babel-runtime/helpers/slicedToArray');
+
+var _slicedToArray3 = _interopRequireDefault(_slicedToArray2);
+
+var _set = require('babel-runtime/core-js/set');
+
+var _set2 = _interopRequireDefault(_set);
+
+var _classCallCheck2 = require('babel-runtime/helpers/classCallCheck');
+
+var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
+
+var _createClass2 = require('babel-runtime/helpers/createClass');
+
+var _createClass3 = _interopRequireDefault(_createClass2);
+
+var _promise = require('babel-runtime/core-js/promise');
+
+var _promise2 = _interopRequireDefault(_promise);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var __awaiter = undefined && undefined.__awaiter || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
+    return new (P || (P = _promise2.default))(function (resolve, reject) {
         function fulfilled(value) {
             try {
                 step(generator.next(value));
@@ -39,13 +71,12 @@ var util_1 = require('../util');
 var GraclPlugin = function () {
     function GraclPlugin() {
         var verbose = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
-
-        _classCallCheck(this, GraclPlugin);
+        (0, _classCallCheck3.default)(this, GraclPlugin);
 
         this.verbose = verbose;
     }
 
-    _createClass(GraclPlugin, [{
+    (0, _createClass3.default)(GraclPlugin, [{
         key: 'log',
         value: function log(message) {
             if (this.verbose) {
@@ -78,7 +109,7 @@ var GraclPlugin = function () {
                 (function () {
                     _this.log('starting boot.');
                     var collections = Tyr.collections,
-                        nodeSet = new Set();
+                        nodeSet = new _set2.default();
                     var schemaObjects = {
                         subjects: {
                             links: [],
@@ -97,7 +128,7 @@ var GraclPlugin = function () {
                             throw new Error('tyranid-gracl permissions hierarchy does not allow for multiple inheritance. ' + ('Collection ' + collectionName + ' has multiple fields with outgoing ownedBy relations.'));
                         }
 
-                        var _linkFields = _slicedToArray(linkFields, 1);
+                        var _linkFields = (0, _slicedToArray3.default)(linkFields, 1);
 
                         var field = _linkFields[0];var graclType = field.def.graclType;
 
@@ -116,8 +147,8 @@ var GraclPlugin = function () {
                         }
                     });
                     var schemaMaps = {
-                        subjects: new Map(),
-                        resources: new Map()
+                        subjects: new _map2.default(),
+                        resources: new _map2.default()
                     };
                     var _arr = ['subjects', 'resources'];
                     for (var _i = 0; _i < _arr.length; _i++) {
@@ -136,7 +167,7 @@ var GraclPlugin = function () {
                         var _iteratorError = undefined;
 
                         try {
-                            for (var _iterator = tyrObjects.links[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                            for (var _iterator = (0, _getIterator3.default)(tyrObjects.links), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
                                 var node = _step.value;
 
                                 var name = node.collection.def.name,
@@ -167,7 +198,7 @@ var GraclPlugin = function () {
                         var _iteratorError2 = undefined;
 
                         try {
-                            for (var _iterator2 = tyrObjects.parents[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                            for (var _iterator2 = (0, _getIterator3.default)(tyrObjects.parents), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
                                 var parent = _step2.value;
 
                                 var _name = parent.def.name;
@@ -197,8 +228,8 @@ var GraclPlugin = function () {
                     _this.outgoingLinkPaths = GraclPlugin.buildLinkGraph();
                     _this.log('creating gracl hierarchy');
                     _this.graclHierarchy = new gracl.Graph({
-                        subjects: Array.from(schemaMaps.subjects.values()),
-                        resources: Array.from(schemaMaps.resources.values())
+                        subjects: (0, _from2.default)(schemaMaps.subjects.values()),
+                        resources: (0, _from2.default)(schemaMaps.resources.values())
                     });
                 })();
             }
@@ -208,12 +239,12 @@ var GraclPlugin = function () {
         value: function query(queriedCollection, permissionType) {
             var user = arguments.length <= 2 || arguments[2] === undefined ? Tyr.local.user : arguments[2];
 
-            return __awaiter(this, void 0, Promise, regeneratorRuntime.mark(function _callee2() {
+            return __awaiter(this, void 0, _promise2.default, _regenerator2.default.mark(function _callee2() {
                 var _this2 = this;
 
                 var ResourceClass, SubjectClass, subject, errorMessageHeader, subjectHierarchyIds, resourceHierarchyClasses, permissions, resourceMap, queriedCollectionLinkFields, queryMaps, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, _step3$value, _collectionName, _step3$value$, collection, _permissions, queryRestrictionSet, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, permission, access, key;
 
-                return regeneratorRuntime.wrap(function _callee2$(_context2) {
+                return _regenerator2.default.wrap(function _callee2$(_context2) {
                     while (1) {
                         switch (_context2.prev = _context2.next) {
                             case 0:
@@ -277,25 +308,25 @@ var GraclPlugin = function () {
                                     if (!map.has(resourceCollectionName)) {
                                         map.set(resourceCollectionName, {
                                             collection: Tyr.byName[resourceCollectionName],
-                                            permissions: new Map()
+                                            permissions: new _map2.default()
                                         });
                                     }
                                     map.get(resourceCollectionName).permissions.set(resourceId, perm);
                                     return map;
-                                }, new Map());
+                                }, new _map2.default());
                                 queriedCollectionLinkFields = util_1.getCollectionLinksSorted(queriedCollection).reduce(function (map, field) {
                                     map.set(field.def.link, field);
                                     return map;
-                                }, new Map());
+                                }, new _map2.default());
                                 queryMaps = {
-                                    positive: new Map(),
-                                    negative: new Map()
+                                    positive: new _map2.default(),
+                                    negative: new _map2.default()
                                 };
                                 _iteratorNormalCompletion3 = true;
                                 _didIteratorError3 = false;
                                 _iteratorError3 = undefined;
                                 _context2.prev = 27;
-                                _iterator3 = resourceMap[Symbol.iterator]();
+                                _iterator3 = (0, _getIterator3.default)(resourceMap);
 
                             case 29:
                                 if (_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done) {
@@ -303,7 +334,7 @@ var GraclPlugin = function () {
                                     break;
                                 }
 
-                                _step3$value = _slicedToArray(_step3.value, 2);
+                                _step3$value = (0, _slicedToArray3.default)(_step3.value, 2);
                                 _collectionName = _step3$value[0];
                                 _step3$value$ = _step3$value[1];
                                 collection = _step3$value$.collection;
@@ -319,7 +350,7 @@ var GraclPlugin = function () {
                                 _didIteratorError4 = false;
                                 _iteratorError4 = undefined;
                                 _context2.prev = 40;
-                                _iterator4 = _permissions.values()[Symbol.iterator]();
+                                _iterator4 = (0, _getIterator3.default)(_permissions.values());
 
                             case 42:
                                 if (_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done) {
@@ -337,7 +368,7 @@ var GraclPlugin = function () {
                                 key = access ? 'positive' : 'negative';
 
                                 if (!queryMaps[key].has(_collectionName)) {
-                                    queryMaps[key].set(_collectionName, new Set());
+                                    queryMaps[key].set(_collectionName, new _set2.default());
                                 }
                                 queryMaps[key].get(_collectionName).add(permission.resourceId);
                                 return _context2.abrupt('break', 52);
@@ -389,10 +420,10 @@ var GraclPlugin = function () {
                                 break;
 
                             case 72:
-                                return _context2.delegateYield(regeneratorRuntime.mark(function _callee() {
+                                return _context2.delegateYield(_regenerator2.default.mark(function _callee() {
                                     var path, pathEndCollectionName, positiveIds, negativeIds, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, _permission, _access, pathEndCollection, nextCollection, pathCollectionName, nextCollectionName, pathCollection, _nextCollection, linkedCollectionName, addIdsToQueryMap;
 
-                                    return regeneratorRuntime.wrap(function _callee$(_context) {
+                                    return _regenerator2.default.wrap(function _callee$(_context) {
                                         while (1) {
                                             switch (_context.prev = _context.next) {
                                                 case 0:
@@ -429,7 +460,7 @@ var GraclPlugin = function () {
                                                     _didIteratorError5 = false;
                                                     _iteratorError5 = undefined;
                                                     _context.prev = 12;
-                                                    _iterator5 = _permissions.values()[Symbol.iterator]();
+                                                    _iterator5 = (0, _getIterator3.default)(_permissions.values());
 
                                                 case 14:
                                                     if (_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done) {
@@ -541,7 +572,7 @@ var GraclPlugin = function () {
                                                             var accessString = access ? 'positive' : 'negative',
                                                                 altAccessString = access ? 'negative' : 'positive';
                                                             if (!queryMaps[accessString].has(linkedCollectionName)) {
-                                                                queryMaps[accessString].set(linkedCollectionName, new Set());
+                                                                queryMaps[accessString].set(linkedCollectionName, new _set2.default());
                                                             }
                                                             if (!queryMaps[altAccessString].has(linkedCollectionName) || !queryMaps[altAccessString].get(linkedCollectionName).has(id)) {
                                                                 queryMaps[accessString].get(linkedCollectionName).add(id);
@@ -626,8 +657,8 @@ var GraclPlugin = function () {
         value: function makeRepository(collection) {
             return {
                 getEntity: function getEntity(id) {
-                    return __awaiter(this, void 0, Promise, regeneratorRuntime.mark(function _callee3() {
-                        return regeneratorRuntime.wrap(function _callee3$(_context3) {
+                    return __awaiter(this, void 0, _promise2.default, _regenerator2.default.mark(function _callee3() {
+                        return _regenerator2.default.wrap(function _callee3$(_context3) {
                             while (1) {
                                 switch (_context3.prev = _context3.next) {
                                     case 0:
@@ -652,8 +683,8 @@ var GraclPlugin = function () {
                     }));
                 },
                 saveEntity: function saveEntity(id, doc) {
-                    return __awaiter(this, void 0, Promise, regeneratorRuntime.mark(function _callee4() {
-                        return regeneratorRuntime.wrap(function _callee4$(_context4) {
+                    return __awaiter(this, void 0, _promise2.default, _regenerator2.default.mark(function _callee4() {
+                        return _regenerator2.default.wrap(function _callee4$(_context4) {
                             while (1) {
                                 switch (_context4.prev = _context4.next) {
                                     case 0:
@@ -685,10 +716,10 @@ var GraclPlugin = function () {
                 var links = col.links({ direction: 'outgoing' }),
                     colName = col.def.name;
                 _.each(links, function (linkField) {
-                    var edges = _.get(g, colName, new Set()),
+                    var edges = _.get(g, colName, new _set2.default()),
                         linkName = linkField.link.def.name;
                     edges.add(linkName);
-                    _.set(g, linkName, _.get(g, linkName, new Set()));
+                    _.set(g, linkName, _.get(g, linkName, new _set2.default()));
                     _.set(g, colName, edges);
                 });
             });
@@ -724,7 +755,6 @@ var GraclPlugin = function () {
             return next;
         }
     }]);
-
     return GraclPlugin;
 }();
 

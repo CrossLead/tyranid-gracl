@@ -1,7 +1,17 @@
 "use strict";
 
+var _regenerator = require('babel-runtime/regenerator');
+
+var _regenerator2 = _interopRequireDefault(_regenerator);
+
+var _promise = require('babel-runtime/core-js/promise');
+
+var _promise2 = _interopRequireDefault(_promise);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 var __awaiter = undefined && undefined.__awaiter || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
+    return new (P || (P = _promise2.default))(function (resolve, reject) {
         function fulfilled(value) {
             try {
                 step(generator.next(value));
@@ -35,8 +45,8 @@ var db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),
 var secure = _1.PermissionsModel.getGraclPlugin();
 describe('tyranid-gracl', function () {
     before(function () {
-        return __awaiter(this, void 0, void 0, regeneratorRuntime.mark(function _callee() {
-            return regeneratorRuntime.wrap(function _callee$(_context) {
+        return __awaiter(this, void 0, void 0, _regenerator2.default.mark(function _callee() {
+            return _regenerator2.default.wrap(function _callee$(_context) {
                 while (1) {
                     switch (_context.prev = _context.next) {
                         case 0:
@@ -59,9 +69,9 @@ describe('tyranid-gracl', function () {
         }));
     });
     it('Cached link paths should be correctly constructed', function () {
-        for (var a in expectedLinkPaths_1.default) {
-            for (var b in expectedLinkPaths_1.default[a]) {
-                chai_1.expect(secure.getShortestPath(Tyr.byName[a], Tyr.byName[b]), 'Path from ' + a + ' to ' + b).to.deep.equal(expectedLinkPaths_1.default[a][b] || []);
+        for (var a in expectedLinkPaths_1.expectedLinkPaths) {
+            for (var b in expectedLinkPaths_1.expectedLinkPaths[a]) {
+                chai_1.expect(secure.getShortestPath(Tyr.byName[a], Tyr.byName[b]), 'Path from ' + a + ' to ' + b).to.deep.equal(expectedLinkPaths_1.expectedLinkPaths[a][b] || []);
             }
         }
     });

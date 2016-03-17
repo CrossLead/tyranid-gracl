@@ -1,10 +1,11 @@
 /// <reference path='../../typings/main.d.ts' />
 /// <reference path='../test-typings.d.ts'/>
+
 import * as Tyr from 'tyranid';
 import * as tpmongo from 'tpmongo';
 import { expect } from 'chai';
 import { PermissionsModel } from '../../lib/';
-import expectedLinkPaths from './expectedLinkPaths';
+import { expectedLinkPaths } from './expectedLinkPaths';
 import { createTestData } from './createTestData';
 
 const db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),

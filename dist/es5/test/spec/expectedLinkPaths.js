@@ -1,6 +1,6 @@
 "use strict";
 
-var linkPaths = {
+exports.expectedLinkPaths = {
     'blog': {
         'organization': ['blog', 'organization']
     },
@@ -15,5 +15,3 @@ var linkPaths = {
         'organization': ['user', 'organization']
     }
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.default = linkPaths;
