@@ -24,7 +24,7 @@ describe('tyranid-gracl', () => {
       db: db,
       validate: [
         { dir: root + '/test/models', fileMatch: '[a-z].js' },
-        { dir: root + '/lib/collections', fileMatch: '[a-z].js' }
+        { dir: root + '/lib/models', fileMatch: '[a-z].js' }
       ],
       secure: secure
     });
