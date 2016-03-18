@@ -1,20 +1,17 @@
+import * as Tyr from 'tyranid';
 import { Blog } from '../models/Blog';
 import { Post } from '../models/Post';
 import { User } from '../models/User';
 import { Team } from '../models/Team';
 import { Organization } from '../models/Organization';
-import { PermissionsModel } from '../../lib/models/PermissionsModel';
 
 export async function createTestData() {
   // nuke old data...
-  await Promise.all([
-    Organization.remove({}),
-    Blog.remove({}),
-    Post.remove({}),
-    Team.remove({}),
-    User.remove({})
-  ]);
+  await Promise.all(Tyr.collections.map(c => c.remove({})));
 
+  /**
+    Organiations
+   */
   const [
     chipotle,
     chopped,
@@ -25,6 +22,9 @@ export async function createTestData() {
     Organization.insert({ name: 'Cava' })
   ]);
 
+  /**
+    Blogs
+   */
   const [
     chipotleFoodBlog,
     chipotleCorporateBlog,
@@ -37,5 +37,81 @@ export async function createTestData() {
     Blog.insert({ name: 'Spinach + Lentils', organizationId: cava['_id'] })
   ]);
 
-  console.log(await Blog.find({}));
+
+  /**
+    Posts
+   */
+  const [
+    whyBurritosAreAmazing,
+    ecoliChallenges,
+    weDontKnowWhyPeopleGotSick
+  ] = await Promise.all([
+    Blog.addPost('whyBurritosAreAmazing', chipotleFoodBlog),
+    Blog.addPost('ecoliChallenges', chipotleFoodBlog),
+    Blog.addPost('weDontKnowWhyPeopleGotSick', chipotleFoodBlog)
+  ]);
+
+
+  /**
+    Teams
+   */
+  const [
+    burritoMakers,
+    chipotleMarketing,
+    choppedExec,
+    cavaEngineers
+  ] = await Promise.all([
+    Team.insert({ name: 'burritoMakers', organizationId: chipotle['_id'] }),
+    Team.insert({ name: 'chipotleMarketing', organizationId: chipotle['_id'] }),
+    Team.insert({ name: 'choppedExec', organizationId: chopped['_id'] }),
+    Team.insert({ name: 'cavaEngineers', organizationId: cava['_id'] })
+  ]);
+
+
+  /**
+    Users
+   */
+  const [
+    ben,
+    ted
+  ] = await Promise.all([
+
+    User.insert({
+      name: 'ben',
+      organizationId: chipotle['_id'],
+      teamIds: [
+        burritoMakers['_id'],
+        chipotleMarketing['_id']
+      ]
+    }),
+
+    User.insert({
+      name: 'ted',
+      organizationId: cava['_id'],
+      teamIds: [
+        cavaEngineers['_id']
+      ]
+    })
+
+  ]);
+
+
+  return {
+    chipotle,
+    chopped,
+    cava,
+    chipotleFoodBlog,
+    chipotleCorporateBlog,
+    choppedBlog,
+    cavaBlog,
+    whyBurritosAreAmazing,
+    ecoliChallenges,
+    weDontKnowWhyPeopleGotSick,
+    burritoMakers,
+    chipotleMarketing,
+    choppedExec,
+    cavaEngineers,
+    ben,
+    ted
+  };
 }
