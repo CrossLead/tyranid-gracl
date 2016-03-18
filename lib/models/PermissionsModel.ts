@@ -31,7 +31,8 @@ export const PermissionsBaseCollection = new Tyr.Collection({
  */
 export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseCollection) {
 
-  static async setPermission(
+
+  static async setPermissionAccess(
       resourceDocument: Tyr.Document,
       permissionType: string,
       access: boolean,
@@ -70,38 +71,58 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       );
     }
 
+    /**
+     *  Instantiate gracl objects and set permission
+     */
+    const subject = new SubjectClass(subjectDocument),
+          resource = new ResourceClass(resourceDocument);
+
+    await resource.setPermissionAccess(subject, permissionType, access);
+
     // manage permissions
-    return await PermissionsModel.updatePermissions(resourceDocument);
+    return await PermissionsModel.updatePermissions(resource.doc);
   }
 
 
   /**
-   *  Given a tyranid document <doc>, update its permissions based
-      on doc.permissions
-
-      TODO: add uniqueness check?
+   *  Given a tyranid document <doc>, update its permissions based on doc.permissions
    */
-  static async updatePermissions(doc: Tyr.Document): Promise<Tyr.Document> {
-    const permissions         = <gracl.Permission[]> _.get(doc, 'permissions', []),
+  static async updatePermissions(resourceDocument: Tyr.Document): Promise<Tyr.Document> {
+    const permissions         = <gracl.Permission[]> _.get(resourceDocument, 'permissions', []),
           existingPermissions = <gracl.Permission[]> [],
           newPermissions      = <gracl.Permission[]> [],
           updated             = <Tyr.Document[]> [],
           permIdField         = PermissionsModel.def.primaryKey.field;
 
+    // extract secure and cast to plugin
+    const plugin = <GraclPlugin> Tyr.secure,
+          resourceCollectionName = resourceDocument.$model.def.name;
+
+    if (!plugin.graclHierarchy.resources.has(resourceCollectionName)) {
+      throw new Error(
+        `Attempted to update permissions for document in ${resourceCollectionName} collection as resource ` +
+        `but no resource class for that collection was found!`
+      );
+    }
+
     const uniquenessCheck = new Set();
 
     // validate + partition
     _.each(permissions, perm => {
-      if (!perm.resourceId) throw new Error(`Tried to add permission for ${doc.$uid} without resourceId!`);
-      if (!perm.subjectId) throw new Error(`Tried to add permission for ${doc.$uid} without subjectId!`);
+      if (!perm.resourceId) throw new Error(`Tried to add permission for ${resourceDocument.$uid} without resourceId!`);
+      if (!perm.subjectId) throw new Error(`Tried to add permission for ${resourceDocument.$uid} without subjectId!`);
 
       const hash = `${perm.resourceId}-${perm.subjectId}`;
+
       if (uniquenessCheck.has(hash)) {
         throw new Error(
           `Attempted to set duplicate permission for combination of ` +
           `resource = ${perm.resourceId}, subject = ${perm.subjectId}`
         );
       }
+
+      uniquenessCheck.add(hash);
+
       if (perm[permIdField]) {
         existingPermissions.push(perm);
       } else {
@@ -109,6 +130,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       }
     });
 
+    // update existing permissions with new data
     updated.push(...(await Promise.all(existingPermissions.map(perm => {
       return PermissionsModel.findAndModify({
         query: { [permIdField]: perm[permIdField] },
@@ -117,31 +139,83 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       });
     }))));
 
+    // insert new permissions
     updated.push(...(await Promise.all(newPermissions.map(perm => {
-      const p = new PermissionsModel(perm);
+      const p = PermissionsModel.fromClient(perm);
       return p.$save();
     }))));
 
-    delete doc['permissions'];
+    delete resourceDocument['permissions'];
 
     // extract all the ids from the updated permissions
-    doc['permissionIds'] = _.map(updated, permIdField);
+    resourceDocument['permissionIds'] = _.map(updated, permIdField);
 
     // remove permissions for this resource that are not in the given ids
     await PermissionsModel.remove({
-      [permIdField]: { $nin: doc['permissionIds'] },
-      resourceId: doc.$uid
+      [permIdField]: { $nin: resourceDocument['permissionIds'] },
+      resourceId: resourceDocument.$uid
     });
 
-    return doc.$save();
-  };
+    return resourceDocument.$save();
+  }
 
 
   /**
    *  Given a uid, remove all permissions relating to that entity in the system
    */
-  static async deletePermissions(uid: string) {
+  static async deletePermissions(doc: Tyr.Document): Promise<Tyr.Document> {
+    const uid = doc.$uid;
 
+    if (!uid) {
+      throw new Error('No $uid property on document!');
+    }
+
+    /**
+     * Get all permissions relevant to this uid
+     */
+    const permissions = await PermissionsModel.find({
+      $or: [
+        { subjectId: uid },
+        { resourceId: uid }
+      ]
+    });
+
+    const permissionsByCollection = new Map<string, string[]>();
+
+    _.each(permissions, perm => {
+      const altUid = perm['subjectId'] === uid
+        ? perm['resourceId']
+        : perm['subjectId'];
+
+      const parsed = Tyr.parseUid(altUid),
+            collectionName = parsed.collection.def.name;
+
+      if (!permissionsByCollection.has(collectionName)) {
+        permissionsByCollection.set(collectionName, []);
+      }
+
+      permissionsByCollection.get(collectionName).push(perm.$id);
+    });
+
+    for (const [collectionName, idList] of permissionsByCollection) {
+      // pull all permissions ids out of documents in this collection
+      // that relate to the resourceDocument
+      await Tyr.byName[collectionName].update(
+        {},
+        {
+          $pull: {
+            [PermissionsModel.def.primaryKey.field]: {
+              $in: idList
+            }
+          }
+        },
+        { multi: true }
+      );
+    }
+
+    delete doc['permissions'];
+    doc['permissionIds'] = [];
+    return doc.$save();
   }
 
 

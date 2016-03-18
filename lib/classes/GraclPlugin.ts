@@ -241,18 +241,31 @@ export class GraclPlugin {
 
         for (const node of tyrObjects.links) {
           const name = node.collection.def.name,
-                parentName = node.link.def.name;
+                parentName = node.link.def.name,
+                parentNamePath = node.collection.parsePath(node.path);
 
           nodes.set(name,
             { name,
+              id: node.collection.def.primaryKey.field,
               parent: parentName,
-              // TODO: ask ted if there is a cleaner way to do this
-              parentId: node.name === node.path ?
-                node.name :
-                node.path.split('.')[0],
-              repository: GraclPlugin.makeRepository(node.collection)
+              repository: GraclPlugin.makeRepository(node.collection),
+              async getParents(): Promise<gracl.Node[]> {
+                const thisNode = <gracl.Node> this;
+
+                let ids: any = parentNamePath.get(thisNode.doc);
+
+                if (!(ids instanceof Array)) {
+                  ids = [ ids ];
+                }
+
+                const parentObjects = await node.link.byIds(ids),
+                      ParentClass = thisNode.getParentClass();
+
+                return parentObjects.map(doc => new ParentClass(doc));
+              }
             }
           );
+
         }
 
         for (const parent of tyrObjects.parents) {
@@ -260,6 +273,7 @@ export class GraclPlugin {
           if (!nodes.has(name)) {
             nodes.set(name, {
               name,
+              id: parent.def.primaryKey.field,
               repository: GraclPlugin.makeRepository(parent)
             });
           }
