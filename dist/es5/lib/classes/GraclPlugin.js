@@ -4,10 +4,6 @@ var _regenerator = require('babel-runtime/regenerator');
 
 var _regenerator2 = _interopRequireDefault(_regenerator);
 
-var _getIterator2 = require('babel-runtime/core-js/get-iterator');
-
-var _getIterator3 = _interopRequireDefault(_getIterator2);
-
 var _from = require('babel-runtime/core-js/array/from');
 
 var _from2 = _interopRequireDefault(_from);
@@ -23,6 +19,10 @@ var _slicedToArray3 = _interopRequireDefault(_slicedToArray2);
 var _set = require('babel-runtime/core-js/set');
 
 var _set2 = _interopRequireDefault(_set);
+
+var _getIterator2 = require('babel-runtime/core-js/get-iterator');
+
+var _getIterator3 = _interopRequireDefault(_getIterator2);
 
 var _classCallCheck2 = require('babel-runtime/helpers/classCallCheck');
 
@@ -83,6 +83,47 @@ var GraclPlugin = function () {
                 console.log('tyranid-gracl: ' + message);
             }
             return this;
+        }
+    }, {
+        key: 'getObjectHierarchy',
+        value: function getObjectHierarchy() {
+            var hierarchy = {
+                subjects: {},
+                resources: {}
+            };
+            var build = function build(obj) {
+                return function (node) {
+                    var path = node.getHierarchyClassNames().reverse();
+                    var o = obj;
+                    var _iteratorNormalCompletion = true;
+                    var _didIteratorError = false;
+                    var _iteratorError = undefined;
+
+                    try {
+                        for (var _iterator = (0, _getIterator3.default)(path), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                            var name = _step.value;
+
+                            o = o[name] = o[name] || {};
+                        }
+                    } catch (err) {
+                        _didIteratorError = true;
+                        _iteratorError = err;
+                    } finally {
+                        try {
+                            if (!_iteratorNormalCompletion && _iterator.return) {
+                                _iterator.return();
+                            }
+                        } finally {
+                            if (_didIteratorError) {
+                                throw _iteratorError;
+                            }
+                        }
+                    }
+                };
+            };
+            this.graclHierarchy.subjects.forEach(build(hierarchy.subjects));
+            this.graclHierarchy.resources.forEach(build(hierarchy.resources));
+            return hierarchy;
         }
     }, {
         key: 'getShortestPath',
@@ -162,13 +203,13 @@ var GraclPlugin = function () {
                             nodes = schemaMaps.resources;
                             tyrObjects = schemaObjects.resources;
                         }
-                        var _iteratorNormalCompletion = true;
-                        var _didIteratorError = false;
-                        var _iteratorError = undefined;
+                        var _iteratorNormalCompletion2 = true;
+                        var _didIteratorError2 = false;
+                        var _iteratorError2 = undefined;
 
                         try {
-                            for (var _iterator = (0, _getIterator3.default)(tyrObjects.links), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-                                var node = _step.value;
+                            for (var _iterator2 = (0, _getIterator3.default)(tyrObjects.links), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                                var node = _step2.value;
 
                                 var name = node.collection.def.name,
                                     parentName = node.link.def.name;
@@ -177,37 +218,6 @@ var GraclPlugin = function () {
                                     parentId: node.name === node.path ? node.name : node.path.split('.')[0],
                                     repository: GraclPlugin.makeRepository(node.collection)
                                 });
-                            }
-                        } catch (err) {
-                            _didIteratorError = true;
-                            _iteratorError = err;
-                        } finally {
-                            try {
-                                if (!_iteratorNormalCompletion && _iterator.return) {
-                                    _iterator.return();
-                                }
-                            } finally {
-                                if (_didIteratorError) {
-                                    throw _iteratorError;
-                                }
-                            }
-                        }
-
-                        var _iteratorNormalCompletion2 = true;
-                        var _didIteratorError2 = false;
-                        var _iteratorError2 = undefined;
-
-                        try {
-                            for (var _iterator2 = (0, _getIterator3.default)(tyrObjects.parents), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
-                                var parent = _step2.value;
-
-                                var _name = parent.def.name;
-                                if (!nodes.has(_name)) {
-                                    nodes.set(_name, {
-                                        name: _name,
-                                        repository: GraclPlugin.makeRepository(parent)
-                                    });
-                                }
                             }
                         } catch (err) {
                             _didIteratorError2 = true;
@@ -220,6 +230,37 @@ var GraclPlugin = function () {
                             } finally {
                                 if (_didIteratorError2) {
                                     throw _iteratorError2;
+                                }
+                            }
+                        }
+
+                        var _iteratorNormalCompletion3 = true;
+                        var _didIteratorError3 = false;
+                        var _iteratorError3 = undefined;
+
+                        try {
+                            for (var _iterator3 = (0, _getIterator3.default)(tyrObjects.parents), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+                                var parent = _step3.value;
+
+                                var _name = parent.def.name;
+                                if (!nodes.has(_name)) {
+                                    nodes.set(_name, {
+                                        name: _name,
+                                        repository: GraclPlugin.makeRepository(parent)
+                                    });
+                                }
+                            }
+                        } catch (err) {
+                            _didIteratorError3 = true;
+                            _iteratorError3 = err;
+                        } finally {
+                            try {
+                                if (!_iteratorNormalCompletion3 && _iterator3.return) {
+                                    _iterator3.return();
+                                }
+                            } finally {
+                                if (_didIteratorError3) {
+                                    throw _iteratorError3;
                                 }
                             }
                         }
@@ -242,7 +283,7 @@ var GraclPlugin = function () {
             return __awaiter(this, void 0, _promise2.default, _regenerator2.default.mark(function _callee2() {
                 var _this2 = this;
 
-                var ResourceClass, SubjectClass, subject, errorMessageHeader, subjectHierarchyIds, resourceHierarchyClasses, permissions, resourceMap, queriedCollectionLinkFields, queryMaps, _iteratorNormalCompletion3, _didIteratorError3, _iteratorError3, _iterator3, _step3, _step3$value, _collectionName, _step3$value$, collection, _permissions, queryRestrictionSet, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, permission, access, key;
+                var ResourceClass, SubjectClass, subject, errorMessageHeader, subjectHierarchyIds, resourceHierarchyClasses, permissions, resourceMap, queriedCollectionLinkFields, queryMaps, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, _step4$value, _collectionName, _step4$value$, collection, _permissions, queryRestrictionSet, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, permission, access, key;
 
                 return _regenerator2.default.wrap(function _callee2$(_context2) {
                     while (1) {
@@ -322,23 +363,23 @@ var GraclPlugin = function () {
                                     positive: new _map2.default(),
                                     negative: new _map2.default()
                                 };
-                                _iteratorNormalCompletion3 = true;
-                                _didIteratorError3 = false;
-                                _iteratorError3 = undefined;
+                                _iteratorNormalCompletion4 = true;
+                                _didIteratorError4 = false;
+                                _iteratorError4 = undefined;
                                 _context2.prev = 27;
-                                _iterator3 = (0, _getIterator3.default)(resourceMap);
+                                _iterator4 = (0, _getIterator3.default)(resourceMap);
 
                             case 29:
-                                if (_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done) {
+                                if (_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done) {
                                     _context2.next = 78;
                                     break;
                                 }
 
-                                _step3$value = (0, _slicedToArray3.default)(_step3.value, 2);
-                                _collectionName = _step3$value[0];
-                                _step3$value$ = _step3$value[1];
-                                collection = _step3$value$.collection;
-                                _permissions = _step3$value$.permissions;
+                                _step4$value = (0, _slicedToArray3.default)(_step4.value, 2);
+                                _collectionName = _step4$value[0];
+                                _step4$value$ = _step4$value[1];
+                                collection = _step4$value$.collection;
+                                _permissions = _step4$value$.permissions;
                                 queryRestrictionSet = false;
 
                                 if (!queriedCollectionLinkFields.has(_collectionName)) {
@@ -346,19 +387,19 @@ var GraclPlugin = function () {
                                     break;
                                 }
 
-                                _iteratorNormalCompletion4 = true;
-                                _didIteratorError4 = false;
-                                _iteratorError4 = undefined;
+                                _iteratorNormalCompletion5 = true;
+                                _didIteratorError5 = false;
+                                _iteratorError5 = undefined;
                                 _context2.prev = 40;
-                                _iterator4 = (0, _getIterator3.default)(_permissions.values());
+                                _iterator5 = (0, _getIterator3.default)(_permissions.values());
 
                             case 42:
-                                if (_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done) {
+                                if (_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done) {
                                     _context2.next = 56;
                                     break;
                                 }
 
-                                permission = _step4.value;
+                                permission = _step5.value;
                                 access = permission.access[permissionType];
                                 _context2.t0 = access;
                                 _context2.next = _context2.t0 === true ? 48 : _context2.t0 === false ? 48 : 52;
@@ -377,7 +418,7 @@ var GraclPlugin = function () {
                                 queryRestrictionSet = true;
 
                             case 53:
-                                _iteratorNormalCompletion4 = true;
+                                _iteratorNormalCompletion5 = true;
                                 _context2.next = 42;
                                 break;
 
@@ -388,26 +429,26 @@ var GraclPlugin = function () {
                             case 58:
                                 _context2.prev = 58;
                                 _context2.t1 = _context2['catch'](40);
-                                _didIteratorError4 = true;
-                                _iteratorError4 = _context2.t1;
+                                _didIteratorError5 = true;
+                                _iteratorError5 = _context2.t1;
 
                             case 62:
                                 _context2.prev = 62;
                                 _context2.prev = 63;
 
-                                if (!_iteratorNormalCompletion4 && _iterator4.return) {
-                                    _iterator4.return();
+                                if (!_iteratorNormalCompletion5 && _iterator5.return) {
+                                    _iterator5.return();
                                 }
 
                             case 65:
                                 _context2.prev = 65;
 
-                                if (!_didIteratorError4) {
+                                if (!_didIteratorError5) {
                                     _context2.next = 68;
                                     break;
                                 }
 
-                                throw _iteratorError4;
+                                throw _iteratorError5;
 
                             case 68:
                                 return _context2.finish(65);
@@ -421,7 +462,7 @@ var GraclPlugin = function () {
 
                             case 72:
                                 return _context2.delegateYield(_regenerator2.default.mark(function _callee() {
-                                    var path, pathEndCollectionName, positiveIds, negativeIds, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, _permission, _access, pathEndCollection, nextCollection, pathCollectionName, nextCollectionName, pathCollection, _nextCollection, linkedCollectionName, addIdsToQueryMap;
+                                    var path, pathEndCollectionName, positiveIds, negativeIds, _iteratorNormalCompletion6, _didIteratorError6, _iteratorError6, _iterator6, _step6, _permission, _access, pathEndCollection, nextCollection, pathCollectionName, nextCollectionName, pathCollection, _nextCollection, linkedCollectionName, addIdsToQueryMap;
 
                                     return _regenerator2.default.wrap(function _callee$(_context) {
                                         while (1) {
@@ -456,19 +497,19 @@ var GraclPlugin = function () {
 
                                                 case 8:
                                                     positiveIds = [], negativeIds = [];
-                                                    _iteratorNormalCompletion5 = true;
-                                                    _didIteratorError5 = false;
-                                                    _iteratorError5 = undefined;
+                                                    _iteratorNormalCompletion6 = true;
+                                                    _didIteratorError6 = false;
+                                                    _iteratorError6 = undefined;
                                                     _context.prev = 12;
-                                                    _iterator5 = (0, _getIterator3.default)(_permissions.values());
+                                                    _iterator6 = (0, _getIterator3.default)(_permissions.values());
 
                                                 case 14:
-                                                    if (_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done) {
+                                                    if (_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done) {
                                                         _context.next = 27;
                                                         break;
                                                     }
 
-                                                    _permission = _step5.value;
+                                                    _permission = _step6.value;
                                                     _access = _permission.access[permissionType];
                                                     _context.t0 = _access;
                                                     _context.next = _context.t0 === true ? 20 : _context.t0 === false ? 22 : 24;
@@ -483,7 +524,7 @@ var GraclPlugin = function () {
                                                     return _context.abrupt('break', 24);
 
                                                 case 24:
-                                                    _iteratorNormalCompletion5 = true;
+                                                    _iteratorNormalCompletion6 = true;
                                                     _context.next = 14;
                                                     break;
 
@@ -494,26 +535,26 @@ var GraclPlugin = function () {
                                                 case 29:
                                                     _context.prev = 29;
                                                     _context.t1 = _context['catch'](12);
-                                                    _didIteratorError5 = true;
-                                                    _iteratorError5 = _context.t1;
+                                                    _didIteratorError6 = true;
+                                                    _iteratorError6 = _context.t1;
 
                                                 case 33:
                                                     _context.prev = 33;
                                                     _context.prev = 34;
 
-                                                    if (!_iteratorNormalCompletion5 && _iterator5.return) {
-                                                        _iterator5.return();
+                                                    if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                                                        _iterator6.return();
                                                     }
 
                                                 case 36:
                                                     _context.prev = 36;
 
-                                                    if (!_didIteratorError5) {
+                                                    if (!_didIteratorError6) {
                                                         _context.next = 39;
                                                         break;
                                                     }
 
-                                                    throw _iteratorError5;
+                                                    throw _iteratorError6;
 
                                                 case 39:
                                                     return _context.finish(36);
@@ -601,7 +642,7 @@ var GraclPlugin = function () {
                                 throw new Error(errorMessageHeader + ', unable to set query restriction ' + ('to satisfy permissions relating to collection ' + _collectionName));
 
                             case 75:
-                                _iteratorNormalCompletion3 = true;
+                                _iteratorNormalCompletion4 = true;
                                 _context2.next = 29;
                                 break;
 
@@ -612,26 +653,26 @@ var GraclPlugin = function () {
                             case 80:
                                 _context2.prev = 80;
                                 _context2.t3 = _context2['catch'](27);
-                                _didIteratorError3 = true;
-                                _iteratorError3 = _context2.t3;
+                                _didIteratorError4 = true;
+                                _iteratorError4 = _context2.t3;
 
                             case 84:
                                 _context2.prev = 84;
                                 _context2.prev = 85;
 
-                                if (!_iteratorNormalCompletion3 && _iterator3.return) {
-                                    _iterator3.return();
+                                if (!_iteratorNormalCompletion4 && _iterator4.return) {
+                                    _iterator4.return();
                                 }
 
                             case 87:
                                 _context2.prev = 87;
 
-                                if (!_didIteratorError3) {
+                                if (!_didIteratorError4) {
                                     _context2.next = 90;
                                     break;
                                 }
 
-                                throw _iteratorError3;
+                                throw _iteratorError4;
 
                             case 90:
                                 return _context2.finish(87);

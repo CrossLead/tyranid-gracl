@@ -80,7 +80,7 @@ var Blog = function (_exports$BlogBaseColl) {
         return (0, _possibleConstructorReturn3.default)(this, (0, _getPrototypeOf2.default)(Blog).apply(this, arguments));
     }
 
-    (0, _createClass3.default)(Blog, [{
+    (0, _createClass3.default)(Blog, null, [{
         key: 'addPost',
         value: function addPost(text, blog) {
             return __awaiter(this, void 0, void 0, _regenerator2.default.mark(function _callee() {

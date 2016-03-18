@@ -28,7 +28,7 @@ export class GraclPlugin {
         );
       },
       async saveEntity(id: string, doc: Tyr.Document): Promise<Tyr.Document> {
-        await PermissionsModel.updatePermissions(doc, 'subject');
+        await PermissionsModel.updatePermissions(doc);
         return await doc.$save();
       }
     };
@@ -110,6 +110,26 @@ export class GraclPlugin {
       console.log(`tyranid-gracl: ${message}`);
     }
     return this;
+  }
+
+
+  getObjectHierarchy() {
+    const hierarchy = {
+      subjects: {},
+      resources: {}
+    };
+
+    const build = (obj: any) => (node: typeof gracl.Node) => {
+      const path = node.getHierarchyClassNames().reverse();
+      let o = obj;
+      for (const name of path) {
+        o = o[name] = o[name] || {};
+      }
+    };
+
+    this.graclHierarchy.subjects.forEach(build(hierarchy.subjects));
+    this.graclHierarchy.resources.forEach(build(hierarchy.resources));
+    return hierarchy;
   }
 
 
@@ -250,11 +270,28 @@ export class GraclPlugin {
       this.log(`creating link graph.`);
       this.outgoingLinkPaths = GraclPlugin.buildLinkGraph();
 
-      this.log(`creating gracl hierarchy`);
       this.graclHierarchy = new gracl.Graph({
         subjects: Array.from(schemaMaps.subjects.values()),
         resources: Array.from(schemaMaps.resources.values())
       });
+
+      this.log(`created gracl hierarchy based on tyranid schemas: `);
+
+      if (this.verbose) {
+        console.log(
+          '  | \n  | ' +
+          JSON
+            .stringify(this.getObjectHierarchy(), null, 4)
+            .replace(/[{},\":]/g, '')
+            .replace(/^\s*\n/gm, '')
+            .split('\n')
+            .join('\n  | ')
+            .replace(/\s+$/, '')
+            .replace(/resources/, '---- resources ----')
+            .replace(/subjects/, '---- subjects ----') +
+          '____'
+        );
+      }
 
     }
   }

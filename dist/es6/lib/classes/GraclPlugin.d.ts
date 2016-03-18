@@ -10,6 +10,10 @@ export declare class GraclPlugin {
     outgoingLinkPaths: Hash<Hash<string>>;
     constructor(verbose?: boolean);
     log(message: string): this;
+    getObjectHierarchy(): {
+        subjects: {};
+        resources: {};
+    };
     getShortestPath(colA: Tyr.CollectionInstance, colB: Tyr.CollectionInstance): string[];
     boot(stage: Tyr.BootStage): void;
     query(queriedCollection: Tyr.CollectionInstance, permissionType: string, user?: Tyr.Document): Promise<boolean | {}>;

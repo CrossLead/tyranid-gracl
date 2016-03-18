@@ -1,4 +1,4 @@
-// Compiled using typings@0.6.10
+// Compiled using typings@0.6.8
 // Source: https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/3d572e1ee3e6492983ef01f8b7adf6150d345b11/lodash/lodash-3.10.d.ts
 // Type definitions for Lo-Dash
 // Project: http://lodash.com/

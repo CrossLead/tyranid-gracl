@@ -1,4 +1,4 @@
-// Compiled using typings@0.6.10
+// Compiled using typings@0.6.8
 // Source: https://raw.githubusercontent.com/tyranid-org/tyranid-typings/master/tyranid/index.d.ts
 /**
  *  Type definitions for tyranid.js
@@ -132,6 +132,11 @@ declare module 'tyranid' {
     const byName: { [key: string]: CollectionInstance };
     const collections: CollectionInstance[];
     const documentPrototype: Document;
+    const secure: Secure;
+
+    interface Secure {
+      query(collection: CollectionInstance, method: 'view' | 'update' | 'insert' | 'delete'): Promise<MongoQuery>;
+    }
 
     const local: {
       user: Document;
