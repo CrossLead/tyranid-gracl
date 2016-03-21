@@ -78,4 +78,24 @@ describe('tyranid-gracl', () => {
     ).to.equal(true);
   });
 
+
+  it('Permissions should be validated', async() => {
+    const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+          chipotleCorporateBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' });
+
+    expect(ben, 'ben should exist').to.exist;
+    expect(chipotleCorporateBlog, 'chipotleCorporateBlog should exist').to.exist;
+
+    let threw = false;
+    try {
+      await chipotleCorporateBlog['$isAllowed']('view', ben);
+    } catch (err) {
+      threw = true;
+    }
+
+    expect(threw,
+      'checking \"view\" without collection should throw'
+    ).to.equal(true);
+  });
+
 });

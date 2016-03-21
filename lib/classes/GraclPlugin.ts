@@ -342,8 +342,10 @@ export class GraclPlugin {
    *  Method for creating a specific query based on a schema object
    */
   async query(queriedCollection: Tyr.CollectionInstance,
-              permissionType: string,
+              permissionAction: string,
               user = Tyr.local.user): Promise<boolean | {}> {
+
+    const permissionType = `${permissionAction}-${queriedCollection.def.name}`;
 
     this.log(
       `tyranid-gracl: restricting query for collection = ${queriedCollection.def.name} ` +

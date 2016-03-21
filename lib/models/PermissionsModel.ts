@@ -32,6 +32,46 @@ export const PermissionsBaseCollection = new Tyr.Collection({
 export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseCollection) {
 
 
+  static validPermissionActions = new Set(['view', 'edit', 'update', 'delete']);
+
+
+  static getGraclPlugin(): GraclPlugin {
+    const plugin = <GraclPlugin> Tyr.secure;
+    if (!plugin) {
+      throw new Error(`No gracl plugin available, must instantiate GraclPlugin and pass to Tyr.config()!`);
+    }
+    return plugin;
+  }
+
+
+  static validatePermissionType(permissionType: string) {
+    const [ action, collectionName ] = permissionType.split('-'),
+          { validPermissionActions } = PermissionsModel;
+
+    if (!collectionName) {
+      throw new Error(
+        `Invalid permissionType ${permissionType}! ` +
+        `No collection name in permission type, permissions must be formatted as <action>-<collection>`
+      );
+    }
+
+    if (!validPermissionActions.has(action)) {
+      throw new Error(
+        `Invalid permissionType ${permissionType}! ` +
+        `permission action given ${action} is not valid. Must be one of ${[...validPermissionActions].join(', ')}`
+      );
+    }
+
+    const plugin = PermissionsModel.getGraclPlugin();
+
+    if (!plugin.graclHierarchy.resources.has(collectionName)) {
+      throw new Error(
+        `Invalid permissionType ${permissionType}! ` +
+        `collection given ${collectionName} is not valid as there is no associated resource class.`
+      );
+    }
+  }
+
   static async getGraclClasses(resourceDocument: Tyr.Document, subjectDocument: Tyr.Document) {
 
     if (!resourceDocument) {
@@ -43,7 +83,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     }
 
     // extract secure and cast to plugin
-    const plugin = <GraclPlugin> Tyr.secure;
+    const plugin = PermissionsModel.getGraclPlugin();
 
     const resourceCollectionName = resourceDocument.$model.def.name,
           subjectCollectionName = subjectDocument.$model.def.name;
@@ -86,6 +126,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       access: boolean,
       subjectDocument = Tyr.local.user
     ): Promise<Tyr.Document> {
+    PermissionsModel.validatePermissionType(permissionType);
 
     const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
 
@@ -103,6 +144,8 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       permissionType: string,
       subjectDocument = Tyr.local.user
     ): Promise<boolean> {
+    PermissionsModel.validatePermissionType(permissionType);
+
     const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
 
     return await resource.isAllowed(subject, permissionType);
@@ -120,7 +163,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
           permIdField         = PermissionsModel.def.primaryKey.field;
 
     // extract secure and cast to plugin
-    const plugin = <GraclPlugin> Tyr.secure,
+    const plugin = PermissionsModel.getGraclPlugin(),
           resourceCollectionName = resourceDocument.$model.def.name;
 
     if (!plugin.graclHierarchy.resources.has(resourceCollectionName)) {
