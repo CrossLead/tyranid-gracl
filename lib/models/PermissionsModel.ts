@@ -148,12 +148,8 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       return p.$save();
     });
 
-
-    const updatedExisting = <Tyr.Document[]> (await Promise.all(existingUpdatePromises));
-    const updatedNew = <Tyr.Document[]> (await Promise.all(newPermissionPromises));
-
-    updated.push(...updatedExisting);
-    updated.push(...updatedNew);
+    updated.push(...(await Promise.all(existingUpdatePromises)));
+    updated.push(...(await Promise.all(newPermissionPromises)));
 
     // extract all the ids from the updated permissions
     resourceDocument['permissionIds'] = _.map(updated, permIdField);

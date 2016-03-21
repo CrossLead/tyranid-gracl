@@ -207,6 +207,20 @@ export class GraclPlugin {
 
         if (!graclType) return;
 
+        const allOutgoingFields = col.links({ direction: 'outgoing' });
+
+        const validateField = (f: Tyr.Field) => {
+          return f.def.link === 'graclPermission' && f.name === 'permissionIds';
+        };
+
+        if (!_.find(allOutgoingFields, validateField)) {
+          throw new Error(
+            `Tyranid collection \"${col.def.name}\" has \"graclType\" annotation but no \"permissionIds\" field. ` +
+            `tyranid-gracl requires a field on secured collections of type: \n` +
+            `\"permissionIds: { is: 'array', link: 'graclPermission' }\"`
+          );
+        }
+
         // validate gracl type
         switch (graclType) {
           case 'subject':
