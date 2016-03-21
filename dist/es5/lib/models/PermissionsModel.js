@@ -184,7 +184,7 @@ var PermissionsModel = function (_exports$PermissionsB) {
             return __awaiter(this, void 0, _promise2.default, _regenerator2.default.mark(function _callee2() {
                 var _PermissionsModel$rem;
 
-                var permissions, existingPermissions, newPermissions, updated, permIdField, plugin, resourceCollectionName, uniquenessCheck, existingUpdatePromises, newPermissionPromises, updatedExisting, updatedNew, updatedResourceDocument;
+                var permissions, existingPermissions, newPermissions, updated, permIdField, plugin, resourceCollectionName, uniquenessCheck, existingUpdatePromises, newPermissionPromises, updatedResourceDocument;
                 return _regenerator2.default.wrap(function _callee2$(_context2) {
                     while (1) {
                         switch (_context2.prev = _context2.next) {
@@ -227,36 +227,45 @@ var PermissionsModel = function (_exports$PermissionsB) {
                                     var p = PermissionsModel.fromClient(perm);
                                     return p.$save();
                                 });
-                                _context2.next = 10;
+                                _context2.t0 = updated.push;
+                                _context2.t1 = updated;
+                                _context2.next = 12;
                                 return _promise2.default.all(existingUpdatePromises);
 
-                            case 10:
-                                updatedExisting = _context2.sent;
-                                _context2.next = 13;
+                            case 12:
+                                _context2.t2 = _context2.sent;
+                                _context2.t3 = (0, _toConsumableArray3.default)(_context2.t2);
+
+                                _context2.t0.apply.call(_context2.t0, _context2.t1, _context2.t3);
+
+                                _context2.t4 = updated.push;
+                                _context2.t5 = updated;
+                                _context2.next = 19;
                                 return _promise2.default.all(newPermissionPromises);
 
-                            case 13:
-                                updatedNew = _context2.sent;
+                            case 19:
+                                _context2.t6 = _context2.sent;
+                                _context2.t7 = (0, _toConsumableArray3.default)(_context2.t6);
 
-                                updated.push.apply(updated, (0, _toConsumableArray3.default)(updatedExisting));
-                                updated.push.apply(updated, (0, _toConsumableArray3.default)(updatedNew));
+                                _context2.t4.apply.call(_context2.t4, _context2.t5, _context2.t7);
+
                                 resourceDocument['permissionIds'] = _.map(updated, permIdField);
-                                _context2.next = 19;
+                                _context2.next = 25;
                                 return PermissionsModel.remove((_PermissionsModel$rem = {}, (0, _defineProperty3.default)(_PermissionsModel$rem, permIdField, { $nin: resourceDocument['permissionIds'] }), (0, _defineProperty3.default)(_PermissionsModel$rem, 'resourceId', resourceDocument.$uid), _PermissionsModel$rem));
 
-                            case 19:
-                                _context2.next = 21;
+                            case 25:
+                                _context2.next = 27;
                                 return resourceDocument.$save();
 
-                            case 21:
+                            case 27:
                                 updatedResourceDocument = _context2.sent;
-                                _context2.next = 24;
+                                _context2.next = 30;
                                 return Tyr.byName[resourceCollectionName].populate('permissionIds', updatedResourceDocument);
 
-                            case 24:
+                            case 30:
                                 return _context2.abrupt('return', _context2.sent);
 
-                            case 25:
+                            case 31:
                             case 'end':
                                 return _context2.stop();
                         }

@@ -32,19 +32,14 @@ export const PermissionsBaseCollection = new Tyr.Collection({
 export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseCollection) {
 
 
-  static async setPermissionAccess(
-      resourceDocument: Tyr.Document,
-      permissionType: string,
-      access: boolean,
-      subjectDocument = Tyr.local.user
-    ): Promise<Tyr.Document> {
+  static async getGraclClasses(resourceDocument: Tyr.Document, subjectDocument: Tyr.Document) {
 
     if (!resourceDocument) {
-      throw new Error('No resource provided to setPermission()!');
+      throw new Error('No resource document provided!');
     }
 
     if (!subjectDocument) {
-      throw new Error('No subject provided to setPermission() (or Tyr.local.user is unavailable)!');
+      throw new Error('No subject document provided (or Tyr.local.user is unavailable)!');
     }
 
     // extract secure and cast to plugin
@@ -63,14 +58,14 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
     if (!ResourceClass) {
       throw new Error(
-        `Attempted to set permission using ${resourceCollectionName} as resource, ` +
+        `Attempted to set/get permission using ${resourceCollectionName} as resource, ` +
         `no relevant resource class found in tyranid-gracl plugin!`
       );
     }
 
     if (!SubjectClass) {
       throw new Error(
-        `Attempted to set permission using ${subjectCollectionName} as subject, ` +
+        `Attempted to set/get permission using ${subjectCollectionName} as subject, ` +
         `no relevant subject class found in tyranid-gracl plugin!`
       );
     }
@@ -81,10 +76,36 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     const subject = new SubjectClass(subjectDocument),
           resource = new ResourceClass(resourceDocument);
 
+    return { subject, resource };
+  }
+
+
+  static async setPermissionAccess(
+      resourceDocument: Tyr.Document,
+      permissionType: string,
+      access: boolean,
+      subjectDocument = Tyr.local.user
+    ): Promise<Tyr.Document> {
+
+    const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
+
+    // setPermissionAccess calls resource.getClass().repository.saveEntity()
+    // which in turn calls PermissionsModel.updatePermissions(doc)
     await resource.setPermissionAccess(subject, permissionType, access);
 
     // manage permissions
     return <Tyr.Document> resource.doc;
+  }
+
+
+  static async isAllowed(
+      resourceDocument: Tyr.Document,
+      permissionType: string,
+      subjectDocument = Tyr.local.user
+    ): Promise<boolean> {
+    const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
+
+    return await resource.isAllowed(subject, permissionType);
   }
 
 
@@ -144,8 +165,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     });
 
     const newPermissionPromises = newPermissions.map(perm => {
-      const p = PermissionsModel.fromClient(perm);
-      return p.$save();
+      return PermissionsModel.fromClient(perm).$save();
     });
 
     updated.push(...(await Promise.all(existingUpdatePromises)));

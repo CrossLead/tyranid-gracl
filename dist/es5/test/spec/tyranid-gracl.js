@@ -76,7 +76,7 @@ describe('tyranid-gracl', function () {
     });
     it('Adding permissions should work', function () {
         return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee2() {
-            var ben, chipotle, updatedChipotle;
+            var ben, chipotle, updatedChipotle, existingPermissions;
             return _regenerator2.default.wrap(function _callee2$(_context2) {
                 while (1) {
                     switch (_context2.prev = _context2.next) {
@@ -99,17 +99,18 @@ describe('tyranid-gracl', function () {
 
                         case 10:
                             updatedChipotle = _context2.sent;
-                            _context2.t0 = console;
-                            _context2.next = 14;
+                            _context2.next = 13;
                             return tyranidGracl.PermissionsModel.find({});
 
-                        case 14:
-                            _context2.t1 = _context2.sent;
-                            _context2.t2 = updatedChipotle;
+                        case 13:
+                            existingPermissions = _context2.sent;
 
-                            _context2.t0.log.call(_context2.t0, _context2.t1, _context2.t2);
+                            chai_1.expect(existingPermissions).to.have.lengthOf(1);
+                            chai_1.expect(existingPermissions[0]['resourceId'].toString(), 'resourceId').to.equal(updatedChipotle['permissions'][0]['resourceId'].toString());
+                            chai_1.expect(existingPermissions[0]['subjectId'].toString(), 'subjectId').to.equal(updatedChipotle['permissions'][0]['subjectId'].toString());
+                            chai_1.expect(existingPermissions[0]['access']['view-post'], 'access').to.equal(updatedChipotle['permissions'][0]['access']['view-post']);
 
-                        case 17:
+                        case 18:
                         case 'end':
                             return _context2.stop();
                     }

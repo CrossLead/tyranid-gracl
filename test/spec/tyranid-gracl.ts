@@ -65,4 +65,17 @@ describe('tyranid-gracl', () => {
   });
 
 
+  it('Permissions hierarchy should be respected', async() => {
+    const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+          chipotleFoodBlog = await Tyr.byName['blog'].findOne({ name: 'Burritos Etc' });
+
+    expect(ben, 'ben should exist').to.exist;
+    expect(chipotleFoodBlog, 'chipotleFoodBlog should exist').to.exist;
+
+    expect(
+      await chipotleFoodBlog['$isAllowed']('view-post', ben),
+      'ben should have access to chipotleFoodBlog through access to chipotle org'
+    ).to.equal(true);
+  });
+
 });

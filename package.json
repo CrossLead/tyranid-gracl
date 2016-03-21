@@ -20,7 +20,7 @@
   "dependencies": {
     "gracl": "git://github.com/crosslead/gracl.git#05c08dccb31bd87152c7cf10f12576639fe0cce0",
     "lodash": "^3.10.1",
-    "tyranid": "^0.0.140"
+    "tyranid": "^0.0.142"
   },
   "babel": {
     "presets": [

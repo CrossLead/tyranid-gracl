@@ -20,7 +20,6 @@ export class GraclPlugin {
   static makeRepository(collection: Tyr.CollectionInstance): gracl.Repository {
     return {
       async getEntity(id: string, node: gracl.Node): Promise<Tyr.Document> {
-        console.log(`getEntity called for ${node.toString()}`);
         return <Tyr.Document> (
           await collection.populate(
             'permissionIds',
@@ -29,7 +28,6 @@ export class GraclPlugin {
         );
       },
       async saveEntity(id: string, doc: Tyr.Document, node: gracl.Node): Promise<Tyr.Document> {
-        console.log(`saveEntity called for ${node.toString()}`);
         return PermissionsModel.updatePermissions(doc);
       }
     };
@@ -166,6 +164,21 @@ export class GraclPlugin {
     if (stage === 'post-link') {
       this.log(`starting boot.`);
 
+      /**
+       *  Add methods to document prototype
+       */
+      Object.assign(Tyr.documentPrototype, {
+        $setPermissionAccess(permissionType: string, access: boolean, subjectDocument = Tyr.local.user) {
+          const doc = <Tyr.Document> this;
+          return PermissionsModel.setPermissionAccess(doc, permissionType, access, subjectDocument);
+        },
+
+        $isAllowed(permissionType: string, subjectDocument = Tyr.local.user) {
+          const doc = <Tyr.Document> this;
+          return PermissionsModel.isAllowed(doc, permissionType, subjectDocument);
+        }
+      });
+
       // type alias for convienience
       type TyrSchemaGraphObjects = {
         links: Tyr.Field[];
@@ -267,8 +280,6 @@ export class GraclPlugin {
                 const thisNode = <gracl.Node> this;
 
                 let ids: any = parentNamePath.get(thisNode.doc);
-
-                console.log(`in custom getParents! ${ids}`);
 
                 if (!(ids instanceof Array)) {
                   ids = [ ids ];
