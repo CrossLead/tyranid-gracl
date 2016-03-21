@@ -118,4 +118,89 @@ describe('tyranid-gracl', function () {
             }, _callee2, this);
         }));
     });
+    it('Permissions hierarchy should be respected', function () {
+        return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee3() {
+            var ben, chipotleFoodBlog;
+            return _regenerator2.default.wrap(function _callee3$(_context3) {
+                while (1) {
+                    switch (_context3.prev = _context3.next) {
+                        case 0:
+                            _context3.next = 2;
+                            return Tyr.byName['user'].findOne({ name: 'ben' });
+
+                        case 2:
+                            ben = _context3.sent;
+                            _context3.next = 5;
+                            return Tyr.byName['blog'].findOne({ name: 'Burritos Etc' });
+
+                        case 5:
+                            chipotleFoodBlog = _context3.sent;
+
+                            chai_1.expect(ben, 'ben should exist').to.exist;
+                            chai_1.expect(chipotleFoodBlog, 'chipotleFoodBlog should exist').to.exist;
+                            _context3.t0 = chai_1;
+                            _context3.next = 11;
+                            return chipotleFoodBlog['$isAllowed']('view-post', ben);
+
+                        case 11:
+                            _context3.t1 = _context3.sent;
+
+                            _context3.t0.expect.call(_context3.t0, _context3.t1, 'ben should have access to chipotleFoodBlog through access to chipotle org').to.equal(true);
+
+                        case 13:
+                        case 'end':
+                            return _context3.stop();
+                    }
+                }
+            }, _callee3, this);
+        }));
+    });
+    it('Permissions should be validated', function () {
+        return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee4() {
+            var ben, chipotleCorporateBlog, threw, message;
+            return _regenerator2.default.wrap(function _callee4$(_context4) {
+                while (1) {
+                    switch (_context4.prev = _context4.next) {
+                        case 0:
+                            _context4.next = 2;
+                            return Tyr.byName['user'].findOne({ name: 'ben' });
+
+                        case 2:
+                            ben = _context4.sent;
+                            _context4.next = 5;
+                            return Tyr.byName['blog'].findOne({ name: 'Mexican Empire' });
+
+                        case 5:
+                            chipotleCorporateBlog = _context4.sent;
+
+                            chai_1.expect(ben, 'ben should exist').to.exist;
+                            chai_1.expect(chipotleCorporateBlog, 'chipotleCorporateBlog should exist').to.exist;
+                            threw = false, message = '';
+                            _context4.prev = 9;
+                            _context4.next = 12;
+                            return chipotleCorporateBlog['$isAllowed']('view', ben);
+
+                        case 12:
+                            _context4.next = 18;
+                            break;
+
+                        case 14:
+                            _context4.prev = 14;
+                            _context4.t0 = _context4['catch'](9);
+
+                            threw = true;
+                            message = _context4.t0.message;
+
+                        case 18:
+                            chai_1.expect(threw, 'checking \"view\" without collection should throw').to.equal(true);
+                            chai_1.expect(message, 'Error message should contain "No collection name in permission type"').to.match(/No collection name in permission type/g);
+
+                        case 20:
+                        case 'end':
+                            return _context4.stop();
+                    }
+                }
+            }, _callee4, this, [[9, 14]]);
+        }));
+    });
 });

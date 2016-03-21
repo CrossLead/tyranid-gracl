@@ -16,5 +16,5 @@ export declare class GraclPlugin {
     };
     getShortestPath(colA: Tyr.CollectionInstance, colB: Tyr.CollectionInstance): string[];
     boot(stage: Tyr.BootStage): void;
-    query(queriedCollection: Tyr.CollectionInstance, permissionType: string, user?: Tyr.Document): Promise<boolean | {}>;
+    query(queriedCollection: Tyr.CollectionInstance, permissionAction: string, user?: Tyr.Document): Promise<boolean | {}>;
 }

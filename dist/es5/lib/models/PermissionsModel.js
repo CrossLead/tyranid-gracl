@@ -1,9 +1,5 @@
 "use strict";
 
-var _slicedToArray2 = require('babel-runtime/helpers/slicedToArray');
-
-var _slicedToArray3 = _interopRequireDefault(_slicedToArray2);
-
 var _getIterator2 = require('babel-runtime/core-js/get-iterator');
 
 var _getIterator3 = _interopRequireDefault(_getIterator2);
@@ -11,10 +7,6 @@ var _getIterator3 = _interopRequireDefault(_getIterator2);
 var _map = require('babel-runtime/core-js/map');
 
 var _map2 = _interopRequireDefault(_map);
-
-var _toConsumableArray2 = require('babel-runtime/helpers/toConsumableArray');
-
-var _toConsumableArray3 = _interopRequireDefault(_toConsumableArray2);
 
 var _defineProperty2 = require('babel-runtime/helpers/defineProperty');
 
@@ -27,6 +19,14 @@ var _set2 = _interopRequireDefault(_set);
 var _regenerator = require('babel-runtime/regenerator');
 
 var _regenerator2 = _interopRequireDefault(_regenerator);
+
+var _toConsumableArray2 = require('babel-runtime/helpers/toConsumableArray');
+
+var _toConsumableArray3 = _interopRequireDefault(_toConsumableArray2);
+
+var _slicedToArray2 = require('babel-runtime/helpers/slicedToArray');
+
+var _slicedToArray3 = _interopRequireDefault(_slicedToArray2);
 
 var _getPrototypeOf = require('babel-runtime/core-js/object/get-prototype-of');
 
@@ -107,10 +107,38 @@ var PermissionsModel = function (_exports$PermissionsB) {
     }
 
     (0, _createClass3.default)(PermissionsModel, null, [{
-        key: 'setPermissionAccess',
-        value: function setPermissionAccess(resourceDocument, permissionType, access) {
-            var subjectDocument = arguments.length <= 3 || arguments[3] === undefined ? Tyr.local.user : arguments[3];
+        key: 'getGraclPlugin',
+        value: function getGraclPlugin() {
+            var plugin = Tyr.secure;
+            if (!plugin) {
+                throw new Error('No gracl plugin available, must instantiate GraclPlugin and pass to Tyr.config()!');
+            }
+            return plugin;
+        }
+    }, {
+        key: 'validatePermissionType',
+        value: function validatePermissionType(permissionType) {
+            var _permissionType$split = permissionType.split('-');
 
+            var _permissionType$split2 = (0, _slicedToArray3.default)(_permissionType$split, 2);
+
+            var action = _permissionType$split2[0];
+            var collectionName = _permissionType$split2[1];var validPermissionActions = PermissionsModel.validPermissionActions;
+
+            if (!collectionName) {
+                throw new Error('Invalid permissionType ' + permissionType + '! ' + 'No collection name in permission type, permissions must be formatted as <action>-<collection>');
+            }
+            if (!validPermissionActions.has(action)) {
+                throw new Error('Invalid permissionType ' + permissionType + '! ' + ('permission action given ' + action + ' is not valid. Must be one of ' + [].concat((0, _toConsumableArray3.default)(validPermissionActions)).join(', ')));
+            }
+            var plugin = PermissionsModel.getGraclPlugin();
+            if (!plugin.graclHierarchy.resources.has(collectionName)) {
+                throw new Error('Invalid permissionType ' + permissionType + '! ' + ('collection given ' + collectionName + ' is not valid as there is no associated resource class.'));
+            }
+        }
+    }, {
+        key: 'getGraclClasses',
+        value: function getGraclClasses(resourceDocument, subjectDocument) {
             return __awaiter(this, void 0, _promise2.default, _regenerator2.default.mark(function _callee() {
                 var plugin, resourceCollectionName, subjectCollectionName, ResourceClass, SubjectClass, subject, resource;
                 return _regenerator2.default.wrap(function _callee$(_context) {
@@ -122,7 +150,7 @@ var PermissionsModel = function (_exports$PermissionsB) {
                                     break;
                                 }
 
-                                throw new Error('No resource provided to setPermission()!');
+                                throw new Error('No resource document provided!');
 
                             case 2:
                                 if (subjectDocument) {
@@ -130,10 +158,10 @@ var PermissionsModel = function (_exports$PermissionsB) {
                                     break;
                                 }
 
-                                throw new Error('No subject provided to setPermission() (or Tyr.local.user is unavailable)!');
+                                throw new Error('No subject document provided (or Tyr.local.user is unavailable)!');
 
                             case 4:
-                                plugin = Tyr.secure;
+                                plugin = PermissionsModel.getGraclPlugin();
                                 resourceCollectionName = resourceDocument.$model.def.name, subjectCollectionName = subjectDocument.$model.def.name;
 
                                 if (resourceDocument['permissions']) {
@@ -152,7 +180,7 @@ var PermissionsModel = function (_exports$PermissionsB) {
                                     break;
                                 }
 
-                                throw new Error('Attempted to set permission using ' + resourceCollectionName + ' as resource, ' + 'no relevant resource class found in tyranid-gracl plugin!');
+                                throw new Error('Attempted to set/get permission using ' + resourceCollectionName + ' as resource, ' + 'no relevant resource class found in tyranid-gracl plugin!');
 
                             case 12:
                                 if (SubjectClass) {
@@ -160,17 +188,13 @@ var PermissionsModel = function (_exports$PermissionsB) {
                                     break;
                                 }
 
-                                throw new Error('Attempted to set permission using ' + subjectCollectionName + ' as subject, ' + 'no relevant subject class found in tyranid-gracl plugin!');
+                                throw new Error('Attempted to set/get permission using ' + subjectCollectionName + ' as subject, ' + 'no relevant subject class found in tyranid-gracl plugin!');
 
                             case 14:
                                 subject = new SubjectClass(subjectDocument), resource = new ResourceClass(resourceDocument);
-                                _context.next = 17;
-                                return resource.setPermissionAccess(subject, permissionType, access);
+                                return _context.abrupt('return', { subject: subject, resource: resource });
 
-                            case 17:
-                                return _context.abrupt('return', resource.doc);
-
-                            case 18:
+                            case 16:
                             case 'end':
                                 return _context.stop();
                         }
@@ -179,21 +203,89 @@ var PermissionsModel = function (_exports$PermissionsB) {
             }));
         }
     }, {
-        key: 'updatePermissions',
-        value: function updatePermissions(resourceDocument) {
-            return __awaiter(this, void 0, _promise2.default, _regenerator2.default.mark(function _callee2() {
-                var _PermissionsModel$rem;
+        key: 'setPermissionAccess',
+        value: function setPermissionAccess(resourceDocument, permissionType, access) {
+            var subjectDocument = arguments.length <= 3 || arguments[3] === undefined ? Tyr.local.user : arguments[3];
 
-                var permissions, existingPermissions, newPermissions, updated, permIdField, plugin, resourceCollectionName, uniquenessCheck, existingUpdatePromises, newPermissionPromises, updatedResourceDocument;
+            return __awaiter(this, void 0, _promise2.default, _regenerator2.default.mark(function _callee2() {
+                var _ref, subject, resource;
+
                 return _regenerator2.default.wrap(function _callee2$(_context2) {
                     while (1) {
                         switch (_context2.prev = _context2.next) {
                             case 0:
+                                PermissionsModel.validatePermissionType(permissionType);
+                                _context2.next = 3;
+                                return PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
+
+                            case 3:
+                                _ref = _context2.sent;
+                                subject = _ref.subject;
+                                resource = _ref.resource;
+                                _context2.next = 8;
+                                return resource.setPermissionAccess(subject, permissionType, access);
+
+                            case 8:
+                                return _context2.abrupt('return', resource.doc);
+
+                            case 9:
+                            case 'end':
+                                return _context2.stop();
+                        }
+                    }
+                }, _callee2, this);
+            }));
+        }
+    }, {
+        key: 'isAllowed',
+        value: function isAllowed(resourceDocument, permissionType) {
+            var subjectDocument = arguments.length <= 2 || arguments[2] === undefined ? Tyr.local.user : arguments[2];
+
+            return __awaiter(this, void 0, _promise2.default, _regenerator2.default.mark(function _callee3() {
+                var _ref2, subject, resource;
+
+                return _regenerator2.default.wrap(function _callee3$(_context3) {
+                    while (1) {
+                        switch (_context3.prev = _context3.next) {
+                            case 0:
+                                PermissionsModel.validatePermissionType(permissionType);
+                                _context3.next = 3;
+                                return PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
+
+                            case 3:
+                                _ref2 = _context3.sent;
+                                subject = _ref2.subject;
+                                resource = _ref2.resource;
+                                _context3.next = 8;
+                                return resource.isAllowed(subject, permissionType);
+
+                            case 8:
+                                return _context3.abrupt('return', _context3.sent);
+
+                            case 9:
+                            case 'end':
+                                return _context3.stop();
+                        }
+                    }
+                }, _callee3, this);
+            }));
+        }
+    }, {
+        key: 'updatePermissions',
+        value: function updatePermissions(resourceDocument) {
+            return __awaiter(this, void 0, _promise2.default, _regenerator2.default.mark(function _callee4() {
+                var _PermissionsModel$rem;
+
+                var permissions, existingPermissions, newPermissions, updated, permIdField, plugin, resourceCollectionName, uniquenessCheck, existingUpdatePromises, newPermissionPromises, updatedResourceDocument;
+                return _regenerator2.default.wrap(function _callee4$(_context4) {
+                    while (1) {
+                        switch (_context4.prev = _context4.next) {
+                            case 0:
                                 permissions = _.get(resourceDocument, 'permissions', []), existingPermissions = [], newPermissions = [], updated = [], permIdField = PermissionsModel.def.primaryKey.field;
-                                plugin = Tyr.secure, resourceCollectionName = resourceDocument.$model.def.name;
+                                plugin = PermissionsModel.getGraclPlugin(), resourceCollectionName = resourceDocument.$model.def.name;
 
                                 if (plugin.graclHierarchy.resources.has(resourceCollectionName)) {
-                                    _context2.next = 4;
+                                    _context4.next = 4;
                                     break;
                                 }
 
@@ -224,82 +316,81 @@ var PermissionsModel = function (_exports$PermissionsB) {
                                     });
                                 });
                                 newPermissionPromises = newPermissions.map(function (perm) {
-                                    var p = PermissionsModel.fromClient(perm);
-                                    return p.$save();
+                                    return PermissionsModel.fromClient(perm).$save();
                                 });
-                                _context2.t0 = updated.push;
-                                _context2.t1 = updated;
-                                _context2.next = 12;
+                                _context4.t0 = updated.push;
+                                _context4.t1 = updated;
+                                _context4.next = 12;
                                 return _promise2.default.all(existingUpdatePromises);
 
                             case 12:
-                                _context2.t2 = _context2.sent;
-                                _context2.t3 = (0, _toConsumableArray3.default)(_context2.t2);
+                                _context4.t2 = _context4.sent;
+                                _context4.t3 = (0, _toConsumableArray3.default)(_context4.t2);
 
-                                _context2.t0.apply.call(_context2.t0, _context2.t1, _context2.t3);
+                                _context4.t0.apply.call(_context4.t0, _context4.t1, _context4.t3);
 
-                                _context2.t4 = updated.push;
-                                _context2.t5 = updated;
-                                _context2.next = 19;
+                                _context4.t4 = updated.push;
+                                _context4.t5 = updated;
+                                _context4.next = 19;
                                 return _promise2.default.all(newPermissionPromises);
 
                             case 19:
-                                _context2.t6 = _context2.sent;
-                                _context2.t7 = (0, _toConsumableArray3.default)(_context2.t6);
+                                _context4.t6 = _context4.sent;
+                                _context4.t7 = (0, _toConsumableArray3.default)(_context4.t6);
 
-                                _context2.t4.apply.call(_context2.t4, _context2.t5, _context2.t7);
+                                _context4.t4.apply.call(_context4.t4, _context4.t5, _context4.t7);
 
                                 resourceDocument['permissionIds'] = _.map(updated, permIdField);
-                                _context2.next = 25;
+                                _context4.next = 25;
                                 return PermissionsModel.remove((_PermissionsModel$rem = {}, (0, _defineProperty3.default)(_PermissionsModel$rem, permIdField, { $nin: resourceDocument['permissionIds'] }), (0, _defineProperty3.default)(_PermissionsModel$rem, 'resourceId', resourceDocument.$uid), _PermissionsModel$rem));
 
                             case 25:
-                                _context2.next = 27;
+                                _context4.next = 27;
                                 return resourceDocument.$save();
 
                             case 27:
-                                updatedResourceDocument = _context2.sent;
-                                _context2.next = 30;
+                                updatedResourceDocument = _context4.sent;
+                                _context4.next = 30;
                                 return Tyr.byName[resourceCollectionName].populate('permissionIds', updatedResourceDocument);
 
                             case 30:
-                                return _context2.abrupt('return', _context2.sent);
+                                return _context4.abrupt('return', _context4.sent);
 
                             case 31:
                             case 'end':
-                                return _context2.stop();
+                                return _context4.stop();
                         }
                     }
-                }, _callee2, this);
+                }, _callee4, this);
             }));
         }
     }, {
         key: 'deletePermissions',
         value: function deletePermissions(doc) {
-            return __awaiter(this, void 0, _promise2.default, _regenerator2.default.mark(function _callee3() {
+            return __awaiter(this, void 0, _promise2.default, _regenerator2.default.mark(function _callee5() {
                 var uid, permissions, permissionsByCollection, _iteratorNormalCompletion, _didIteratorError, _iteratorError, _iterator, _step, _step$value, collectionName, idList;
 
-                return _regenerator2.default.wrap(function _callee3$(_context3) {
+                return _regenerator2.default.wrap(function _callee5$(_context5) {
                     while (1) {
-                        switch (_context3.prev = _context3.next) {
+                        switch (_context5.prev = _context5.next) {
                             case 0:
                                 uid = doc.$uid;
 
                                 if (uid) {
-                                    _context3.next = 3;
+                                    _context5.next = 3;
                                     break;
                                 }
 
                                 throw new Error('No $uid property on document!');
 
                             case 3:
-                                _context3.next = 5;
+                                _context5.next = 5;
                                 return PermissionsModel.find({
                                     $or: [{ subjectId: uid }, { resourceId: uid }]
                                 });
 
                             case 5:
-                                permissions = _context3.sent;
+                                permissions = _context5.sent;
                                 permissionsByCollection = new _map2.default();
 
                                 _.each(permissions, function (perm) {
@@ -314,19 +405,19 @@ var PermissionsModel = function (_exports$PermissionsB) {
                                 _iteratorNormalCompletion = true;
                                 _didIteratorError = false;
                                 _iteratorError = undefined;
-                                _context3.prev = 11;
+                                _context5.prev = 11;
                                 _iterator = (0, _getIterator3.default)(permissionsByCollection);
 
                             case 13:
                                 if (_iteratorNormalCompletion = (_step = _iterator.next()).done) {
-                                    _context3.next = 22;
+                                    _context5.next = 22;
                                     break;
                                 }
 
                                 _step$value = (0, _slicedToArray3.default)(_step.value, 2);
                                 collectionName = _step$value[0];
                                 idList = _step$value[1];
-                                _context3.next = 19;
+                                _context5.next = 19;
                                 return Tyr.byName[collectionName].update({}, {
                                     $pull: (0, _defineProperty3.default)({}, PermissionsModel.def.primaryKey.field, {
                                         $in: idList
@@ -335,58 +426,59 @@ var PermissionsModel = function (_exports$PermissionsB) {
 
                             case 19:
                                 _iteratorNormalCompletion = true;
-                                _context3.next = 13;
+                                _context5.next = 13;
                                 break;
 
                             case 22:
-                                _context3.next = 28;
+                                _context5.next = 28;
                                 break;
 
                             case 24:
-                                _context3.prev = 24;
-                                _context3.t0 = _context3['catch'](11);
+                                _context5.prev = 24;
+                                _context5.t0 = _context5['catch'](11);
                                 _didIteratorError = true;
-                                _iteratorError = _context3.t0;
+                                _iteratorError = _context5.t0;
 
                             case 28:
-                                _context3.prev = 28;
-                                _context3.prev = 29;
+                                _context5.prev = 28;
+                                _context5.prev = 29;
 
                                 if (!_iteratorNormalCompletion && _iterator.return) {
                                     _iterator.return();
                                 }
 
                             case 31:
-                                _context3.prev = 31;
+                                _context5.prev = 31;
 
                                 if (!_didIteratorError) {
-                                    _context3.next = 34;
+                                    _context5.next = 34;
                                     break;
                                 }
 
                                 throw _iteratorError;
 
                             case 34:
-                                return _context3.finish(31);
+                                return _context5.finish(31);
 
                             case 35:
-                                return _context3.finish(28);
+                                return _context5.finish(28);
 
                             case 36:
                                 delete doc['permissions'];
                                 doc['permissionIds'] = [];
-                                return _context3.abrupt('return', doc.$save());
+                                return _context5.abrupt('return', doc.$save());
 
                             case 39:
                             case 'end':
-                                return _context3.stop();
+                                return _context5.stop();
                         }
                     }
-                }, _callee3, this, [[11, 24, 28, 36], [29,, 31, 35]]);
+                }, _callee5, this, [[11, 24, 28, 36], [29,, 31, 35]]);
             }));
         }
     }]);
     return PermissionsModel;
 }(exports.PermissionsBaseCollection);
 
+PermissionsModel.validPermissionActions = new _set2.default(['view', 'edit', 'update', 'delete']);
 exports.PermissionsModel = PermissionsModel;

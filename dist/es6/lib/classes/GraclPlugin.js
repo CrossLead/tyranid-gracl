@@ -19,12 +19,12 @@ class GraclPlugin {
     static makeRepository(collection) {
         return {
             getEntity(id, node) {
-                return __awaiter(this, void 0, void 0, function* () {
+                return __awaiter(this, void 0, Promise, function* () {
                     return (yield collection.populate('permissionIds', yield collection.byId(id)));
                 });
             },
             saveEntity(id, doc, node) {
-                return __awaiter(this, void 0, void 0, function* () {
+                return __awaiter(this, void 0, Promise, function* () {
                     return PermissionsModel_1.PermissionsModel.updatePermissions(doc);
                 });
             }
@@ -184,7 +184,7 @@ class GraclPlugin {
                         parent: parentName,
                         repository: GraclPlugin.makeRepository(node.collection),
                         getParents() {
-                            return __awaiter(this, void 0, void 0, function* () {
+                            return __awaiter(this, void 0, Promise, function* () {
                                 const thisNode = this;
                                 let ids = parentNamePath.get(thisNode.doc);
                                 if (!(ids instanceof Array)) {
@@ -230,7 +230,7 @@ class GraclPlugin {
         }
     }
     query(queriedCollection, permissionAction, user = Tyr.local.user) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, Promise, function* () {
             const permissionType = `${permissionAction}-${queriedCollection.def.name}`;
             this.log(`tyranid-gracl: restricting query for collection = ${queriedCollection.def.name} ` +
                 `permissionType = ${permissionType} ` +

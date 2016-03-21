@@ -72,7 +72,13 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     }
   }
 
-  static async getGraclClasses(resourceDocument: Tyr.Document, subjectDocument: Tyr.Document) {
+  static async getGraclClasses(
+    resourceDocument: Tyr.Document,
+    subjectDocument: Tyr.Document
+    ): Promise<{
+      subject: gracl.Subject,
+      resource: gracl.Resource
+    }> {
 
     if (!resourceDocument) {
       throw new Error('No resource document provided!');

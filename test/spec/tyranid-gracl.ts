@@ -16,6 +16,8 @@ const db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),
 
 describe('tyranid-gracl', () => {
 
+
+
   before(async function() {
     secure.verbose = true;
 
@@ -32,6 +34,7 @@ describe('tyranid-gracl', () => {
   });
 
 
+
   it('Cached link paths should be correctly constructed', () => {
     for (const a in expectedLinkPaths) {
       for (const b in expectedLinkPaths[a]) {
@@ -40,6 +43,7 @@ describe('tyranid-gracl', () => {
       }
     }
   });
+
 
 
   it('Adding permissions should work', async() => {
@@ -65,6 +69,7 @@ describe('tyranid-gracl', () => {
   });
 
 
+
   it('Permissions hierarchy should be respected', async() => {
     const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
           chipotleFoodBlog = await Tyr.byName['blog'].findOne({ name: 'Burritos Etc' });
@@ -79,6 +84,7 @@ describe('tyranid-gracl', () => {
   });
 
 
+
   it('Permissions should be validated', async() => {
     const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
           chipotleCorporateBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' });
@@ -86,16 +92,23 @@ describe('tyranid-gracl', () => {
     expect(ben, 'ben should exist').to.exist;
     expect(chipotleCorporateBlog, 'chipotleCorporateBlog should exist').to.exist;
 
-    let threw = false;
+    let threw = false,
+        message = '';
     try {
       await chipotleCorporateBlog['$isAllowed']('view', ben);
     } catch (err) {
       threw = true;
+      message = err.message;
     }
 
     expect(threw,
       'checking \"view\" without collection should throw'
     ).to.equal(true);
+
+    expect(message, `Error message should contain \"No collection name in permission type\"`)
+      .to.match(/No collection name in permission type/g);
   });
+
+
 
 });
