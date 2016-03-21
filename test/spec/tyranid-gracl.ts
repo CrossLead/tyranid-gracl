@@ -53,10 +53,15 @@ describe('tyranid-gracl', () => {
       .PermissionsModel
       .setPermissionAccess(chipotle, 'view-post', true, ben);
 
-    console.log(
-      await tyranidGracl.PermissionsModel.find({}),
-      updatedChipotle
-    );
+    const existingPermissions = await tyranidGracl.PermissionsModel.find({});
+
+    expect(existingPermissions).to.have.lengthOf(1);
+    expect(existingPermissions[0]['resourceId'].toString(), 'resourceId')
+      .to.equal(updatedChipotle['permissions'][0]['resourceId'].toString());
+    expect(existingPermissions[0]['subjectId'].toString(), 'subjectId')
+      .to.equal(updatedChipotle['permissions'][0]['subjectId'].toString());
+    expect(existingPermissions[0]['access']['view-post'], 'access')
+      .to.equal(updatedChipotle['permissions'][0]['access']['view-post']);
   });
 
 
