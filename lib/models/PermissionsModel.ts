@@ -53,6 +53,10 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     const resourceCollectionName = resourceDocument.$model.def.name,
           subjectCollectionName = subjectDocument.$model.def.name;
 
+    if (!resourceDocument['permissions']) {
+      await Tyr.byName[resourceCollectionName].populate('permissionIds', resourceDocument);
+    }
+
     // extract subject and resource Gracl classes
     const ResourceClass = plugin.graclHierarchy.getResource(resourceCollectionName),
           SubjectClass = plugin.graclHierarchy.getSubject(subjectCollectionName);
@@ -80,7 +84,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     await resource.setPermissionAccess(subject, permissionType, access);
 
     // manage permissions
-    return await PermissionsModel.updatePermissions(resource.doc);
+    return <Tyr.Document> resource.doc;
   }
 
 
@@ -130,22 +134,26 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       }
     });
 
-    // update existing permissions with new data
-    updated.push(...(await Promise.all(existingPermissions.map(perm => {
+
+    const existingUpdatePromises = existingPermissions.map(perm => {
       return PermissionsModel.findAndModify({
         query: { [permIdField]: perm[permIdField] },
         update: { $set: perm },
         new: true
       });
-    }))));
+    });
 
-    // insert new permissions
-    updated.push(...(await Promise.all(newPermissions.map(perm => {
+    const newPermissionPromises = newPermissions.map(perm => {
       const p = PermissionsModel.fromClient(perm);
       return p.$save();
-    }))));
+    });
 
-    delete resourceDocument['permissions'];
+
+    const updatedExisting = <Tyr.Document[]> (await Promise.all(existingUpdatePromises));
+    const updatedNew = <Tyr.Document[]> (await Promise.all(newPermissionPromises));
+
+    updated.push(...updatedExisting);
+    updated.push(...updatedNew);
 
     // extract all the ids from the updated permissions
     resourceDocument['permissionIds'] = _.map(updated, permIdField);
@@ -156,7 +164,11 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       resourceId: resourceDocument.$uid
     });
 
-    return resourceDocument.$save();
+    const updatedResourceDocument = await resourceDocument.$save();
+    return <Tyr.Document> (
+      await Tyr.byName[resourceCollectionName]
+        .populate('permissionIds', updatedResourceDocument)
+    );
   }
 
 

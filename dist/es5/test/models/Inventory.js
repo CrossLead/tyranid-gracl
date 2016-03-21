@@ -32,7 +32,7 @@ exports.InventoryBaseCollection = new Tyr.Collection({
             relate: 'ownedBy',
             graclType: 'resource'
         },
-        permissions: { link: 'graclPermission' }
+        permissionIds: { is: 'array', link: 'graclPermission' }
     }
 });
 

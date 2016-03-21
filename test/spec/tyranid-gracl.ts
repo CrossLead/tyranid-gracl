@@ -52,6 +52,11 @@ describe('tyranid-gracl', () => {
     const updatedChipotle = await tyranidGracl
       .PermissionsModel
       .setPermissionAccess(chipotle, 'view-post', true, ben);
+
+    console.log(
+      await tyranidGracl.PermissionsModel.find({}),
+      updatedChipotle
+    );
   });
 
 

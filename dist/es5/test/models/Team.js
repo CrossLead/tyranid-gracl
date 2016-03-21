@@ -31,7 +31,7 @@ var TeamBaseCollection = new Tyr.Collection({
             relate: 'ownedBy',
             graclType: 'subject'
         },
-        permissions: { link: 'graclPermission' }
+        permissionIds: { is: 'array', link: 'graclPermission' }
     }
 });
 

@@ -18,9 +18,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "gracl": "git://github.com/crosslead/gracl.git#7a24a8c878f633df087de03b530e51a8e3cd1556",
+    "gracl": "git://github.com/crosslead/gracl.git#05c08dccb31bd87152c7cf10f12576639fe0cce0",
     "lodash": "^3.10.1",
-    "tyranid": "^0.0.136"
+    "tyranid": "^0.0.140"
   },
   "babel": {
     "presets": [
@@ -28,6 +28,10 @@
     ],
     "plugins": [
       "babel-plugin-transform-runtime"
+    ],
+    "ignore": [
+      "./node_modules",
+      "./node_modules/tyranid"
     ],
     "sourceMaps": true
   },
@@ -50,7 +54,7 @@
     "ts-node": "^0.5.5",
     "tslint": "^3.5.0",
     "typedoc": "^0.3.12",
-    "typescript": "^1.8.7",
+    "typescript": "1.8.7",
     "typings": "^0.6.8",
     "uglifyjs": "^2.4.10"
   }

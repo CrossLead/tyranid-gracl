@@ -1,4 +1,4 @@
-// Compiled using typings@0.6.8
+// Compiled using typings@0.6.10
 // Source: https://raw.githubusercontent.com/DefinitelyTyped/DefinitelyTyped/dd638012d63e069f2c99d06ef4dcc9616a943ee4/express/express.d.ts
 // Type definitions for Express 4.x
 // Project: http://expressjs.com

@@ -19,17 +19,18 @@ export class GraclPlugin {
   // create a repository object for a given collection
   static makeRepository(collection: Tyr.CollectionInstance): gracl.Repository {
     return {
-      async getEntity(id: string): Promise<Tyr.Document> {
+      async getEntity(id: string, node: gracl.Node): Promise<Tyr.Document> {
+        console.log(`getEntity called for ${node.toString()}`);
         return <Tyr.Document> (
           await collection.populate(
-            'permissions',
+            'permissionIds',
             await collection.byId(id)
           )
         );
       },
-      async saveEntity(id: string, doc: Tyr.Document): Promise<Tyr.Document> {
-        await PermissionsModel.updatePermissions(doc);
-        return await doc.$save();
+      async saveEntity(id: string, doc: Tyr.Document, node: gracl.Node): Promise<Tyr.Document> {
+        console.log(`saveEntity called for ${node.toString()}`);
+        return PermissionsModel.updatePermissions(doc);
       }
     };
   }
@@ -185,7 +186,6 @@ export class GraclPlugin {
         }
       };
 
-
       // loop through all collections, retrieve
       // ownedBy links
       collections.forEach(col => {
@@ -254,6 +254,8 @@ export class GraclPlugin {
 
                 let ids: any = parentNamePath.get(thisNode.doc);
 
+                console.log(`in custom getParents! ${ids}`);
+
                 if (!(ids instanceof Array)) {
                   ids = [ ids ];
                 }
@@ -265,7 +267,6 @@ export class GraclPlugin {
               }
             }
           );
-
         }
 
         for (const parent of tyrObjects.parents) {

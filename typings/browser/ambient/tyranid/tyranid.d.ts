@@ -1,4 +1,4 @@
-// Compiled using typings@0.6.8
+// Compiled using typings@0.6.10
 // Source: https://raw.githubusercontent.com/tyranid-org/tyranid-typings/master/tyranid/index.d.ts
 /**
  *  Type definitions for tyranid.js
