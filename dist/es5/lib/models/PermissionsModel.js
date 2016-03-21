@@ -387,7 +387,7 @@ var PermissionsModel = function (_exports$PermissionsB) {
                                 _context5.next = 5;
                                 return PermissionsModel.find({
                                     $or: [{ subjectId: uid }, { resourceId: uid }]
-                                });
+                                }, null, { tyranid: { insecure: true } });
 
                             case 5:
                                 permissions = _context5.sent;

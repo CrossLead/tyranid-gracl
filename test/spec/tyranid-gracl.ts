@@ -57,7 +57,7 @@ describe('tyranid-gracl', () => {
       .PermissionsModel
       .setPermissionAccess(chipotle, 'view-post', true, ben);
 
-    const existingPermissions = await tyranidGracl.PermissionsModel.find({});
+    const existingPermissions = await tyranidGracl.PermissionsModel.find({}, null, { tyranid: { insecure: true } });
 
     expect(existingPermissions).to.have.lengthOf(1);
     expect(existingPermissions[0]['resourceId'].toString(), 'resourceId')
@@ -81,6 +81,11 @@ describe('tyranid-gracl', () => {
       await chipotleFoodBlog['$isAllowed']('view-post', ben),
       'ben should have access to chipotleFoodBlog through access to chipotle org'
     ).to.equal(true);
+  });
+
+
+  it('Collection.find() should be appropriately filtered based on permissions', async() => {
+    const ben = await Tyr.byName['user'].findOne({ name: 'ben' });
   });
 
 

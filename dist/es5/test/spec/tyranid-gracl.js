@@ -100,7 +100,7 @@ describe('tyranid-gracl', function () {
                         case 10:
                             updatedChipotle = _context2.sent;
                             _context2.next = 13;
-                            return tyranidGracl.PermissionsModel.find({});
+                            return tyranidGracl.PermissionsModel.find({}, null, { tyranid: { insecure: true } });
 
                         case 13:
                             existingPermissions = _context2.sent;
@@ -155,9 +155,9 @@ describe('tyranid-gracl', function () {
             }, _callee3, this);
         }));
     });
-    it('Permissions should be validated', function () {
+    it('Collection.find() should be appropriately filtered based on permissions', function () {
         return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee4() {
-            var ben, chipotleCorporateBlog, threw, message;
+            var ben;
             return _regenerator2.default.wrap(function _callee4$(_context4) {
                 while (1) {
                     switch (_context4.prev = _context4.next) {
@@ -167,29 +167,50 @@ describe('tyranid-gracl', function () {
 
                         case 2:
                             ben = _context4.sent;
-                            _context4.next = 5;
+
+                        case 3:
+                        case 'end':
+                            return _context4.stop();
+                    }
+                }
+            }, _callee4, this);
+        }));
+    });
+    it('Permissions should be validated', function () {
+        return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee5() {
+            var ben, chipotleCorporateBlog, threw, message;
+            return _regenerator2.default.wrap(function _callee5$(_context5) {
+                while (1) {
+                    switch (_context5.prev = _context5.next) {
+                        case 0:
+                            _context5.next = 2;
+                            return Tyr.byName['user'].findOne({ name: 'ben' });
+
+                        case 2:
+                            ben = _context5.sent;
+                            _context5.next = 5;
                             return Tyr.byName['blog'].findOne({ name: 'Mexican Empire' });
 
                         case 5:
-                            chipotleCorporateBlog = _context4.sent;
+                            chipotleCorporateBlog = _context5.sent;
 
                             chai_1.expect(ben, 'ben should exist').to.exist;
                             chai_1.expect(chipotleCorporateBlog, 'chipotleCorporateBlog should exist').to.exist;
                             threw = false, message = '';
-                            _context4.prev = 9;
-                            _context4.next = 12;
+                            _context5.prev = 9;
+                            _context5.next = 12;
                             return chipotleCorporateBlog['$isAllowed']('view', ben);
 
                         case 12:
-                            _context4.next = 18;
+                            _context5.next = 18;
                             break;
 
                         case 14:
-                            _context4.prev = 14;
-                            _context4.t0 = _context4['catch'](9);
+                            _context5.prev = 14;
+                            _context5.t0 = _context5['catch'](9);
 
                             threw = true;
-                            message = _context4.t0.message;
+                            message = _context5.t0.message;
 
                         case 18:
                             chai_1.expect(threw, 'checking \"view\" without collection should throw').to.equal(true);
@@ -197,10 +218,10 @@ describe('tyranid-gracl', function () {
 
                         case 20:
                         case 'end':
-                            return _context4.stop();
+                            return _context5.stop();
                     }
                 }
-            }, _callee4, this, [[9, 14]]);
+            }, _callee5, this, [[9, 14]]);
         }));
     });
 });

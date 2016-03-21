@@ -255,7 +255,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
         { subjectId: uid },
         { resourceId: uid }
       ]
-    });
+    }, null, { tyranid: { insecure: true } });
 
     const permissionsByCollection = new Map<string, string[]>();
 
