@@ -19,7 +19,6 @@ describe('tyranid-gracl', () => {
 
 
   before(async function() {
-    secure.verbose = true;
 
     Tyr.config({
       db: db,
@@ -32,6 +31,11 @@ describe('tyranid-gracl', () => {
     });
 
     await createTestData();
+  });
+
+
+  beforeEach(async() => {
+    Tyr.local.user = undefined;
   });
 
 
@@ -58,7 +62,9 @@ describe('tyranid-gracl', () => {
       .PermissionsModel
       .setPermissionAccess(chopped, 'view-post', true, ben);
 
-    const existingPermissions = await tyranidGracl.PermissionsModel.find({}, null, { tyranid: { insecure: true } });
+    const existingPermissions = await tyranidGracl.PermissionsModel.find(
+      {}, null, { tyranid: { insecure: true } }
+    );
 
     expect(existingPermissions).to.have.lengthOf(1);
     expect(existingPermissions[0]['resourceId'].toString(), 'resourceId')
@@ -85,21 +91,53 @@ describe('tyranid-gracl', () => {
   });
 
 
+  it('secure.query() should produce query restriction based on permissions', async() => {
+    const Post = Tyr.byName['post'],
+          Blog = Tyr.byName['blog'],
+          Org = Tyr.byName['organization'],
+          ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+          chopped = await Org.findOne({ name: 'Chopped' });
+
+    const choppedBlogs = await Blog.find(
+      { organizationId: chopped['_id'] },
+      { _id: 1 },
+      { tyranid: { insecure: true } }
+    );
+
+    const query = await secure.query(Post, 'view', ben);
+
+    expect(query, 'query should find correct blogs').to.deep.equal({
+      blogId: { $in: _.map(choppedBlogs, '_id') }
+    });
+  });
+
+
+
   it('Collection.find() should be appropriately filtered based on permissions', async() => {
-    const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
-          ted = await Tyr.byName['user'].findOne({ name: 'ted' });
+    const Post = Tyr.byName['post'],
+          User = Tyr.byName['user'],
+          Blog = Tyr.byName['blog'],
+          Org = Tyr.byName['organization'],
+          ben = await User.findOne({ name: 'ben' }),
+          ted = await User.findOne({ name: 'ted' });
 
     Tyr.local.user = ben;
 
-    console.log(`finding all posts with ben as user`);
-    const postsBenCanSee = await Tyr.byName['post'].find({});
+    const postsBenCanSee = await Post.find({});
 
-    Tyr.local.user = ted;
+    const chopped = await Org.findOne({ name: 'Chopped' });
 
-    console.log(`finding all posts with ted as user`);
-    const postsTedCanSee = await Tyr.byName['post'].find({});
+    const choppedBlogs = await Blog.find(
+      { organizationId: chopped['_id'] },
+      { _id: 1 },
+      { tyranid: { insecure: true } }
+    );
 
-    console.log(postsBenCanSee, postsTedCanSee);
+    const choppedPosts = await Post.find({
+      blogId: { $in: _.map(choppedBlogs, '_id') }
+    }, null, { tyranid: { insecure: true } });
+
+    expect(postsBenCanSee, 'ben should only see chopped posts').to.deep.equal(choppedPosts);
   });
 
 

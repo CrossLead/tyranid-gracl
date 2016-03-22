@@ -29,10 +29,6 @@
     "plugins": [
       "babel-plugin-transform-runtime"
     ],
-    "ignore": [
-      "./node_modules",
-      "./node_modules/tyranid"
-    ],
     "sourceMaps": true
   },
   "devDependencies": {

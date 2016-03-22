@@ -60,15 +60,19 @@ export async function createTestData() {
     ecoliChallenges,
     weDontKnowWhyPeopleGotSick,
     cleaningUp,
-    burritoManagement
+    burritoManagement,
+    saladsAreGreat,
+    guacGreens,
+    lentilsAreGreat
   ] = await Promise.all([
     Blog.addPost('Why burritos are amazing.', chipotleFoodBlog),
     Blog.addPost('Ecoli challenges.', chipotleFoodBlog),
     Blog.addPost('We don\' actually know why people got sick.', chipotleFoodBlog),
     Blog.addPost('Re-evaluating the way we clean up.', chipotleCorporateBlog),
     Blog.addPost('Burrito Management, a new paradigm.', chipotleCorporateBlog),
-    Blog.addPost('Salads are great.', chopped ),
-    Blog.addPost('Guacamole Greens to the rescue!.', chopped),
+    Blog.addPost('Salads are great.', choppedBlog ),
+    Blog.addPost('Guacamole Greens to the rescue!.', choppedBlog),
+    Blog.addPost('Lentils are great', cavaBlog)
   ]);
 
 

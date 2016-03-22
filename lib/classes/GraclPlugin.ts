@@ -20,7 +20,6 @@ export class GraclPlugin {
   static makeRepository(collection: Tyr.CollectionInstance): gracl.Repository {
     return {
       async getEntity(id: string, node: gracl.Node): Promise<Tyr.Document> {
-        console.log(`in ${node.toString()}.getEntity()`);
         return <Tyr.Document> (
           await collection.populate(
             'permissionIds',
@@ -48,7 +47,7 @@ export class GraclPlugin {
             colName = col.def.name;
 
       _.each(links, linkField => {
-        const edges = _.get(g, colName, new Set()),
+        const edges = _.get(g, colName, new Set<string>()),
               linkName = linkField.link.def.name;
 
         edges.add(linkName);
@@ -354,7 +353,7 @@ export class GraclPlugin {
 
     if (queriedCollectionName === PermissionsModel.def.name) {
       this.log(`skipping query modification for ${PermissionsModel.def.name}`);
-      return false;
+      return {};
     }
 
     const permissionType = `${permissionAction}-${queriedCollectionName}`;
@@ -369,7 +368,7 @@ export class GraclPlugin {
 
     // if no user, no restriction...
     if (!user) {
-      this.log(`No user passed to GraclPlugin.query() (or found on Tyr.local) -- no restriction enforced!`);
+      this.log(`No user passed to GraclPlugin.query() (or found on Tyr.local) -- no documents allowed!`);
       return false;
     }
 
@@ -383,7 +382,7 @@ export class GraclPlugin {
       this.log(
         `Querying against collection (${queriedCollectionName}) with no resource class -- no restriction enforced!`
       );
-      return false;
+      return {};
     }
 
 
@@ -456,7 +455,6 @@ export class GraclPlugin {
 
     // extract all collections that have a relevant permission set for the requested resource
     for (const [ collectionName, { collection, permissions } ] of resourceMap) {
-      console.log(collectionName, Array.from(permissions.values()));
 
       let queryRestrictionSet = false;
       // check to see if the collection we are querying has a field linked to <collectionName>
@@ -619,12 +617,9 @@ export class GraclPlugin {
     const positiveRestriction = createInQueries(queryMaps['positive'], queriedCollection, '$in'),
           negativeRestriction = createInQueries(queryMaps['negative'], queriedCollection, '$nin');
 
-    const restricted = {};
-
-    console.log(positiveRestriction, negativeRestriction);
-
-    const hasPositive = _(positiveRestriction).keys().any(),
-          hasNegative = _(negativeRestriction).keys().any();
+    const restricted = {},
+          hasPositive = _.chain(positiveRestriction).keys().any().value(),
+          hasNegative = _.chain(negativeRestriction).keys().any().value();
 
     if (hasNegative && hasPositive) {
       restricted['$and'] = [
