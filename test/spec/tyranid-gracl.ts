@@ -27,7 +27,8 @@ describe('tyranid-gracl', () => {
         { dir: root + '/test/models', fileMatch: '[a-z].js' },
         { dir: root + '/lib/models', fileMatch: '[a-z].js' }
       ],
-      secure: secure
+      secure: secure,
+      cls: false
     });
 
     await createTestData();
@@ -48,44 +49,57 @@ describe('tyranid-gracl', () => {
 
   it('Adding permissions should work', async() => {
     const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
-          chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
+          chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
     expect(ben, 'ben should exist').to.exist;
-    expect(chipotle, 'chipotle should exist').to.exist;
+    expect(chopped, 'chopped should exist').to.exist;
 
-    const updatedChipotle = await tyranidGracl
+    const updatedChopped = await tyranidGracl
       .PermissionsModel
-      .setPermissionAccess(chipotle, 'view-post', true, ben);
+      .setPermissionAccess(chopped, 'view-post', true, ben);
 
     const existingPermissions = await tyranidGracl.PermissionsModel.find({}, null, { tyranid: { insecure: true } });
 
     expect(existingPermissions).to.have.lengthOf(1);
     expect(existingPermissions[0]['resourceId'].toString(), 'resourceId')
-      .to.equal(updatedChipotle['permissions'][0]['resourceId'].toString());
+      .to.equal(updatedChopped['permissions'][0]['resourceId'].toString());
     expect(existingPermissions[0]['subjectId'].toString(), 'subjectId')
-      .to.equal(updatedChipotle['permissions'][0]['subjectId'].toString());
+      .to.equal(updatedChopped['permissions'][0]['subjectId'].toString());
     expect(existingPermissions[0]['access']['view-post'], 'access')
-      .to.equal(updatedChipotle['permissions'][0]['access']['view-post']);
+      .to.equal(updatedChopped['permissions'][0]['access']['view-post']);
   });
 
 
 
   it('Permissions hierarchy should be respected', async() => {
     const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
-          chipotleFoodBlog = await Tyr.byName['blog'].findOne({ name: 'Burritos Etc' });
+          choppedBlog = await Tyr.byName['blog'].findOne({ name: 'Salads are great' });
 
     expect(ben, 'ben should exist').to.exist;
-    expect(chipotleFoodBlog, 'chipotleFoodBlog should exist').to.exist;
+    expect(choppedBlog, 'choppedBlog should exist').to.exist;
 
     expect(
-      await chipotleFoodBlog['$isAllowed']('view-post', ben),
-      'ben should have access to chipotleFoodBlog through access to chipotle org'
+      await choppedBlog['$isAllowed']('view-post', ben),
+      'ben should have access to choppedBlog through access to chopped org'
     ).to.equal(true);
   });
 
 
   it('Collection.find() should be appropriately filtered based on permissions', async() => {
-    const ben = await Tyr.byName['user'].findOne({ name: 'ben' });
+    const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+          ted = await Tyr.byName['user'].findOne({ name: 'ted' });
+
+    Tyr.local.user = ben;
+
+    console.log(`finding all posts with ben as user`);
+    const postsBenCanSee = await Tyr.byName['post'].find({});
+
+    Tyr.local.user = ted;
+
+    console.log(`finding all posts with ted as user`);
+    const postsTedCanSee = await Tyr.byName['post'].find({});
+
+    console.log(postsBenCanSee, postsTedCanSee);
   });
 
 

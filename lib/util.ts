@@ -52,7 +52,7 @@ export function findLinkInCollection(col: Tyr.CollectionInstance, linkCollection
   const links = getCollectionLinksSorted(col),
         index = gracl.binaryIndexOf(links, linkCollection, (aCol: Tyr.CollectionInstance, bCol: Tyr.Field) => {
           const a = aCol.def.name,
-                b = bCol.collection.def.name;
+                b = bCol.link.def.name;
           return gracl.baseCompare(a, b);
         });
 
@@ -62,26 +62,25 @@ export function findLinkInCollection(col: Tyr.CollectionInstance, linkCollection
 }
 
 
-/**
- *  parametric type for arbitrary string-keyed objects
- */
+
 export function createInQueries(
                   map: Map<string, Set<string>>,
                   queriedCollection: Tyr.CollectionInstance,
                   key: string
                 ) {
+
   return Array.from(map.entries())
     .reduce((out: Hash<Hash<string[]>>, [col, uids]) => {
       // if the collection is the same as the one being queried, use the primary id field
+      let prop: string;
       if (col === queriedCollection.def.name) {
-        col = queriedCollection.def.primaryKey.field;
+        prop = queriedCollection.def.primaryKey.field;
+      } else {
+        const link = findLinkInCollection(queriedCollection, Tyr.byName[col]);
+        prop = link.spath;
       }
 
-      const collectionLinkField = _.find(col.fields({ direction: 'outgoing' }), field => {
-
-      });
-
-      out[col] = { [key]: [...uids].map((u: string) => Tyr.parseUid(u).id) };
+      out[prop] = { [key]: [...uids] };
       return out;
     }, {});
 };
@@ -95,12 +94,13 @@ export function createInQueries(
 export async function stepThroughCollectionPath(
                         ids: string[],
                         previousCollection: Tyr.CollectionInstance,
-                        nextCollection: Tyr.CollectionInstance
+                        nextCollection: Tyr.CollectionInstance,
+                        insecure: boolean = true
                       ) {
 
   // find the field in the current path collection which we need to get
   // for the ids of the next path collection
-  const nextCollectionLinkField = findLinkInCollection(previousCollection, nextCollection);
+  const nextCollectionLinkField = findLinkInCollection(nextCollection, previousCollection);
 
   if (!nextCollectionLinkField) {
     throw new Error(
@@ -114,7 +114,7 @@ export async function stepThroughCollectionPath(
     // the ids of the last collection in the path
     .chain(await nextCollection.find({
       [nextCollectionLinkField.spath]: { $in: ids }
-    }))
+    }, null, { tyranid: { insecure } }))
     // extract their primary ids using the primary field
     .map(nextCollection.def.primaryKey.field)
     .value();

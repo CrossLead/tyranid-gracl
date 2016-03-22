@@ -20,6 +20,7 @@ export class GraclPlugin {
   static makeRepository(collection: Tyr.CollectionInstance): gracl.Repository {
     return {
       async getEntity(id: string, node: gracl.Node): Promise<Tyr.Document> {
+        console.log(`in ${node.toString()}.getEntity()`);
         return <Tyr.Document> (
           await collection.populate(
             'permissionIds',
@@ -273,7 +274,7 @@ export class GraclPlugin {
 
           nodes.set(name,
             { name,
-              id: node.collection.def.primaryKey.field,
+              id: '$uid',
               parent: parentName,
               repository: GraclPlugin.makeRepository(node.collection),
               async getParents(): Promise<gracl.Node[]> {
@@ -285,7 +286,11 @@ export class GraclPlugin {
                   ids = [ ids ];
                 }
 
-                const parentObjects = await node.link.byIds(ids),
+                const linkCollection = node.link;
+
+                const parentObjects = await linkCollection.find({
+                        [linkCollection.def.primaryKey.field]: { $in: ids }
+                      }, null, { tyranid: { insecure: true } }),
                       ParentClass = thisNode.getParentClass();
 
                 return parentObjects.map(doc => new ParentClass(doc));
@@ -299,7 +304,7 @@ export class GraclPlugin {
           if (!nodes.has(name)) {
             nodes.set(name, {
               name,
-              id: parent.def.primaryKey.field,
+              id: '$uid',
               repository: GraclPlugin.makeRepository(parent)
             });
           }
@@ -345,16 +350,17 @@ export class GraclPlugin {
               permissionAction: string,
               user = Tyr.local.user): Promise<boolean | {}> {
 
-    const permissionType = `${permissionAction}-${queriedCollection.def.name}`;
+    const queriedCollectionName = queriedCollection.def.name;
 
-    this.log(
-      `tyranid-gracl: restricting query for collection = ${queriedCollection.def.name} ` +
-      `permissionType = ${permissionType} ` +
-      `user = ${user}`
-    );
+    if (queriedCollectionName === PermissionsModel.def.name) {
+      this.log(`skipping query modification for ${PermissionsModel.def.name}`);
+      return false;
+    }
 
-    if (!permissionType) {
-      throw new Error(`No permissionType given to GraclPlugin.query()!`);
+    const permissionType = `${permissionAction}-${queriedCollectionName}`;
+
+    if (!permissionAction) {
+      throw new Error(`No permissionAction given to GraclPlugin.query()!`);
     }
 
     if (!this.graclHierarchy) {
@@ -367,8 +373,22 @@ export class GraclPlugin {
       return false;
     }
 
+    this.log(
+      `restricting query for collection = ${queriedCollectionName} ` +
+      `permissionType = ${permissionType} ` +
+      `user = ${JSON.stringify(user.$toClient())}`
+    );
+
+    if (!this.graclHierarchy.resources.has(queriedCollectionName)) {
+      this.log(
+        `Querying against collection (${queriedCollectionName}) with no resource class -- no restriction enforced!`
+      );
+      return false;
+    }
+
+
     // extract subject and resource Gracl classes
-    const ResourceClass = this.graclHierarchy.getResource(queriedCollection.def.name),
+    const ResourceClass = this.graclHierarchy.getResource(queriedCollectionName),
           SubjectClass = this.graclHierarchy.getSubject(user.$model.def.name);
 
     const subject = new SubjectClass(user);
@@ -380,13 +400,16 @@ export class GraclPlugin {
 
     // get list of all ids in the subject hierarchy,
     // as well as the names of the classes in the resource hierarchy
-    const subjectHierarchyIds = await subject.getHierarchyIds(),
-          resourceHierarchyClasses = ResourceClass.getHierarchyClassNames();
+    const subjectHierarchyIds = await subject.getHierarchyIds();
 
-    const permissions = await PermissionsModel.find({
+    const resourceHierarchyClasses = ResourceClass.getHierarchyClassNames();
+
+    const permissionsQuery = {
       subjectId:    { $in: subjectHierarchyIds },
       resourceType: { $in: resourceHierarchyClasses }
-    });
+    };
+
+    const permissions = await PermissionsModel.find(permissionsQuery, null, { tyranid: { insecure: true } });
 
     // no permissions found, return no restriction
     if (!Array.isArray(permissions) || permissions.length === 0) {
@@ -433,6 +456,8 @@ export class GraclPlugin {
 
     // extract all collections that have a relevant permission set for the requested resource
     for (const [ collectionName, { collection, permissions } ] of resourceMap) {
+      console.log(collectionName, Array.from(permissions.values()));
+
       let queryRestrictionSet = false;
       // check to see if the collection we are querying has a field linked to <collectionName>
       if (queriedCollectionLinkFields.has(collectionName)) {
@@ -490,7 +515,7 @@ export class GraclPlugin {
         if (!path.length) {
           throw new Error(
             `${errorMessageHeader}, as there is no path between ` +
-            `collections ${queriedCollection.def.name} and ${collectionName} in the schema.`
+            `collections ${queriedCollectionName} and ${collectionName} in the schema.`
           );
         }
 
@@ -499,17 +524,17 @@ export class GraclPlugin {
 
         if (collectionName !== pathEndCollectionName) {
           throw new Error(
-            `Path returned for collection pair ${queriedCollection.def.name} and ${collectionName} is invalid!`
+            `Path returned for collection pair ${queriedCollectionName} and ${collectionName} is invalid!`
           );
         }
 
         // assert that the penultimate path collection exists as a link on the queriedCollection
         if (!queriedCollectionLinkFields.has(path[1])) {
           throw new Error(
-            `Path returned for collection pair ${queriedCollection.def.name} and ${collectionName} ` +
+            `Path returned for collection pair ${queriedCollectionName} and ${collectionName} ` +
             `must have the penultimate path exist as a link on the collection being queried, ` +
-            `the penultimate collection path between ${queriedCollection.def.name} and ${collectionName} ` +
-            `is ${path[1]}, which is not linked to by ${queriedCollection.def.name}`
+            `the penultimate collection path between ${queriedCollectionName} and ${collectionName} ` +
+            `is ${path[1]}, which is not linked to by ${queriedCollectionName}`
           );
         }
 
@@ -559,7 +584,7 @@ export class GraclPlugin {
         // that is directly linked to by queriedCollection,
         // and positive / negativeIds should contain ids of documents
         // from <nextCollectionName>
-        const linkedCollectionName = nextCollectionName;
+        const linkedCollectionName = nextCollection.def.name;
 
         const addIdsToQueryMap = (access: boolean) => (id: string) => {
           const accessString    = access ? 'positive' : 'negative',
@@ -591,12 +616,28 @@ export class GraclPlugin {
       }
     }
 
-    return {
-      $and: [
-        createInQueries(queryMaps['positive'], queriedCollection, '$in'),
-        createInQueries(queryMaps['negative'], queriedCollection, '$nin')
-      ]
-    };
+    const positiveRestriction = createInQueries(queryMaps['positive'], queriedCollection, '$in'),
+          negativeRestriction = createInQueries(queryMaps['negative'], queriedCollection, '$nin');
+
+    const restricted = {};
+
+    console.log(positiveRestriction, negativeRestriction);
+
+    const hasPositive = _(positiveRestriction).keys().any(),
+          hasNegative = _(negativeRestriction).keys().any();
+
+    if (hasNegative && hasPositive) {
+      restricted['$and'] = [
+        positiveRestriction,
+        negativeRestriction
+      ];
+    } else if (hasNegative) {
+      Object.assign(restricted, negativeRestriction);
+    } else if (hasPositive) {
+      Object.assign(restricted, positiveRestriction);
+    }
+
+    return restricted;
   }
 
 

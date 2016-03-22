@@ -58,11 +58,17 @@ export async function createTestData() {
   const [
     whyBurritosAreAmazing,
     ecoliChallenges,
-    weDontKnowWhyPeopleGotSick
+    weDontKnowWhyPeopleGotSick,
+    cleaningUp,
+    burritoManagement
   ] = await Promise.all([
-    Blog.addPost('whyBurritosAreAmazing', chipotleFoodBlog),
-    Blog.addPost('ecoliChallenges', chipotleFoodBlog),
-    Blog.addPost('weDontKnowWhyPeopleGotSick', chipotleFoodBlog)
+    Blog.addPost('Why burritos are amazing.', chipotleFoodBlog),
+    Blog.addPost('Ecoli challenges.', chipotleFoodBlog),
+    Blog.addPost('We don\' actually know why people got sick.', chipotleFoodBlog),
+    Blog.addPost('Re-evaluating the way we clean up.', chipotleCorporateBlog),
+    Blog.addPost('Burrito Management, a new paradigm.', chipotleCorporateBlog),
+    Blog.addPost('Salads are great.', chopped ),
+    Blog.addPost('Guacamole Greens to the rescue!.', chopped),
   ]);
 
 
