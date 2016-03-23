@@ -60,6 +60,7 @@ describe('tyranid-gracl', () => {
 
 
   describe('Creating the plugin', () => {
+
     it('should correctly produce paths between collections', () => {
       for (const a in expectedLinkPaths) {
         for (const b in expectedLinkPaths[a]) {
@@ -68,6 +69,11 @@ describe('tyranid-gracl', () => {
         }
       }
     });
+
+    it('should add permissions methods to documents', () => {
+      console.warn('ADD TEST');
+    });
+
   });
 
 

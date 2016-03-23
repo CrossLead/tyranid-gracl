@@ -13,6 +13,29 @@ import {
 } from '../util';
 
 
+export const documentMethods = {
+
+  $setPermissionAccess(permissionType: string, access: boolean, subjectDocument = Tyr.local.user) {
+    const doc = <Tyr.Document> this;
+    return PermissionsModel.setPermissionAccess(doc, permissionType, access, subjectDocument);
+  },
+
+  $isAllowed(permissionType: string, subjectDocument = Tyr.local.user) {
+    const doc = <Tyr.Document> this;
+    return PermissionsModel.isAllowed(doc, permissionType, subjectDocument);
+  },
+
+  $allow(permissionType: string, subjectDocument = Tyr.local.user) {
+    return this.$setPermissionAccess(permissionType, true, subjectDocument);
+  },
+
+  $deny(permissionType: string, subjectDocument = Tyr.local.user) {
+    return this.$setPermissionAccess(permissionType, false, subjectDocument);
+  }
+
+};
+
+
 export class GraclPlugin {
 
 
@@ -167,17 +190,7 @@ export class GraclPlugin {
       /**
        *  Add methods to document prototype
        */
-      Object.assign(Tyr.documentPrototype, {
-        $setPermissionAccess(permissionType: string, access: boolean, subjectDocument = Tyr.local.user) {
-          const doc = <Tyr.Document> this;
-          return PermissionsModel.setPermissionAccess(doc, permissionType, access, subjectDocument);
-        },
-
-        $isAllowed(permissionType: string, subjectDocument = Tyr.local.user) {
-          const doc = <Tyr.Document> this;
-          return PermissionsModel.isAllowed(doc, permissionType, subjectDocument);
-        }
-      });
+      Object.assign(Tyr.documentPrototype, documentMethods);
 
       // type alias for convienience
       type TyrSchemaGraphObjects = {
