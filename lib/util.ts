@@ -92,27 +92,29 @@ export function createInQueries(
                   key: string
                 ) {
 
-  return Array.from(map.entries())
-    .reduce((out: Hash<Hash<string[]>>, [col, uids]) => {
-      // if the collection is the same as the one being queried, use the primary id field
-      let prop: string;
-      if (col === queriedCollection.def.name) {
-        prop = queriedCollection.def.primaryKey.field;
-      } else {
-        const link = findLinkInCollection(queriedCollection, Tyr.byName[col]);
-        prop = link.spath;
-      }
+  const query: Hash<Hash<string[]>> = {};
 
-      out[prop] = { [key]: [...uids] };
-      return out;
-    }, {});
+  for (const [col, uids] of map.entries()) {
+    // if the collection is the same as the one being queried, use the primary id field
+    let prop: string;
+    if (col === queriedCollection.def.name) {
+      prop = queriedCollection.def.primaryKey.field;
+    } else {
+      const link = findLinkInCollection(queriedCollection, Tyr.byName[col]);
+      prop = link.spath;
+    }
+
+    query[prop] = { [key]: [...uids] };
+  }
+
+  return query;
 };
 
 
 
 /**
- *  Given collections A and B and an array of object ids of documents from A (aIds),
-    find the ids of all documents in B linked to A by <aIds>
+ *  Given collections A and B and an array of object ids of documents from A (A-Ids),
+    find the ids of all documents in B linked to A by <A-Ids>
  */
 export async function stepThroughCollectionPath(
                         ids: string[],
@@ -134,15 +136,14 @@ export async function stepThroughCollectionPath(
 
   const nextCollectionId = nextCollection.def.primaryKey.field;
 
-  return <string[]> _
-    // get the objects in the second to last collection of the path using
-    // the ids of the last collection in the path
-    .chain(await nextCollection.find(
-      { [nextCollectionLinkField.spath]: { $in: ids } },
-      { _id: 1, [nextCollectionId]: 1 },
-      { tyranid: { insecure } }
-    ))
-    // extract their primary ids using the primary field
-    .map(nextCollectionId)
-    .value();
+  // get the objects in the second to last collection of the path using
+  // the ids of the last collection in the path
+  const nextCollectionDocs = await nextCollection.find(
+    { [nextCollectionLinkField.spath]: { $in: ids } },
+    { _id: 1, [nextCollectionId]: 1 },
+    { tyranid: { insecure } }
+  );
+
+  // extract their primary ids using the primary field
+  return <string[]> _.map(nextCollectionDocs, nextCollectionId);
 }
