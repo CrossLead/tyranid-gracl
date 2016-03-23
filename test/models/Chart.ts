@@ -9,6 +9,18 @@ export const ChartBaseCollection = new Tyr.Collection({
     name: { is: 'string' },
     organizationId: {
       link: 'organization'
+    },
+    blogId: {
+      link: 'blog'
+    },
+    postIds: {
+      is: 'array', of: { link: 'post' }
+    },
+    teamIds: {
+      is: 'array', of: { link: 'team' }
+    },
+    userIds: {
+      is: 'array', of: { link: 'user' }
     }
   }
 });

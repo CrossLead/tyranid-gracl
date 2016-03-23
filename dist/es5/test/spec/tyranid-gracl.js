@@ -86,10 +86,20 @@ describe('tyranid-gracl', function () {
     });
     describe('utility functions', function () {
         it('should correctly find links using getCollectionLinksSorted', function () {
-            console.warn('ADD TEST');
+            var Chart = Tyr.byName['chart'],
+                options = { direction: 'outgoing' },
+                links = tyranidGracl.getCollectionLinksSorted(Chart, options);
+            chai_1.expect(links, 'should produce sorted links').to.deep.equal(_.sortBy(Chart.links(options), function (field) {
+                return field.link.def.name;
+            }));
         });
         it('should find specific link using findLinkInCollection', function () {
-            console.warn('ADD TEST');
+            var Chart = Tyr.byName['chart'],
+                User = Tyr.byName['user'],
+                linkField = tyranidGracl.findLinkInCollection(Chart, User);
+            chai_1.expect(linkField).to.exist;
+            chai_1.expect(linkField.link.def.name).to.equal('user');
+            chai_1.expect(linkField.spath).to.equal('userIds');
         });
         it('should correctly create formatted queries using createInQueries', function () {
             console.warn('ADD TEST');
@@ -107,13 +117,8 @@ describe('tyranid-gracl', function () {
             }
         });
         it('should add permissions methods to documents', function () {
-            console.warn('ADD TEST');
-        });
-    });
-    describe('Working with permissions', function () {
-        it('should successfully add permissions', function () {
             return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee3() {
-                var ben, chopped, updatedChopped, existingPermissions;
+                var ben;
                 return _regenerator2.default.wrap(function _callee3$(_context3) {
                     while (1) {
                         switch (_context3.prev = _context3.next) {
@@ -123,31 +128,13 @@ describe('tyranid-gracl', function () {
 
                             case 2:
                                 ben = _context3.sent;
-                                _context3.next = 5;
-                                return Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
-                            case 5:
-                                chopped = _context3.sent;
+                                chai_1.expect(ben, 'should have method: $isAllowed').to.have.property('$isAllowed');
+                                chai_1.expect(ben, 'should have method: $setPermissionAccess').to.have.property('$setPermissionAccess');
+                                chai_1.expect(ben, 'should have method: $allow').to.have.property('$allow');
+                                chai_1.expect(ben, 'should have method: $deny').to.have.property('$deny');
 
-                                chai_1.expect(ben, 'ben should exist').to.exist;
-                                chai_1.expect(chopped, 'chopped should exist').to.exist;
-                                _context3.next = 10;
-                                return tyranidGracl.PermissionsModel.setPermissionAccess(chopped, 'view-post', true, ben);
-
-                            case 10:
-                                updatedChopped = _context3.sent;
-                                _context3.next = 13;
-                                return tyranidGracl.PermissionsModel.find({}, null, { tyranid: { insecure: true } });
-
-                            case 13:
-                                existingPermissions = _context3.sent;
-
-                                chai_1.expect(existingPermissions).to.have.lengthOf(1);
-                                chai_1.expect(existingPermissions[0]['resourceId'].toString(), 'resourceId').to.equal(updatedChopped['permissions'][0]['resourceId'].toString());
-                                chai_1.expect(existingPermissions[0]['subjectId'].toString(), 'subjectId').to.equal(updatedChopped['permissions'][0]['subjectId'].toString());
-                                chai_1.expect(existingPermissions[0]['access']['view-post'], 'access').to.equal(updatedChopped['permissions'][0]['access']['view-post']);
-
-                            case 18:
+                            case 7:
                             case 'end':
                                 return _context3.stop();
                         }
@@ -155,9 +142,11 @@ describe('tyranid-gracl', function () {
                 }, _callee3, this);
             }));
         });
-        it('should respect permissions hierarchy', function () {
+    });
+    describe('Working with permissions', function () {
+        it('should successfully add permissions', function () {
             return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee4() {
-                var ben, choppedBlog;
+                var ben, chopped, updatedChopped, existingPermissions;
                 return _regenerator2.default.wrap(function _callee4$(_context4) {
                     while (1) {
                         switch (_context4.prev = _context4.next) {
@@ -168,23 +157,30 @@ describe('tyranid-gracl', function () {
                             case 2:
                                 ben = _context4.sent;
                                 _context4.next = 5;
-                                return Tyr.byName['blog'].findOne({ name: 'Salads are great' });
+                                return Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
                             case 5:
-                                choppedBlog = _context4.sent;
+                                chopped = _context4.sent;
 
                                 chai_1.expect(ben, 'ben should exist').to.exist;
-                                chai_1.expect(choppedBlog, 'choppedBlog should exist').to.exist;
-                                _context4.t0 = chai_1;
-                                _context4.next = 11;
-                                return choppedBlog['$isAllowed']('view-post', ben);
+                                chai_1.expect(chopped, 'chopped should exist').to.exist;
+                                _context4.next = 10;
+                                return tyranidGracl.PermissionsModel.setPermissionAccess(chopped, 'view-post', true, ben);
 
-                            case 11:
-                                _context4.t1 = _context4.sent;
-
-                                _context4.t0.expect.call(_context4.t0, _context4.t1, 'ben should have access to choppedBlog through access to chopped org').to.equal(true);
+                            case 10:
+                                updatedChopped = _context4.sent;
+                                _context4.next = 13;
+                                return tyranidGracl.PermissionsModel.find({}, null, { tyranid: { insecure: true } });
 
                             case 13:
+                                existingPermissions = _context4.sent;
+
+                                chai_1.expect(existingPermissions).to.have.lengthOf(1);
+                                chai_1.expect(existingPermissions[0]['resourceId'].toString(), 'resourceId').to.equal(updatedChopped['permissions'][0]['resourceId'].toString());
+                                chai_1.expect(existingPermissions[0]['subjectId'].toString(), 'subjectId').to.equal(updatedChopped['permissions'][0]['subjectId'].toString());
+                                chai_1.expect(existingPermissions[0]['access']['view-post'], 'access').to.equal(updatedChopped['permissions'][0]['access']['view-post']);
+
+                            case 18:
                             case 'end':
                                 return _context4.stop();
                         }
@@ -192,9 +188,9 @@ describe('tyranid-gracl', function () {
                 }, _callee4, this);
             }));
         });
-        it('should validate permissions', function () {
+        it('should respect permissions hierarchy', function () {
             return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee5() {
-                var ben, chipotleCorporateBlog, threw, message;
+                var ben, choppedBlog;
                 return _regenerator2.default.wrap(function _callee5$(_context5) {
                     while (1) {
                         switch (_context5.prev = _context5.next) {
@@ -205,28 +201,65 @@ describe('tyranid-gracl', function () {
                             case 2:
                                 ben = _context5.sent;
                                 _context5.next = 5;
+                                return Tyr.byName['blog'].findOne({ name: 'Salads are great' });
+
+                            case 5:
+                                choppedBlog = _context5.sent;
+
+                                chai_1.expect(ben, 'ben should exist').to.exist;
+                                chai_1.expect(choppedBlog, 'choppedBlog should exist').to.exist;
+                                _context5.t0 = chai_1;
+                                _context5.next = 11;
+                                return choppedBlog['$isAllowed']('view-post', ben);
+
+                            case 11:
+                                _context5.t1 = _context5.sent;
+
+                                _context5.t0.expect.call(_context5.t0, _context5.t1, 'ben should have access to choppedBlog through access to chopped org').to.equal(true);
+
+                            case 13:
+                            case 'end':
+                                return _context5.stop();
+                        }
+                    }
+                }, _callee5, this);
+            }));
+        });
+        it('should validate permissions', function () {
+            return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee6() {
+                var ben, chipotleCorporateBlog, threw, message;
+                return _regenerator2.default.wrap(function _callee6$(_context6) {
+                    while (1) {
+                        switch (_context6.prev = _context6.next) {
+                            case 0:
+                                _context6.next = 2;
+                                return Tyr.byName['user'].findOne({ name: 'ben' });
+
+                            case 2:
+                                ben = _context6.sent;
+                                _context6.next = 5;
                                 return Tyr.byName['blog'].findOne({ name: 'Mexican Empire' });
 
                             case 5:
-                                chipotleCorporateBlog = _context5.sent;
+                                chipotleCorporateBlog = _context6.sent;
 
                                 chai_1.expect(ben, 'ben should exist').to.exist;
                                 chai_1.expect(chipotleCorporateBlog, 'chipotleCorporateBlog should exist').to.exist;
                                 threw = false, message = '';
-                                _context5.prev = 9;
-                                _context5.next = 12;
+                                _context6.prev = 9;
+                                _context6.next = 12;
                                 return chipotleCorporateBlog['$isAllowed']('view', ben);
 
                             case 12:
-                                _context5.next = 18;
+                                _context6.next = 18;
                                 break;
 
                             case 14:
-                                _context5.prev = 14;
-                                _context5.t0 = _context5['catch'](9);
+                                _context6.prev = 14;
+                                _context6.t0 = _context6['catch'](9);
 
                                 threw = true;
-                                message = _context5.t0.message;
+                                message = _context6.t0.message;
 
                             case 18:
                                 chai_1.expect(threw, 'checking \"view\" without collection should throw').to.equal(true);
@@ -234,60 +267,21 @@ describe('tyranid-gracl', function () {
 
                             case 20:
                             case 'end':
-                                return _context5.stop();
-                        }
-                    }
-                }, _callee5, this, [[9, 14]]);
-            }));
-        });
-    });
-    describe('plugin.query()', function () {
-        it('should return false with no user', function () {
-            return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee6() {
-                var Post, query;
-                return _regenerator2.default.wrap(function _callee6$(_context6) {
-                    while (1) {
-                        switch (_context6.prev = _context6.next) {
-                            case 0:
-                                Post = Tyr.byName['post'];
-                                _context6.next = 3;
-                                return secure.query(Post, 'view');
-
-                            case 3:
-                                query = _context6.sent;
-
-                                chai_1.expect(query, 'query should be false').to.equal(false);
-
-                            case 5:
-                            case 'end':
                                 return _context6.stop();
                         }
                     }
-                }, _callee6, this);
+                }, _callee6, this, [[9, 14]]);
             }));
         });
-        it('should return empty object for collection with no permissions hierarchy node', function () {
+        it('should modify existing permissions instead of creating new ones', function () {
             return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee7() {
-                var Chart, ben, query;
                 return _regenerator2.default.wrap(function _callee7$(_context7) {
                     while (1) {
                         switch (_context7.prev = _context7.next) {
                             case 0:
-                                Chart = Tyr.byName['chart'];
-                                _context7.next = 3;
-                                return Tyr.byName['user'].findOne({ name: 'ben' });
+                                console.warn('ADD TEST');
 
-                            case 3:
-                                ben = _context7.sent;
-                                _context7.next = 6;
-                                return secure.query(Chart, 'view', ben);
-
-                            case 6:
-                                query = _context7.sent;
-
-                                chai_1.expect(query, 'query should be {}').to.deep.equal({});
-
-                            case 8:
+                            case 1:
                             case 'end':
                                 return _context7.stop();
                         }
@@ -295,42 +289,15 @@ describe('tyranid-gracl', function () {
                 }, _callee7, this);
             }));
         });
-        it('should produce query restriction based on permissions', function () {
+        it('should successfully remove all permissions after PermissionsModel.deletePermissions()', function () {
             return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee8() {
-                var Post, Blog, Org, ben, chopped, choppedBlogs, query;
                 return _regenerator2.default.wrap(function _callee8$(_context8) {
                     while (1) {
                         switch (_context8.prev = _context8.next) {
                             case 0:
-                                Post = Tyr.byName['post'];
-                                Blog = Tyr.byName['blog'];
-                                Org = Tyr.byName['organization'];
-                                _context8.next = 5;
-                                return Tyr.byName['user'].findOne({ name: 'ben' });
+                                console.warn('ADD TEST');
 
-                            case 5:
-                                ben = _context8.sent;
-                                _context8.next = 8;
-                                return Org.findOne({ name: 'Chopped' });
-
-                            case 8:
-                                chopped = _context8.sent;
-                                _context8.next = 11;
-                                return Blog.find({ organizationId: chopped['_id'] }, { _id: 1 }, { tyranid: { insecure: true } });
-
-                            case 11:
-                                choppedBlogs = _context8.sent;
-                                _context8.next = 14;
-                                return secure.query(Post, 'view', ben);
-
-                            case 14:
-                                query = _context8.sent;
-
-                                chai_1.expect(query, 'query should find correct blogs').to.deep.equal({
-                                    blogId: { $in: _.map(choppedBlogs, '_id') }
-                                });
-
-                            case 16:
+                            case 1:
                             case 'end':
                                 return _context8.stop();
                         }
@@ -338,20 +305,118 @@ describe('tyranid-gracl', function () {
                 }, _callee8, this);
             }));
         });
-        it('should produce query with primaryKey field set if permissions are directly set for collection', function () {
+    });
+    describe('plugin.query()', function () {
+        it('should return false with no user', function () {
             return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee9() {
+                var Post, query;
                 return _regenerator2.default.wrap(function _callee9$(_context9) {
                     while (1) {
                         switch (_context9.prev = _context9.next) {
                             case 0:
-                                console.warn('ADD TEST');
+                                Post = Tyr.byName['post'];
+                                _context9.next = 3;
+                                return secure.query(Post, 'view');
 
-                            case 1:
+                            case 3:
+                                query = _context9.sent;
+
+                                chai_1.expect(query, 'query should be false').to.equal(false);
+
+                            case 5:
                             case 'end':
                                 return _context9.stop();
                         }
                     }
                 }, _callee9, this);
+            }));
+        });
+        it('should return empty object for collection with no permissions hierarchy node', function () {
+            return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee10() {
+                var Chart, ben, query;
+                return _regenerator2.default.wrap(function _callee10$(_context10) {
+                    while (1) {
+                        switch (_context10.prev = _context10.next) {
+                            case 0:
+                                Chart = Tyr.byName['chart'];
+                                _context10.next = 3;
+                                return Tyr.byName['user'].findOne({ name: 'ben' });
+
+                            case 3:
+                                ben = _context10.sent;
+                                _context10.next = 6;
+                                return secure.query(Chart, 'view', ben);
+
+                            case 6:
+                                query = _context10.sent;
+
+                                chai_1.expect(query, 'query should be {}').to.deep.equal({});
+
+                            case 8:
+                            case 'end':
+                                return _context10.stop();
+                        }
+                    }
+                }, _callee10, this);
+            }));
+        });
+        it('should produce query restriction based on permissions', function () {
+            return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee11() {
+                var Post, Blog, Org, ben, chopped, choppedBlogs, query;
+                return _regenerator2.default.wrap(function _callee11$(_context11) {
+                    while (1) {
+                        switch (_context11.prev = _context11.next) {
+                            case 0:
+                                Post = Tyr.byName['post'];
+                                Blog = Tyr.byName['blog'];
+                                Org = Tyr.byName['organization'];
+                                _context11.next = 5;
+                                return Tyr.byName['user'].findOne({ name: 'ben' });
+
+                            case 5:
+                                ben = _context11.sent;
+                                _context11.next = 8;
+                                return Org.findOne({ name: 'Chopped' });
+
+                            case 8:
+                                chopped = _context11.sent;
+                                _context11.next = 11;
+                                return Blog.find({ organizationId: chopped['_id'] }, { _id: 1 }, { tyranid: { insecure: true } });
+
+                            case 11:
+                                choppedBlogs = _context11.sent;
+                                _context11.next = 14;
+                                return secure.query(Post, 'view', ben);
+
+                            case 14:
+                                query = _context11.sent;
+
+                                chai_1.expect(query, 'query should find correct blogs').to.deep.equal({
+                                    blogId: { $in: _.map(choppedBlogs, '_id') }
+                                });
+
+                            case 16:
+                            case 'end':
+                                return _context11.stop();
+                        }
+                    }
+                }, _callee11, this);
+            }));
+        });
+        it('should produce query with primaryKey field set if permissions are directly set for collection', function () {
+            return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee12() {
+                return _regenerator2.default.wrap(function _callee12$(_context12) {
+                    while (1) {
+                        switch (_context12.prev = _context12.next) {
+                            case 0:
+                                console.warn('ADD TEST');
+
+                            case 1:
+                            case 'end':
+                                return _context12.stop();
+                        }
+                    }
+                }, _callee12, this);
             }));
         });
         it('should produce $and clause with excluded and included ids', function () {
@@ -360,54 +425,54 @@ describe('tyranid-gracl', function () {
     });
     describe('Collection.find()', function () {
         it('should be appropriately filtered based on permissions', function () {
-            return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee10() {
+            return __awaiter(undefined, void 0, void 0, _regenerator2.default.mark(function _callee13() {
                 var Post, User, Blog, Org, ben, postsBenCanSee, chopped, choppedBlogs, choppedPosts;
-                return _regenerator2.default.wrap(function _callee10$(_context10) {
+                return _regenerator2.default.wrap(function _callee13$(_context13) {
                     while (1) {
-                        switch (_context10.prev = _context10.next) {
+                        switch (_context13.prev = _context13.next) {
                             case 0:
                                 Post = Tyr.byName['post'];
                                 User = Tyr.byName['user'];
                                 Blog = Tyr.byName['blog'];
                                 Org = Tyr.byName['organization'];
-                                _context10.next = 6;
+                                _context13.next = 6;
                                 return User.findOne({ name: 'ben' });
 
                             case 6:
-                                ben = _context10.sent;
+                                ben = _context13.sent;
 
                                 Tyr.local.user = ben;
-                                _context10.next = 10;
+                                _context13.next = 10;
                                 return Post.find({});
 
                             case 10:
-                                postsBenCanSee = _context10.sent;
-                                _context10.next = 13;
+                                postsBenCanSee = _context13.sent;
+                                _context13.next = 13;
                                 return Org.findOne({ name: 'Chopped' });
 
                             case 13:
-                                chopped = _context10.sent;
-                                _context10.next = 16;
+                                chopped = _context13.sent;
+                                _context13.next = 16;
                                 return Blog.find({ organizationId: chopped['_id'] }, { _id: 1 }, { tyranid: { insecure: true } });
 
                             case 16:
-                                choppedBlogs = _context10.sent;
-                                _context10.next = 19;
+                                choppedBlogs = _context13.sent;
+                                _context13.next = 19;
                                 return Post.find({
                                     blogId: { $in: _.map(choppedBlogs, '_id') }
                                 }, null, { tyranid: { insecure: true } });
 
                             case 19:
-                                choppedPosts = _context10.sent;
+                                choppedPosts = _context13.sent;
 
                                 chai_1.expect(postsBenCanSee, 'ben should only see chopped posts').to.deep.equal(choppedPosts);
 
                             case 21:
                             case 'end':
-                                return _context10.stop();
+                                return _context13.stop();
                         }
                     }
-                }, _callee10, this);
+                }, _callee13, this);
             }));
         });
         it('should default to lowest hierarchy permission', function () {

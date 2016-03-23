@@ -41,11 +41,22 @@ describe('tyranid-gracl', () => {
   describe('utility functions', () => {
 
     it('should correctly find links using getCollectionLinksSorted', () => {
-      console.warn('ADD TEST');
+      const Chart = Tyr.byName['chart'],
+            options = { direction: 'outgoing' },
+            links = tyranidGracl.getCollectionLinksSorted(Chart, options);
+
+      expect(links, 'should produce sorted links')
+        .to.deep.equal(_.sortBy(Chart.links(options), field => field.link.def.name));
     });
 
     it('should find specific link using findLinkInCollection', () => {
-      console.warn('ADD TEST');
+      const Chart     = Tyr.byName['chart'],
+            User      = Tyr.byName['user'],
+            linkField = tyranidGracl.findLinkInCollection(Chart, User);
+
+      expect(linkField).to.exist;
+      expect(linkField.link.def.name).to.equal('user');
+      expect(linkField.spath).to.equal('userIds');
     });
 
     it('should correctly create formatted queries using createInQueries', () => {
@@ -70,8 +81,12 @@ describe('tyranid-gracl', () => {
       }
     });
 
-    it('should add permissions methods to documents', () => {
-      console.warn('ADD TEST');
+    it('should add permissions methods to documents', async () => {
+      const ben = await Tyr.byName['user'].findOne({ name: 'ben' });
+      expect(ben, 'should have method: $isAllowed').to.have.property('$isAllowed');
+      expect(ben, 'should have method: $setPermissionAccess').to.have.property('$setPermissionAccess');
+      expect(ben, 'should have method: $allow').to.have.property('$allow');
+      expect(ben, 'should have method: $deny').to.have.property('$deny');
     });
 
   });
@@ -139,6 +154,16 @@ describe('tyranid-gracl', () => {
 
       expect(message, `Error message should contain \"No collection name in permission type\"`)
         .to.match(/No collection name in permission type/g);
+    });
+
+
+    it('should modify existing permissions instead of creating new ones', async () => {
+      console.warn('ADD TEST');
+    });
+
+
+    it('should successfully remove all permissions after PermissionsModel.deletePermissions()', async () => {
+      console.warn('ADD TEST');
     });
 
 
