@@ -5,8 +5,8 @@ import * as tpmongo from 'tpmongo';
 import * as _ from 'lodash';
 import * as tyranidGracl from '../../lib/index';
 import { expect } from 'chai';
-import { expectedLinkPaths } from './expectedLinkPaths';
-import { createTestData } from './createTestData';
+import { expectedLinkPaths } from '../helpers/expectedLinkPaths';
+import { createTestData } from '../helpers/createTestData';
 
 
 const db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),
