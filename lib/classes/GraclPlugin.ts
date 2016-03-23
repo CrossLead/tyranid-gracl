@@ -13,30 +13,33 @@ import {
 } from '../util';
 
 
-export const documentMethods = {
-
-  $setPermissionAccess(permissionType: string, access: boolean, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
-    const doc = <Tyr.Document> this;
-    return PermissionsModel.setPermissionAccess(doc, permissionType, access, subjectDocument);
-  },
-
-  $isAllowed(permissionType: string, subjectDocument = Tyr.local.user): Promise<boolean> {
-    const doc = <Tyr.Document> this;
-    return PermissionsModel.isAllowed(doc, permissionType, subjectDocument);
-  },
-
-  $allow(permissionType: string, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
-    return this.$setPermissionAccess(permissionType, true, subjectDocument);
-  },
-
-  $deny(permissionType: string, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
-    return this.$setPermissionAccess(permissionType, false, subjectDocument);
-  }
-
-};
-
-
 export class GraclPlugin {
+
+
+  /**
+   *  Methods to mixin to Tyr.documentPrototype for working with permissions
+   */
+  static documentMethods = {
+
+    $setPermissionAccess(permissionType: string, access: boolean, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
+      const doc = <Tyr.Document> this;
+      return PermissionsModel.setPermissionAccess(doc, permissionType, access, subjectDocument);
+    },
+
+    $isAllowed(permissionType: string, subjectDocument = Tyr.local.user): Promise<boolean> {
+      const doc = <Tyr.Document> this;
+      return PermissionsModel.isAllowed(doc, permissionType, subjectDocument);
+    },
+
+    $allow(permissionType: string, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
+      return this.$setPermissionAccess(permissionType, true, subjectDocument);
+    },
+
+    $deny(permissionType: string, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
+      return this.$setPermissionAccess(permissionType, false, subjectDocument);
+    }
+
+  };
 
 
   // create a repository object for a given collection
@@ -190,7 +193,7 @@ export class GraclPlugin {
       /**
        *  Add methods to document prototype
        */
-      Object.assign(Tyr.documentPrototype, documentMethods);
+      Object.assign(Tyr.documentPrototype, GraclPlugin.documentMethods);
 
       // type alias for convienience
       type TyrSchemaGraphObjects = {

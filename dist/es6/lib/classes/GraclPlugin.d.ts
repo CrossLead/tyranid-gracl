@@ -2,14 +2,14 @@
 import * as Tyr from 'tyranid';
 import * as gracl from 'gracl';
 import { Hash } from '../util';
-export declare const documentMethods: {
-    $setPermissionAccess(permissionType: string, access: boolean, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
-    $isAllowed(permissionType: string, subjectDocument?: Tyr.Document): Promise<boolean>;
-    $allow(permissionType: string, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
-    $deny(permissionType: string, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
-};
 export declare class GraclPlugin {
     verbose: boolean;
+    static documentMethods: {
+        $setPermissionAccess(permissionType: string, access: boolean, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
+        $isAllowed(permissionType: string, subjectDocument?: Tyr.Document): Promise<boolean>;
+        $allow(permissionType: string, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
+        $deny(permissionType: string, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
+    };
     static makeRepository(collection: Tyr.CollectionInstance): gracl.Repository;
     static buildLinkGraph(): Hash<Hash<string>>;
     graclHierarchy: gracl.Graph;

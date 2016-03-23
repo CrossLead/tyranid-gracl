@@ -79,30 +79,6 @@ var PermissionsModel_1 = require('../models/PermissionsModel');
 var gracl = require('gracl');
 var _ = require('lodash');
 var util_1 = require('../util');
-exports.documentMethods = {
-    $setPermissionAccess: function $setPermissionAccess(permissionType, access) {
-        var subjectDocument = arguments.length <= 2 || arguments[2] === undefined ? Tyr.local.user : arguments[2];
-
-        var doc = this;
-        return PermissionsModel_1.PermissionsModel.setPermissionAccess(doc, permissionType, access, subjectDocument);
-    },
-    $isAllowed: function $isAllowed(permissionType) {
-        var subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? Tyr.local.user : arguments[1];
-
-        var doc = this;
-        return PermissionsModel_1.PermissionsModel.isAllowed(doc, permissionType, subjectDocument);
-    },
-    $allow: function $allow(permissionType) {
-        var subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? Tyr.local.user : arguments[1];
-
-        return this.$setPermissionAccess(permissionType, true, subjectDocument);
-    },
-    $deny: function $deny(permissionType) {
-        var subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? Tyr.local.user : arguments[1];
-
-        return this.$setPermissionAccess(permissionType, false, subjectDocument);
-    }
-};
 
 var GraclPlugin = function () {
     function GraclPlugin() {
@@ -185,7 +161,7 @@ var GraclPlugin = function () {
             if (stage === 'post-link') {
                 (function () {
                     _this.log('starting boot.');
-                    (0, _assign2.default)(Tyr.documentPrototype, exports.documentMethods);
+                    (0, _assign2.default)(Tyr.documentPrototype, GraclPlugin.documentMethods);
                     var collections = Tyr.collections,
                         nodeSet = new _set2.default();
                     var schemaObjects = {
@@ -907,4 +883,28 @@ var GraclPlugin = function () {
     return GraclPlugin;
 }();
 
+GraclPlugin.documentMethods = {
+    $setPermissionAccess: function $setPermissionAccess(permissionType, access) {
+        var subjectDocument = arguments.length <= 2 || arguments[2] === undefined ? Tyr.local.user : arguments[2];
+
+        var doc = this;
+        return PermissionsModel_1.PermissionsModel.setPermissionAccess(doc, permissionType, access, subjectDocument);
+    },
+    $isAllowed: function $isAllowed(permissionType) {
+        var subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? Tyr.local.user : arguments[1];
+
+        var doc = this;
+        return PermissionsModel_1.PermissionsModel.isAllowed(doc, permissionType, subjectDocument);
+    },
+    $allow: function $allow(permissionType) {
+        var subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? Tyr.local.user : arguments[1];
+
+        return this.$setPermissionAccess(permissionType, true, subjectDocument);
+    },
+    $deny: function $deny(permissionType) {
+        var subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? Tyr.local.user : arguments[1];
+
+        return this.$setPermissionAccess(permissionType, false, subjectDocument);
+    }
+};
 exports.GraclPlugin = GraclPlugin;
