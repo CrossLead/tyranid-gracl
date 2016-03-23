@@ -157,6 +157,11 @@ describe('tyranid-gracl', () => {
     });
 
 
+    it('should lock permissions for resource while update in progress', async () => {
+      console.warn('ADD TEST');
+    });
+
+
     it('should modify existing permissions instead of creating new ones', async () => {
       console.warn('ADD TEST');
     });

@@ -3,7 +3,7 @@ import * as _ from 'lodash';
 import * as Tyr from 'tyranid';
 import * as gracl from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
-
+import { PermissionLocks } from './PermissionsLocks';
 
 export const PermissionsBaseCollection = new Tyr.Collection({
   id: '_gp',
@@ -80,11 +80,11 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       resource: gracl.Resource
     }> {
 
-    if (!resourceDocument) {
+    if (!(resourceDocument && resourceDocument.$uid)) {
       throw new Error('No resource document provided!');
     }
 
-    if (!subjectDocument) {
+    if (!(subjectDocument && subjectDocument.$uid)) {
       throw new Error('No subject document provided (or Tyr.local.user is unavailable)!');
     }
 
@@ -168,6 +168,33 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
           updated             = <Tyr.Document[]> [],
           permIdField         = PermissionsModel.def.primaryKey.field;
 
+    if (!(resourceDocument && resourceDocument.$uid)) {
+      throw new Error('No resource document provided!');
+    }
+
+    const lock = await PermissionLocks.findAndModify({
+      query: {
+        resourceId: resourceDocument.$uid
+      },
+      update: {
+        $set: {
+          locked: true
+        }
+      },
+      new: false,
+      upsert: true
+    });
+
+    /**
+     *  Check if we are already updating permissions for this resource
+     */
+    if (lock && lock['locked'] === true) {
+      throw new Error(
+        `Cannot update permissions for resource ${resourceDocument.$uid} as another update is in progress!`
+      );
+    }
+
+
     // extract secure and cast to plugin
     const plugin = PermissionsModel.getGraclPlugin(),
           resourceCollectionName = resourceDocument.$model.def.name;
@@ -230,10 +257,25 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     });
 
     const updatedResourceDocument = await resourceDocument.$save();
-    return <Tyr.Document> (
+
+    const populated = <Tyr.Document> (
       await Tyr.byName[resourceCollectionName]
         .populate('permissionIds', updatedResourceDocument)
     );
+
+    await PermissionLocks.findAndModify({
+      query: {
+        resourceId: resourceDocument.$uid
+      },
+      update: {
+        $set: {
+          locked: false
+        }
+      },
+      upsert: true
+    });
+
+    return populated;
   }
 
 
@@ -292,7 +334,8 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
     delete doc['permissions'];
     doc['permissionIds'] = [];
-    return doc.$save();
+    await doc.$save();
+    return doc;
   }
 
 

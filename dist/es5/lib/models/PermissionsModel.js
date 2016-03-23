@@ -80,6 +80,7 @@ var __awaiter = undefined && undefined.__awaiter || function (thisArg, _argument
 };
 var _ = require('lodash');
 var Tyr = require('tyranid');
+var PermissionsLocks_1 = require('./PermissionsLocks');
 exports.PermissionsBaseCollection = new Tyr.Collection({
     id: '_gp',
     name: 'graclPermission',
@@ -145,7 +146,7 @@ var PermissionsModel = function (_exports$PermissionsB) {
                     while (1) {
                         switch (_context.prev = _context.next) {
                             case 0:
-                                if (resourceDocument) {
+                                if (resourceDocument && resourceDocument.$uid) {
                                     _context.next = 2;
                                     break;
                                 }
@@ -153,7 +154,7 @@ var PermissionsModel = function (_exports$PermissionsB) {
                                 throw new Error('No resource document provided!');
 
                             case 2:
-                                if (subjectDocument) {
+                                if (subjectDocument && subjectDocument.$uid) {
                                     _context.next = 4;
                                     break;
                                 }
@@ -276,22 +277,56 @@ var PermissionsModel = function (_exports$PermissionsB) {
             return __awaiter(this, void 0, _promise2.default, _regenerator2.default.mark(function _callee4() {
                 var _PermissionsModel$rem;
 
-                var permissions, existingPermissions, newPermissions, updated, permIdField, plugin, resourceCollectionName, uniquenessCheck, existingUpdatePromises, newPermissionPromises, updatedResourceDocument;
+                var permissions, existingPermissions, newPermissions, updated, permIdField, lock, plugin, resourceCollectionName, uniquenessCheck, existingUpdatePromises, newPermissionPromises, updatedResourceDocument, populated;
                 return _regenerator2.default.wrap(function _callee4$(_context4) {
                     while (1) {
                         switch (_context4.prev = _context4.next) {
                             case 0:
                                 permissions = _.get(resourceDocument, 'permissions', []), existingPermissions = [], newPermissions = [], updated = [], permIdField = PermissionsModel.def.primaryKey.field;
+
+                                if (resourceDocument && resourceDocument.$uid) {
+                                    _context4.next = 3;
+                                    break;
+                                }
+
+                                throw new Error('No resource document provided!');
+
+                            case 3:
+                                _context4.next = 5;
+                                return PermissionsLocks_1.PermissionLocks.findAndModify({
+                                    query: {
+                                        resourceId: resourceDocument.$uid
+                                    },
+                                    update: {
+                                        $set: {
+                                            locked: true
+                                        }
+                                    },
+                                    new: false,
+                                    upsert: true
+                                });
+
+                            case 5:
+                                lock = _context4.sent;
+
+                                if (!(lock && lock['locked'] === true)) {
+                                    _context4.next = 8;
+                                    break;
+                                }
+
+                                throw new Error('Cannot update permissions for resource ' + resourceDocument.$uid + ' as another update is in progress!');
+
+                            case 8:
                                 plugin = PermissionsModel.getGraclPlugin(), resourceCollectionName = resourceDocument.$model.def.name;
 
                                 if (plugin.graclHierarchy.resources.has(resourceCollectionName)) {
-                                    _context4.next = 4;
+                                    _context4.next = 11;
                                     break;
                                 }
 
                                 throw new Error('Attempted to update permissions for document in ' + resourceCollectionName + ' collection as resource ' + 'but no resource class for that collection was found!');
 
-                            case 4:
+                            case 11:
                                 uniquenessCheck = new _set2.default();
 
                                 _.each(permissions, function (perm) {
@@ -320,10 +355,10 @@ var PermissionsModel = function (_exports$PermissionsB) {
                                 });
                                 _context4.t0 = updated.push;
                                 _context4.t1 = updated;
-                                _context4.next = 12;
+                                _context4.next = 19;
                                 return _promise2.default.all(existingUpdatePromises);
 
-                            case 12:
+                            case 19:
                                 _context4.t2 = _context4.sent;
                                 _context4.t3 = (0, _toConsumableArray3.default)(_context4.t2);
 
@@ -331,32 +366,47 @@ var PermissionsModel = function (_exports$PermissionsB) {
 
                                 _context4.t4 = updated.push;
                                 _context4.t5 = updated;
-                                _context4.next = 19;
+                                _context4.next = 26;
                                 return _promise2.default.all(newPermissionPromises);
 
-                            case 19:
+                            case 26:
                                 _context4.t6 = _context4.sent;
                                 _context4.t7 = (0, _toConsumableArray3.default)(_context4.t6);
 
                                 _context4.t4.apply.call(_context4.t4, _context4.t5, _context4.t7);
 
                                 resourceDocument['permissionIds'] = _.map(updated, permIdField);
-                                _context4.next = 25;
+                                _context4.next = 32;
                                 return PermissionsModel.remove((_PermissionsModel$rem = {}, (0, _defineProperty3.default)(_PermissionsModel$rem, permIdField, { $nin: resourceDocument['permissionIds'] }), (0, _defineProperty3.default)(_PermissionsModel$rem, 'resourceId', resourceDocument.$uid), _PermissionsModel$rem));
 
-                            case 25:
-                                _context4.next = 27;
+                            case 32:
+                                _context4.next = 34;
                                 return resourceDocument.$save();
 
-                            case 27:
+                            case 34:
                                 updatedResourceDocument = _context4.sent;
-                                _context4.next = 30;
+                                _context4.next = 37;
                                 return Tyr.byName[resourceCollectionName].populate('permissionIds', updatedResourceDocument);
 
-                            case 30:
-                                return _context4.abrupt('return', _context4.sent);
+                            case 37:
+                                populated = _context4.sent;
+                                _context4.next = 40;
+                                return PermissionsLocks_1.PermissionLocks.findAndModify({
+                                    query: {
+                                        resourceId: resourceDocument.$uid
+                                    },
+                                    update: {
+                                        $set: {
+                                            locked: false
+                                        }
+                                    },
+                                    upsert: true
+                                });
 
-                            case 31:
+                            case 40:
+                                return _context4.abrupt('return', populated);
+
+                            case 41:
                             case 'end':
                                 return _context4.stop();
                         }
@@ -466,9 +516,13 @@ var PermissionsModel = function (_exports$PermissionsB) {
                             case 36:
                                 delete doc['permissions'];
                                 doc['permissionIds'] = [];
-                                return _context5.abrupt('return', doc.$save());
+                                _context5.next = 40;
+                                return doc.$save();
 
-                            case 39:
+                            case 40:
+                                return _context5.abrupt('return', doc);
+
+                            case 41:
                             case 'end':
                                 return _context5.stop();
                         }
