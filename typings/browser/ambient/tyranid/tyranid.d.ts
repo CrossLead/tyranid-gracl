@@ -131,7 +131,7 @@ declare module 'tyranid' {
     const byId: { [key: string]: CollectionInstance };
     const byName: { [key: string]: CollectionInstance };
     const collections: CollectionInstance[];
-    const documentPrototype: Document;
+    const documentPrototype: any;
     const secure: Secure;
 
     interface Secure {
@@ -150,7 +150,7 @@ declare module 'tyranid' {
     function labelize(name: string): string;
     function config(opts: any): void;
     function byUid(uid: string): Promise<Document>;
-    function byUids(uidList: string[]): Promise<Document[]>;
+    function byUids(uidList: string[], options?: any): Promise<Document[]>;
     function trace(opts: any): void;
     function log(opts: any): void;
     function info(opts: any): void;
@@ -190,7 +190,7 @@ declare module 'tyranid' {
       def: TyranidCollectionDefinition;
 
       byId(id: IdType): Promise<Document>;
-      byIds(ids: IdType[]): Promise<Document[]>;
+      byIds(ids: IdType[], projection?: any, options?: any): Promise<Document[]>;
       byLabel(label: LabelType): Promise<Document>;
 
       fieldsBy(filter: (field: Field) => boolean): Field[];
