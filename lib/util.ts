@@ -18,22 +18,29 @@ export type Hash<T> = {
     and sort them by the collection name
  */
 export const getCollectionLinksSorted = (function() {
+
   // need to cast function to special memoized type to allow the cache property
   type memoized = {
     (col: Tyr.CollectionInstance, opts?: any): Tyr.Field[];
     cache: Hash<Tyr.Field[]>;
   };
 
+  const defaultOpts = { direction: 'outgoing' };
+
   // create and cast function
   const fn = <memoized> function getCollectionLinksSorted(
-                    col: Tyr.CollectionInstance,
-                    opts: any = { direction: 'outgoing' }
-                  ): Array<Tyr.Field> {
+      col: Tyr.CollectionInstance,
+      opts: any = defaultOpts
+    ): Array<Tyr.Field> {
+
     const collectionFieldCache = fn.cache,
           hash = `${col.def.name}:${_.pairs(opts).map(e => e.join('=')).sort().join(':')}`;
 
     if (collectionFieldCache[hash]) return collectionFieldCache[hash];
-    const links = _.sortBy(col.links(opts), link => link.collection.def.name);
+
+    // sort fields by link collection name
+    const links = _.sortBy(col.links(opts), field => field.link.def.name);
+
     return collectionFieldCache[hash] = links;
   };
 
@@ -43,18 +50,34 @@ export const getCollectionLinksSorted = (function() {
 })();
 
 
+
+/**
+ *  Compare a collection by name with a field by name
+ */
+export function compareCollectionWithField(
+    aCol: Tyr.CollectionInstance,
+    bCol: Tyr.Field
+  ) {
+  const a = aCol.def.name,
+        b = bCol.link.def.name;
+
+  return gracl.baseCompare(a, b);
+}
+
+
+
 /**
  *  Function to find if <linkCollection> appears on an outgoing link field
     on <col>, uses memoized <getCollectionFieldSorted> for O(1) field lookup
     and binary search for feild search => O(log(n)) lookup
  */
-export function findLinkInCollection(col: Tyr.CollectionInstance, linkCollection: Tyr.CollectionInstance): Tyr.Field {
+export function findLinkInCollection(
+    col: Tyr.CollectionInstance,
+    linkCollection: Tyr.CollectionInstance
+  ): Tyr.Field {
+
   const links = getCollectionLinksSorted(col),
-        index = gracl.binaryIndexOf(links, linkCollection, (aCol: Tyr.CollectionInstance, bCol: Tyr.Field) => {
-          const a = aCol.def.name,
-                b = bCol.link.def.name;
-          return gracl.baseCompare(a, b);
-        });
+        index = gracl.binaryIndexOf(links, linkCollection, compareCollectionWithField);
 
   return (index >= 0)
     ? links[index]
@@ -109,13 +132,17 @@ export async function stepThroughCollectionPath(
     );
   }
 
+  const nextCollectionId = nextCollection.def.primaryKey.field;
+
   return <string[]> _
     // get the objects in the second to last collection of the path using
     // the ids of the last collection in the path
-    .chain(await nextCollection.find({
-      [nextCollectionLinkField.spath]: { $in: ids }
-    }, null, { tyranid: { insecure } }))
+    .chain(await nextCollection.find(
+      { [nextCollectionLinkField.spath]: { $in: ids } },
+      { _id: 1, [nextCollectionId]: 1 },
+      { tyranid: { insecure } }
+    ))
     // extract their primary ids using the primary field
-    .map(nextCollection.def.primaryKey.field)
+    .map(nextCollectionId)
     .value();
 }
