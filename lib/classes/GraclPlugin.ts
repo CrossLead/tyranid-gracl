@@ -617,7 +617,7 @@ export class GraclPlugin {
     const positiveRestriction = createInQueries(queryMaps['positive'], queriedCollection, '$in'),
           negativeRestriction = createInQueries(queryMaps['negative'], queriedCollection, '$nin');
 
-    const restricted = {},
+    const restricted: any = {},
           hasPositive = _.chain(positiveRestriction).keys().any().value(),
           hasNegative = _.chain(negativeRestriction).keys().any().value();
 

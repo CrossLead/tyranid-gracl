@@ -81,7 +81,7 @@ var __awaiter = undefined && undefined.__awaiter || function (thisArg, _argument
 var _ = require('lodash');
 var Tyr = require('tyranid');
 exports.PermissionsBaseCollection = new Tyr.Collection({
-    id: 'gcp',
+    id: '_gp',
     name: 'graclPermission',
     dbName: 'graclPermissions',
     fields: {

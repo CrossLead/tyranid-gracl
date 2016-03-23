@@ -11,4 +11,4 @@ export declare const getCollectionLinksSorted: {
 };
 export declare function findLinkInCollection(col: Tyr.CollectionInstance, linkCollection: Tyr.CollectionInstance): Tyr.Field;
 export declare function createInQueries(map: Map<string, Set<string>>, queriedCollection: Tyr.CollectionInstance, key: string): {};
-export declare function stepThroughCollectionPath(ids: string[], previousCollection: Tyr.CollectionInstance, nextCollection: Tyr.CollectionInstance): Promise<string[]>;
+export declare function stepThroughCollectionPath(ids: string[], previousCollection: Tyr.CollectionInstance, nextCollection: Tyr.CollectionInstance, insecure?: boolean): Promise<string[]>;

@@ -6,7 +6,7 @@ import { GraclPlugin } from '../classes/GraclPlugin';
 
 
 export const PermissionsBaseCollection = new Tyr.Collection({
-  id: 'gcp',
+  id: '_gp',
   name: 'graclPermission',
   dbName: 'graclPermissions',
   fields: {

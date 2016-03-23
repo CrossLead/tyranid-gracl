@@ -4,6 +4,10 @@ var _regenerator = require('babel-runtime/regenerator');
 
 var _regenerator2 = _interopRequireDefault(_regenerator);
 
+var _defineProperty2 = require('babel-runtime/helpers/defineProperty');
+
+var _defineProperty3 = _interopRequireDefault(_defineProperty2);
+
 var _stringify = require('babel-runtime/core-js/json/stringify');
 
 var _stringify2 = _interopRequireDefault(_stringify);
@@ -244,12 +248,12 @@ var GraclPlugin = function () {
                                     parentName = node.link.def.name,
                                     parentNamePath = node.collection.parsePath(node.path);
                                 nodes.set(name, { name: name,
-                                    id: node.collection.def.primaryKey.field,
+                                    id: '$uid',
                                     parent: parentName,
                                     repository: GraclPlugin.makeRepository(node.collection),
                                     getParents: function getParents() {
                                         return __awaiter(this, void 0, _promise2.default, _regenerator2.default.mark(function _callee() {
-                                            var thisNode, ids, parentObjects, ParentClass;
+                                            var thisNode, ids, linkCollection, parentObjects, ParentClass;
                                             return _regenerator2.default.wrap(function _callee$(_context) {
                                                 while (1) {
                                                     switch (_context.prev = _context.next) {
@@ -260,17 +264,18 @@ var GraclPlugin = function () {
                                                             if (!(ids instanceof Array)) {
                                                                 ids = [ids];
                                                             }
-                                                            _context.next = 5;
-                                                            return node.link.byIds(ids);
+                                                            linkCollection = node.link;
+                                                            _context.next = 6;
+                                                            return linkCollection.find((0, _defineProperty3.default)({}, linkCollection.def.primaryKey.field, { $in: ids }), null, { tyranid: { insecure: true } });
 
-                                                        case 5:
+                                                        case 6:
                                                             parentObjects = _context.sent;
                                                             ParentClass = thisNode.getParentClass();
                                                             return _context.abrupt('return', parentObjects.map(function (doc) {
                                                                 return new ParentClass(doc);
                                                             }));
 
-                                                        case 8:
+                                                        case 9:
                                                         case 'end':
                                                             return _context.stop();
                                                     }
@@ -311,7 +316,7 @@ var GraclPlugin = function () {
                                 if (!nodes.has(name)) {
                                     nodes.set(name, {
                                         name: name,
-                                        id: parent.def.primaryKey.field,
+                                        id: '$uid',
                                         repository: GraclPlugin.makeRepository(parent)
                                     });
                                 }
@@ -352,68 +357,89 @@ var GraclPlugin = function () {
             return __awaiter(this, void 0, _promise2.default, _regenerator2.default.mark(function _callee3() {
                 var _this2 = this;
 
-                var permissionType, ResourceClass, SubjectClass, subject, errorMessageHeader, subjectHierarchyIds, resourceHierarchyClasses, permissions, resourceMap, queriedCollectionLinkFields, queryMaps, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, _step4$value, _collectionName, _step4$value$, collection, _permissions, queryRestrictionSet, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, permission, access, key;
+                var queriedCollectionName, permissionType, ResourceClass, SubjectClass, subject, errorMessageHeader, subjectHierarchyIds, resourceHierarchyClasses, permissionsQuery, permissions, resourceMap, queriedCollectionLinkFields, queryMaps, _iteratorNormalCompletion4, _didIteratorError4, _iteratorError4, _iterator4, _step4, _step4$value, _collectionName, _step4$value$, collection, _permissions, queryRestrictionSet, _iteratorNormalCompletion5, _didIteratorError5, _iteratorError5, _iterator5, _step5, permission, access, key, positiveRestriction, negativeRestriction, restricted, hasPositive, hasNegative;
 
                 return _regenerator2.default.wrap(function _callee3$(_context3) {
                     while (1) {
                         switch (_context3.prev = _context3.next) {
                             case 0:
-                                permissionType = permissionAction + '-' + queriedCollection.def.name;
+                                queriedCollectionName = queriedCollection.def.name;
 
-                                this.log('tyranid-gracl: restricting query for collection = ' + queriedCollection.def.name + ' ' + ('permissionType = ' + permissionType + ' ') + ('user = ' + user));
-
-                                if (permissionType) {
+                                if (!(queriedCollectionName === PermissionsModel_1.PermissionsModel.def.name)) {
                                     _context3.next = 4;
                                     break;
                                 }
 
-                                throw new Error('No permissionType given to GraclPlugin.query()!');
+                                this.log('skipping query modification for ' + PermissionsModel_1.PermissionsModel.def.name);
+                                return _context3.abrupt('return', {});
 
                             case 4:
+                                permissionType = permissionAction + '-' + queriedCollectionName;
+
+                                if (permissionAction) {
+                                    _context3.next = 7;
+                                    break;
+                                }
+
+                                throw new Error('No permissionAction given to GraclPlugin.query()!');
+
+                            case 7:
                                 if (this.graclHierarchy) {
-                                    _context3.next = 6;
+                                    _context3.next = 9;
                                     break;
                                 }
 
                                 throw new Error('Must call GraclPlugin.boot() before using GraclPlugin.query()!');
 
-                            case 6:
+                            case 9:
                                 if (user) {
-                                    _context3.next = 9;
+                                    _context3.next = 12;
                                     break;
                                 }
 
-                                this.log('No user passed to GraclPlugin.query() (or found on Tyr.local) -- no restriction enforced!');
+                                this.log('No user passed to GraclPlugin.query() (or found on Tyr.local) -- no documents allowed!');
                                 return _context3.abrupt('return', false);
 
-                            case 9:
-                                ResourceClass = this.graclHierarchy.getResource(queriedCollection.def.name), SubjectClass = this.graclHierarchy.getSubject(user.$model.def.name);
+                            case 12:
+                                this.log('restricting query for collection = ' + queriedCollectionName + ' ' + ('permissionType = ' + permissionType + ' ') + ('user = ' + (0, _stringify2.default)(user.$toClient())));
+
+                                if (this.graclHierarchy.resources.has(queriedCollectionName)) {
+                                    _context3.next = 16;
+                                    break;
+                                }
+
+                                this.log('Querying against collection (' + queriedCollectionName + ') with no resource class -- no restriction enforced!');
+                                return _context3.abrupt('return', {});
+
+                            case 16:
+                                ResourceClass = this.graclHierarchy.getResource(queriedCollectionName), SubjectClass = this.graclHierarchy.getSubject(user.$model.def.name);
                                 subject = new SubjectClass(user);
                                 errorMessageHeader = 'Unable to construct query object for ' + queriedCollection.name + ' ' + ('from the perspective of ' + subject.toString());
-                                _context3.next = 14;
+                                _context3.next = 21;
                                 return subject.getHierarchyIds();
 
-                            case 14:
+                            case 21:
                                 subjectHierarchyIds = _context3.sent;
                                 resourceHierarchyClasses = ResourceClass.getHierarchyClassNames();
-                                _context3.next = 18;
-                                return PermissionsModel_1.PermissionsModel.find({
+                                permissionsQuery = {
                                     subjectId: { $in: subjectHierarchyIds },
                                     resourceType: { $in: resourceHierarchyClasses }
-                                });
+                                };
+                                _context3.next = 26;
+                                return PermissionsModel_1.PermissionsModel.find(permissionsQuery, null, { tyranid: { insecure: true } });
 
-                            case 18:
+                            case 26:
                                 permissions = _context3.sent;
 
                                 if (!(!Array.isArray(permissions) || permissions.length === 0)) {
-                                    _context3.next = 22;
+                                    _context3.next = 30;
                                     break;
                                 }
 
                                 this.log('No permissions found, returning false!');
                                 return _context3.abrupt('return', false);
 
-                            case 22:
+                            case 30:
                                 resourceMap = permissions.reduce(function (map, perm) {
                                     var resourceCollectionName = perm['resourceType'],
                                         resourceId = perm['resourceId'];
@@ -437,12 +463,12 @@ var GraclPlugin = function () {
                                 _iteratorNormalCompletion4 = true;
                                 _didIteratorError4 = false;
                                 _iteratorError4 = undefined;
-                                _context3.prev = 28;
+                                _context3.prev = 36;
                                 _iterator4 = (0, _getIterator3.default)(resourceMap);
 
-                            case 30:
+                            case 38:
                                 if (_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done) {
-                                    _context3.next = 79;
+                                    _context3.next = 87;
                                     break;
                                 }
 
@@ -454,84 +480,84 @@ var GraclPlugin = function () {
                                 queryRestrictionSet = false;
 
                                 if (!queriedCollectionLinkFields.has(_collectionName)) {
-                                    _context3.next = 73;
+                                    _context3.next = 81;
                                     break;
                                 }
 
                                 _iteratorNormalCompletion5 = true;
                                 _didIteratorError5 = false;
                                 _iteratorError5 = undefined;
-                                _context3.prev = 41;
+                                _context3.prev = 49;
                                 _iterator5 = (0, _getIterator3.default)(_permissions.values());
 
-                            case 43:
+                            case 51:
                                 if (_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done) {
-                                    _context3.next = 57;
+                                    _context3.next = 65;
                                     break;
                                 }
 
                                 permission = _step5.value;
                                 access = permission.access[permissionType];
                                 _context3.t0 = access;
-                                _context3.next = _context3.t0 === true ? 49 : _context3.t0 === false ? 49 : 53;
+                                _context3.next = _context3.t0 === true ? 57 : _context3.t0 === false ? 57 : 61;
                                 break;
 
-                            case 49:
+                            case 57:
                                 key = access ? 'positive' : 'negative';
 
                                 if (!queryMaps[key].has(_collectionName)) {
                                     queryMaps[key].set(_collectionName, new _set2.default());
                                 }
                                 queryMaps[key].get(_collectionName).add(permission.resourceId);
-                                return _context3.abrupt('break', 53);
+                                return _context3.abrupt('break', 61);
 
-                            case 53:
+                            case 61:
                                 queryRestrictionSet = true;
 
-                            case 54:
+                            case 62:
                                 _iteratorNormalCompletion5 = true;
-                                _context3.next = 43;
+                                _context3.next = 51;
                                 break;
 
-                            case 57:
-                                _context3.next = 63;
+                            case 65:
+                                _context3.next = 71;
                                 break;
 
-                            case 59:
-                                _context3.prev = 59;
-                                _context3.t1 = _context3['catch'](41);
+                            case 67:
+                                _context3.prev = 67;
+                                _context3.t1 = _context3['catch'](49);
                                 _didIteratorError5 = true;
                                 _iteratorError5 = _context3.t1;
 
-                            case 63:
-                                _context3.prev = 63;
-                                _context3.prev = 64;
+                            case 71:
+                                _context3.prev = 71;
+                                _context3.prev = 72;
 
                                 if (!_iteratorNormalCompletion5 && _iterator5.return) {
                                     _iterator5.return();
                                 }
 
-                            case 66:
-                                _context3.prev = 66;
+                            case 74:
+                                _context3.prev = 74;
 
                                 if (!_didIteratorError5) {
-                                    _context3.next = 69;
+                                    _context3.next = 77;
                                     break;
                                 }
 
                                 throw _iteratorError5;
 
-                            case 69:
-                                return _context3.finish(66);
+                            case 77:
+                                return _context3.finish(74);
 
-                            case 70:
-                                return _context3.finish(63);
+                            case 78:
+                                return _context3.finish(71);
 
-                            case 71:
-                                _context3.next = 74;
+                            case 79:
+                                _context3.next = 82;
                                 break;
 
-                            case 73:
+                            case 81:
                                 return _context3.delegateYield(_regenerator2.default.mark(function _callee2() {
                                     var path, pathEndCollectionName, positiveIds, negativeIds, _iteratorNormalCompletion6, _didIteratorError6, _iteratorError6, _iterator6, _step6, _permission, _access, pathEndCollection, nextCollection, pathCollectionName, nextCollectionName, pathCollection, _nextCollection, linkedCollectionName, addIdsToQueryMap;
 
@@ -546,7 +572,7 @@ var GraclPlugin = function () {
                                                         break;
                                                     }
 
-                                                    throw new Error(errorMessageHeader + ', as there is no path between ' + ('collections ' + queriedCollection.def.name + ' and ' + _collectionName + ' in the schema.'));
+                                                    throw new Error(errorMessageHeader + ', as there is no path between ' + ('collections ' + queriedCollectionName + ' and ' + _collectionName + ' in the schema.'));
 
                                                 case 3:
                                                     pathEndCollectionName = path.pop();
@@ -556,7 +582,7 @@ var GraclPlugin = function () {
                                                         break;
                                                     }
 
-                                                    throw new Error('Path returned for collection pair ' + queriedCollection.def.name + ' and ' + _collectionName + ' is invalid!');
+                                                    throw new Error('Path returned for collection pair ' + queriedCollectionName + ' and ' + _collectionName + ' is invalid!');
 
                                                 case 6:
                                                     if (queriedCollectionLinkFields.has(path[1])) {
@@ -564,7 +590,7 @@ var GraclPlugin = function () {
                                                         break;
                                                     }
 
-                                                    throw new Error('Path returned for collection pair ' + queriedCollection.def.name + ' and ' + _collectionName + ' ' + 'must have the penultimate path exist as a link on the collection being queried, ' + ('the penultimate collection path between ' + queriedCollection.def.name + ' and ' + _collectionName + ' ') + ('is ' + path[1] + ', which is not linked to by ' + queriedCollection.def.name));
+                                                    throw new Error('Path returned for collection pair ' + queriedCollectionName + ' and ' + _collectionName + ' ' + 'must have the penultimate path exist as a link on the collection being queried, ' + ('the penultimate collection path between ' + queriedCollectionName + ' and ' + _collectionName + ' ') + ('is ' + path[1] + ', which is not linked to by ' + queriedCollectionName));
 
                                                 case 8:
                                                     positiveIds = [], negativeIds = [];
@@ -677,7 +703,7 @@ var GraclPlugin = function () {
                                                     break;
 
                                                 case 61:
-                                                    linkedCollectionName = nextCollectionName;
+                                                    linkedCollectionName = nextCollection.def.name;
 
                                                     addIdsToQueryMap = function addIdsToQueryMap(access) {
                                                         return function (id) {
@@ -702,66 +728,74 @@ var GraclPlugin = function () {
                                             }
                                         }
                                     }, _callee2, _this2, [[12, 29, 33, 41], [34,, 36, 40]]);
-                                })(), 't2', 74);
+                                })(), 't2', 82);
 
-                            case 74:
+                            case 82:
                                 if (queryRestrictionSet) {
-                                    _context3.next = 76;
+                                    _context3.next = 84;
                                     break;
                                 }
 
                                 throw new Error(errorMessageHeader + ', unable to set query restriction ' + ('to satisfy permissions relating to collection ' + _collectionName));
 
-                            case 76:
+                            case 84:
                                 _iteratorNormalCompletion4 = true;
-                                _context3.next = 30;
+                                _context3.next = 38;
                                 break;
 
-                            case 79:
-                                _context3.next = 85;
+                            case 87:
+                                _context3.next = 93;
                                 break;
 
-                            case 81:
-                                _context3.prev = 81;
-                                _context3.t3 = _context3['catch'](28);
+                            case 89:
+                                _context3.prev = 89;
+                                _context3.t3 = _context3['catch'](36);
                                 _didIteratorError4 = true;
                                 _iteratorError4 = _context3.t3;
 
-                            case 85:
-                                _context3.prev = 85;
-                                _context3.prev = 86;
+                            case 93:
+                                _context3.prev = 93;
+                                _context3.prev = 94;
 
                                 if (!_iteratorNormalCompletion4 && _iterator4.return) {
                                     _iterator4.return();
                                 }
 
-                            case 88:
-                                _context3.prev = 88;
+                            case 96:
+                                _context3.prev = 96;
 
                                 if (!_didIteratorError4) {
-                                    _context3.next = 91;
+                                    _context3.next = 99;
                                     break;
                                 }
 
                                 throw _iteratorError4;
 
-                            case 91:
-                                return _context3.finish(88);
+                            case 99:
+                                return _context3.finish(96);
 
-                            case 92:
-                                return _context3.finish(85);
+                            case 100:
+                                return _context3.finish(93);
 
-                            case 93:
-                                return _context3.abrupt('return', {
-                                    $and: [util_1.createInQueries(queryMaps['positive'], queriedCollection, '$in'), util_1.createInQueries(queryMaps['negative'], queriedCollection, '$nin')]
-                                });
+                            case 101:
+                                positiveRestriction = util_1.createInQueries(queryMaps['positive'], queriedCollection, '$in'), negativeRestriction = util_1.createInQueries(queryMaps['negative'], queriedCollection, '$nin');
+                                restricted = {}, hasPositive = _.chain(positiveRestriction).keys().any().value(), hasNegative = _.chain(negativeRestriction).keys().any().value();
 
-                            case 94:
+                                if (hasNegative && hasPositive) {
+                                    restricted['$and'] = [positiveRestriction, negativeRestriction];
+                                } else if (hasNegative) {
+                                    (0, _assign2.default)(restricted, negativeRestriction);
+                                } else if (hasPositive) {
+                                    (0, _assign2.default)(restricted, positiveRestriction);
+                                }
+                                return _context3.abrupt('return', restricted);
+
+                            case 105:
                             case 'end':
                                 return _context3.stop();
                         }
                     }
-                }, _callee3, this, [[28, 81, 85, 93], [41, 59, 63, 71], [64,, 66, 70], [86,, 88, 92]]);
+                }, _callee3, this, [[36, 89, 93, 101], [49, 67, 71, 79], [72,, 74, 78], [94,, 96, 100]]);
             }));
         }
     }], [{

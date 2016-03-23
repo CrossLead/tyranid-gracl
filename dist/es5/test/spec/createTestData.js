@@ -46,7 +46,7 @@ var Inventory_1 = require('../models/Inventory');
 var Organization_1 = require('../models/Organization');
 function createTestData() {
     return __awaiter(this, void 0, void 0, _regenerator2.default.mark(function _callee() {
-        var _ref, _ref2, chipotle, chopped, cava, _ref3, _ref4, chipotleInventory, choppedInventory, cavaInventory, _ref5, _ref6, chipotleFoodBlog, chipotleCorporateBlog, choppedBlog, cavaBlog, _ref7, _ref8, whyBurritosAreAmazing, ecoliChallenges, weDontKnowWhyPeopleGotSick, _ref9, _ref10, burritoMakers, chipotleMarketing, choppedExec, cavaEngineers, _ref11, _ref12, ben, ted;
+        var _ref, _ref2, chipotle, chopped, cava, _ref3, _ref4, chipotleInventory, choppedInventory, cavaInventory, _ref5, _ref6, chipotleFoodBlog, chipotleCorporateBlog, choppedBlog, cavaBlog, _ref7, _ref8, whyBurritosAreAmazing, ecoliChallenges, weDontKnowWhyPeopleGotSick, cleaningUp, burritoManagement, saladsAreGreat, guacGreens, lentilsAreGreat, _ref9, _ref10, burritoMakers, chipotleMarketing, choppedExec, cavaEngineers, _ref11, _ref12, ben, ted;
 
         return _regenerator2.default.wrap(function _callee$(_context) {
             while (1) {
@@ -87,25 +87,30 @@ function createTestData() {
                         choppedBlog = _ref6[2];
                         cavaBlog = _ref6[3];
                         _context.next = 26;
-                        return _promise2.default.all([Blog_1.Blog.addPost('whyBurritosAreAmazing', chipotleFoodBlog), Blog_1.Blog.addPost('ecoliChallenges', chipotleFoodBlog), Blog_1.Blog.addPost('weDontKnowWhyPeopleGotSick', chipotleFoodBlog)]);
+                        return _promise2.default.all([Blog_1.Blog.addPost('Why burritos are amazing.', chipotleFoodBlog), Blog_1.Blog.addPost('Ecoli challenges.', chipotleFoodBlog), Blog_1.Blog.addPost('We don\' actually know why people got sick.', chipotleFoodBlog), Blog_1.Blog.addPost('Re-evaluating the way we clean up.', chipotleCorporateBlog), Blog_1.Blog.addPost('Burrito Management, a new paradigm.', chipotleCorporateBlog), Blog_1.Blog.addPost('Salads are great.', choppedBlog), Blog_1.Blog.addPost('Guacamole Greens to the rescue!.', choppedBlog), Blog_1.Blog.addPost('Lentils are great', cavaBlog)]);
 
                     case 26:
                         _ref7 = _context.sent;
-                        _ref8 = (0, _slicedToArray3.default)(_ref7, 3);
+                        _ref8 = (0, _slicedToArray3.default)(_ref7, 8);
                         whyBurritosAreAmazing = _ref8[0];
                         ecoliChallenges = _ref8[1];
                         weDontKnowWhyPeopleGotSick = _ref8[2];
-                        _context.next = 33;
+                        cleaningUp = _ref8[3];
+                        burritoManagement = _ref8[4];
+                        saladsAreGreat = _ref8[5];
+                        guacGreens = _ref8[6];
+                        lentilsAreGreat = _ref8[7];
+                        _context.next = 38;
                         return _promise2.default.all([Team_1.Team.insert({ name: 'burritoMakers', organizationId: chipotle['_id'] }), Team_1.Team.insert({ name: 'chipotleMarketing', organizationId: chipotle['_id'] }), Team_1.Team.insert({ name: 'choppedExec', organizationId: chopped['_id'] }), Team_1.Team.insert({ name: 'cavaEngineers', organizationId: cava['_id'] })]);
 
-                    case 33:
+                    case 38:
                         _ref9 = _context.sent;
                         _ref10 = (0, _slicedToArray3.default)(_ref9, 4);
                         burritoMakers = _ref10[0];
                         chipotleMarketing = _ref10[1];
                         choppedExec = _ref10[2];
                         cavaEngineers = _ref10[3];
-                        _context.next = 41;
+                        _context.next = 46;
                         return _promise2.default.all([User_1.User.insert({
                             name: 'ben',
                             organizationId: chipotle['_id'],
@@ -116,13 +121,13 @@ function createTestData() {
                             teamIds: [cavaEngineers['_id']]
                         })]);
 
-                    case 41:
+                    case 46:
                         _ref11 = _context.sent;
                         _ref12 = (0, _slicedToArray3.default)(_ref11, 2);
                         ben = _ref12[0];
                         ted = _ref12[1];
 
-                    case 45:
+                    case 50:
                     case 'end':
                         return _context.stop();
                 }

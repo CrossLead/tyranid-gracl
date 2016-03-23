@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 const _ = require('lodash');
 const Tyr = require('tyranid');
 exports.PermissionsBaseCollection = new Tyr.Collection({
-    id: 'gcp',
+    id: '_gp',
     name: 'graclPermission',
     dbName: 'graclPermissions',
     fields: {
@@ -51,7 +51,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
         }
     }
     static getGraclClasses(resourceDocument, subjectDocument) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, Promise, function* () {
             if (!resourceDocument) {
                 throw new Error('No resource document provided!');
             }
@@ -77,7 +77,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
         });
     }
     static setPermissionAccess(resourceDocument, permissionType, access, subjectDocument = Tyr.local.user) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, Promise, function* () {
             PermissionsModel.validatePermissionType(permissionType);
             const { subject, resource } = yield PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
             yield resource.setPermissionAccess(subject, permissionType, access);
@@ -85,14 +85,14 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
         });
     }
     static isAllowed(resourceDocument, permissionType, subjectDocument = Tyr.local.user) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, Promise, function* () {
             PermissionsModel.validatePermissionType(permissionType);
             const { subject, resource } = yield PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
             return yield resource.isAllowed(subject, permissionType);
         });
     }
     static updatePermissions(resourceDocument) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, Promise, function* () {
             const permissions = _.get(resourceDocument, 'permissions', []), existingPermissions = [], newPermissions = [], updated = [], permIdField = PermissionsModel.def.primaryKey.field;
             const plugin = PermissionsModel.getGraclPlugin(), resourceCollectionName = resourceDocument.$model.def.name;
             if (!plugin.graclHierarchy.resources.has(resourceCollectionName)) {
@@ -141,7 +141,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
         });
     }
     static deletePermissions(doc) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, Promise, function* () {
             const uid = doc.$uid;
             if (!uid) {
                 throw new Error('No $uid property on document!');

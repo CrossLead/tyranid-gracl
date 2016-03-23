@@ -3,6 +3,7 @@ import { Blog } from '../models/Blog';
 import { Post } from '../models/Post';
 import { User } from '../models/User';
 import { Team } from '../models/Team';
+import { Chart } from '../models/Chart';
 import { Inventory } from '../models/Inventory';
 import { Organization } from '../models/Organization';
 

@@ -74,7 +74,7 @@ function findLinkInCollection(col, linkCollection) {
     var links = exports.getCollectionLinksSorted(col),
         index = gracl.binaryIndexOf(links, linkCollection, function (aCol, bCol) {
         var a = aCol.def.name,
-            b = bCol.collection.def.name;
+            b = bCol.link.def.name;
         return gracl.baseCompare(a, b);
     });
     return index >= 0 ? links[index] : undefined;
@@ -87,26 +87,29 @@ function createInQueries(map, queriedCollection, key) {
         var col = _ref2[0];
         var uids = _ref2[1];
 
+        var prop = void 0;
         if (col === queriedCollection.def.name) {
-            col = queriedCollection.def.primaryKey.field;
+            prop = queriedCollection.def.primaryKey.field;
+        } else {
+            var link = findLinkInCollection(queriedCollection, Tyr.byName[col]);
+            prop = link.spath;
         }
-        var collectionLinkField = _.find(col.fields({ direction: 'outgoing' }), function (field) {});
-        out[col] = (0, _defineProperty3.default)({}, key, [].concat((0, _toConsumableArray3.default)(uids)).map(function (u) {
-            return Tyr.parseUid(u).id;
-        }));
+        out[prop] = (0, _defineProperty3.default)({}, key, [].concat((0, _toConsumableArray3.default)(uids)));
         return out;
     }, {});
 }
 exports.createInQueries = createInQueries;
 ;
 function stepThroughCollectionPath(ids, previousCollection, nextCollection) {
+    var insecure = arguments.length <= 3 || arguments[3] === undefined ? true : arguments[3];
+
     return __awaiter(this, void 0, void 0, _regenerator2.default.mark(function _callee() {
         var nextCollectionLinkField;
         return _regenerator2.default.wrap(function _callee$(_context) {
             while (1) {
                 switch (_context.prev = _context.next) {
                     case 0:
-                        nextCollectionLinkField = findLinkInCollection(previousCollection, nextCollection);
+                        nextCollectionLinkField = findLinkInCollection(nextCollection, previousCollection);
 
                         if (nextCollectionLinkField) {
                             _context.next = 3;
@@ -118,7 +121,7 @@ function stepThroughCollectionPath(ids, previousCollection, nextCollection) {
                     case 3:
                         _context.t0 = _;
                         _context.next = 6;
-                        return nextCollection.find((0, _defineProperty3.default)({}, nextCollectionLinkField.spath, { $in: ids }));
+                        return nextCollection.find((0, _defineProperty3.default)({}, nextCollectionLinkField.spath, { $in: ids }), null, { tyranid: { insecure: insecure } });
 
                     case 6:
                         _context.t1 = _context.sent;
