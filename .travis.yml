@@ -18,7 +18,7 @@ node_js:
   - "4"
   - "5"
 before_install:
-  - npm -g install npm@3
+  - npm install -g npm@3
 before_script:
   - echo "replSet = myReplSetName" | sudo tee -a /etc/mongodb.conf
   - curl https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.2.0.tgz -O -#
