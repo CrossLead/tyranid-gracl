@@ -15,21 +15,21 @@ import {
 
 export const documentMethods = {
 
-  $setPermissionAccess(permissionType: string, access: boolean, subjectDocument = Tyr.local.user) {
+  $setPermissionAccess(permissionType: string, access: boolean, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
     const doc = <Tyr.Document> this;
     return PermissionsModel.setPermissionAccess(doc, permissionType, access, subjectDocument);
   },
 
-  $isAllowed(permissionType: string, subjectDocument = Tyr.local.user) {
+  $isAllowed(permissionType: string, subjectDocument = Tyr.local.user): Promise<boolean> {
     const doc = <Tyr.Document> this;
     return PermissionsModel.isAllowed(doc, permissionType, subjectDocument);
   },
 
-  $allow(permissionType: string, subjectDocument = Tyr.local.user) {
+  $allow(permissionType: string, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
     return this.$setPermissionAccess(permissionType, true, subjectDocument);
   },
 
-  $deny(permissionType: string, subjectDocument = Tyr.local.user) {
+  $deny(permissionType: string, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
     return this.$setPermissionAccess(permissionType, false, subjectDocument);
   }
 
