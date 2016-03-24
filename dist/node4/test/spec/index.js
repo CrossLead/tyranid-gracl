@@ -131,6 +131,10 @@ describe('tyranid-gracl', () => {
             chai_1.expect(ben, 'should have method: $allowForThis').to.have.property('$allowForThis');
             chai_1.expect(ben, 'should have method: $denyForThis').to.have.property('$denyForThis');
         }));
+        it('should create subject and resource classes for collections without links in or out', () => {
+            chai_1.expect(secure.graclHierarchy.resources.has('usagelog')).to.equal(true);
+            chai_1.expect(secure.graclHierarchy.subjects.has('usagelog')).to.equal(true);
+        });
     });
     describe('Working with permissions', () => {
         it('should successfully add permissions', () => __awaiter(undefined, void 0, void 0, function* () {

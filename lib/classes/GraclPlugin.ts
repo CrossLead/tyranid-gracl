@@ -250,11 +250,12 @@ export class GraclPlugin {
       // loop through all collections, retrieve
       // ownedBy links
       collections.forEach(col => {
-        const linkFields = col.links({ relate: 'ownedBy', direction: 'outgoing' }),
+        const linkFields = getCollectionLinksSorted(col, { relate: 'ownedBy', direction: 'outgoing' }),
+              permissionsLink = findLinkInCollection(col, PermissionsModel),
               collectionName = col.def.name;
 
         // if no links at all, skip
-        if (!linkFields.length) return;
+        if (!(linkFields.length || permissionsLink)) return;
 
         // validate that we can only have one parent of each field.
         if (linkFields.length > 1) {
@@ -265,17 +266,12 @@ export class GraclPlugin {
         }
 
         const [ field ] = linkFields;
-        let { graclType } = field.def;
+        let { graclType } = field ? field.def : permissionsLink.def;
 
         // if no graclType property on this collection, skip the collection
         if (!graclType) return;
 
-        const allOutgoingFields = col.links({ direction: 'outgoing' }),
-              validateField = (f: Tyr.Field) => {
-                return f.def.link === 'graclPermission' && f.name === 'permissionIds';
-              };
-
-        if (!_.find(allOutgoingFields, validateField)) {
+        if (!(permissionsLink && permissionsLink.name === 'permissionIds')) {
           throw new Error(
             `Tyranid collection \"${col.def.name}\" has \"graclType\" annotation but no \"permissionIds\" field. ` +
             `tyranid-gracl requires a field on secured collections of type: \n` +
@@ -292,12 +288,20 @@ export class GraclPlugin {
         while (currentType = graclType.pop()) {
           switch (currentType) {
             case 'subject':
-              graclGraphNodes.subjects.links.push(field);
-              graclGraphNodes.subjects.parents.push(field.link);
+              if (field) {
+                graclGraphNodes.subjects.links.push(field);
+                graclGraphNodes.subjects.parents.push(field.link);
+              } else {
+                graclGraphNodes.subjects.parents.push(col);
+              }
               break;
             case 'resource':
-              graclGraphNodes.resources.links.push(field);
-              graclGraphNodes.resources.parents.push(field.link);
+              if (field) {
+                graclGraphNodes.resources.links.push(field);
+                graclGraphNodes.resources.parents.push(field.link);
+              } else {
+                graclGraphNodes.resources.parents.push(col);
+              }
               break;
             default:
               throw new Error(`Invalid gracl node type set on collection ${collectionName}, type = ${graclType}`);

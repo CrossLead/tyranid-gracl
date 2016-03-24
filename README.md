@@ -18,7 +18,7 @@ as add annotations indicating the "hierarchy parents"...
 
 import Tyr from 'tyranid';
 
-const OrganizationBaseCollection = new Tyr.Collection({
+const Organization = new Tyr.Collection({
   id: 'o00',
   name: 'organization',
   dbName: 'organizations',
@@ -31,7 +31,7 @@ const OrganizationBaseCollection = new Tyr.Collection({
 });
 
 
-const TeamBaseCollection = new Tyr.Collection({
+const Team = new Tyr.Collection({
   id: 't00',
   name: 'team',
   dbName: 'teams',
@@ -44,7 +44,9 @@ const TeamBaseCollection = new Tyr.Collection({
     organizationId: {
       link: 'organization',
       relate: 'ownedBy',
-      graclType: [ 'subject', 'resource' ] // can be both!
+      // can be both!
+      // now, organization is implicitly also a subject and resource
+      graclType: [ 'subject', 'resource' ]
     },
     // also need permissions prop!
     permissionIds: { is: 'array', link: 'graclPermission' }
@@ -52,7 +54,7 @@ const TeamBaseCollection = new Tyr.Collection({
 });
 
 
-export const BlogBaseCollection = new Tyr.Collection({
+export const Blog = new Tyr.Collection({
   id: 'b00',
   name: 'blog',
   dbName: 'blogs',
@@ -65,6 +67,27 @@ export const BlogBaseCollection = new Tyr.Collection({
       graclType: 'resource'
     },
     permissionIds: { is: 'array', link: 'graclPermission' }
+  }
+});
+
+
+/**
+ *  Alternatively, if there is a collection that has no collections
+    pointing to it via an "ownedBy" relation, you can add a permissionIds
+    field on the collection itself and specify the graclType
+ */
+export const UsageLog = new Tyr.Collection({
+  id: 'ul0',
+  name: 'usagelog',
+  dbName: 'usagelogs',
+  fields: {
+    _id: { is: 'mongoid' },
+    text: { is: 'string' },
+    permissionIds: {
+      is: 'array',
+      link: 'graclPermission',
+      graclType: [ 'subject', 'resource' ]
+    }
   }
 });
 ```
@@ -107,7 +130,8 @@ Method usage examples:
 
 ```javascript
 import Tyr from 'tyranid';
-
+// import PermissionsModel from plugin for deletion
+import { PermissionsModel } from 'tyranid-gracl';
 
 /**
  *  Example express controller to set a permission
@@ -118,9 +142,21 @@ export async function giveUserBlogViewAccessToOrg(req, res) {
         // organizationId of org we want to give user view access to
         organizationId = req.query.organizationId;
 
-  const updatedOrg = await Tyr.byName['organization']
-    .byId(organizationId)       // get the organization document by its id
-    .$allow('view-blog', user); // set view-blog access to true for user
+  try {
+
+    const updatedOrg = await Tyr.byName
+      .organization
+      .byId(organizationId)       // get the organization document by its id
+      .$allow('view-blog', user); // set view-blog access to true for user
+
+  } catch (error) {
+    if (/another update is in progress/.test(error.message)) {
+      // the permissions model found a simultaneous update request, and denied this update
+      return res.json({ message: 'Cannot update permissions now, try again.' })
+    } else {
+      throw error;
+    }
+  }
 
   return res.json(updatedOrg);
 }
@@ -149,8 +185,31 @@ export async function checkCanViewUid(req, res) {
  */
 export async function findBlogs(req, res) {
   // no extra api needed! already filtered!
-  const blogs = await Tyr.byName['blog'].find({});
+  const blogs = await Tyr.byName.blog.find({});
 
   return res.json(blogs);
 }
+
+
+
+/**
+ *  Example express controller to delete all permissions for an entity
+ */
+export async function deletePermissionsRelatingToUid(req, res) {
+  const uid = req.query.uid;
+
+  try {
+    await PermissionsModel.deletePermissions(await Tyr.byUid(uid));
+  } catch (error) {
+    if (/another update is in progress/.test(error.message)) {
+      // the permissions model found a simultaneous update request, and denied this update
+      return res.json({ message: 'Cannot update permissions now, try again.' })
+    } else {
+      throw error;
+    }
+  }
+
+  return res.json({ message: 'Success!' });
+}
+
 ```

@@ -165,6 +165,11 @@ describe('tyranid-gracl', () => {
       expect(ben, 'should have method: $denyForThis').to.have.property('$denyForThis');
     });
 
+    it('should create subject and resource classes for collections without links in or out', () => {
+      expect(secure.graclHierarchy.resources.has('usagelog')).to.equal(true);
+      expect(secure.graclHierarchy.subjects.has('usagelog')).to.equal(true);
+    });
+
   });
 
 

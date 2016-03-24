@@ -151,9 +151,10 @@ class GraclPlugin {
                 }
             };
             collections.forEach(col => {
-                const linkFields = col.links({ relate: 'ownedBy', direction: 'outgoing' }),
+                const linkFields = util_1.getCollectionLinksSorted(col, { relate: 'ownedBy', direction: 'outgoing' }),
+                      permissionsLink = util_1.findLinkInCollection(col, PermissionsModel_1.PermissionsModel),
                       collectionName = col.def.name;
-                if (!linkFields.length) return;
+                if (!(linkFields.length || permissionsLink)) return;
                 if (linkFields.length > 1) {
                     throw new Error(`tyranid-gracl permissions hierarchy does not allow for multiple inheritance. ` + `Collection ${ collectionName } has multiple fields with outgoing ownedBy relations.`);
                 }
@@ -161,14 +162,13 @@ class GraclPlugin {
                 var _linkFields = _slicedToArray(linkFields, 1);
 
                 const field = _linkFields[0];
-                let graclType = field.def.graclType;
+
+                var _ref = field ? field.def : permissionsLink.def;
+
+                let graclType = _ref.graclType;
 
                 if (!graclType) return;
-                const allOutgoingFields = col.links({ direction: 'outgoing' }),
-                      validateField = f => {
-                    return f.def.link === 'graclPermission' && f.name === 'permissionIds';
-                };
-                if (!_.find(allOutgoingFields, validateField)) {
+                if (!(permissionsLink && permissionsLink.name === 'permissionIds')) {
                     throw new Error(`Tyranid collection \"${ col.def.name }\" has \"graclType\" annotation but no \"permissionIds\" field. ` + `tyranid-gracl requires a field on secured collections of type: \n` + `\"permissionIds: { is: 'array', link: 'graclPermission' }\"`);
                 }
                 if (!Array.isArray(graclType)) {
@@ -178,12 +178,20 @@ class GraclPlugin {
                 while (currentType = graclType.pop()) {
                     switch (currentType) {
                         case 'subject':
-                            graclGraphNodes.subjects.links.push(field);
-                            graclGraphNodes.subjects.parents.push(field.link);
+                            if (field) {
+                                graclGraphNodes.subjects.links.push(field);
+                                graclGraphNodes.subjects.parents.push(field.link);
+                            } else {
+                                graclGraphNodes.subjects.parents.push(col);
+                            }
                             break;
                         case 'resource':
-                            graclGraphNodes.resources.links.push(field);
-                            graclGraphNodes.resources.parents.push(field.link);
+                            if (field) {
+                                graclGraphNodes.resources.links.push(field);
+                                graclGraphNodes.resources.parents.push(field.link);
+                            } else {
+                                graclGraphNodes.resources.parents.push(col);
+                            }
                             break;
                         default:
                             throw new Error(`Invalid gracl node type set on collection ${ collectionName }, type = ${ graclType }`);
@@ -315,13 +323,13 @@ class GraclPlugin {
                 positive: new Map(),
                 negative: new Map()
             };
-            for (const _ref of resourceMap) {
-                var _ref2 = _slicedToArray(_ref, 2);
+            for (const _ref2 of resourceMap) {
+                var _ref3 = _slicedToArray(_ref2, 2);
 
-                const collectionName = _ref2[0];
-                var _ref2$ = _ref2[1];
-                const collection = _ref2$.collection;
-                const permissions = _ref2$.permissions;
+                const collectionName = _ref3[0];
+                var _ref3$ = _ref3[1];
+                const collection = _ref3$.collection;
+                const permissions = _ref3$.permissions;
 
                 let queryRestrictionSet = false;
                 if (queriedCollectionLinkFields.has(collectionName) || queriedCollectionName === collectionName) {
