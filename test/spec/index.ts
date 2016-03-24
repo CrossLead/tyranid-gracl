@@ -16,6 +16,12 @@ const db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),
       insecure = { tyranid: { insecure: true } };
 
 
+const checkStringEq = (got: string[], want: string[], message = '') => {
+  expect(_.map(got, s => s.toString()), message)
+    .to.deep.equal(_.map(want, s => s.toString()));
+};
+
+
 async function giveBenAccessToChoppedPosts() {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
@@ -99,9 +105,9 @@ describe('tyranid-gracl', () => {
             blogIdRestriction = _.find(query['$or'], v => _.contains(_.keys(v), 'blogId')),
             userIdsRestriction = _.find(query['$or'], v => _.contains(_.keys(v), 'userIds'));
 
-      expect(_idRestriction['_id'], 'should correctly map own _id field').to.deep.equal({ $in: chartIds });
-      expect(blogIdRestriction['blogId'], 'should find correct property').to.deep.equal({ $in: blogIds });
-      expect(userIdsRestriction['userIds'], 'should find correct property').to.deep.equal({ $in: userIds });
+      checkStringEq(_idRestriction['_id']['$in'], chartIds, 'should correctly map own _id field');
+      checkStringEq(blogIdRestriction['blogId']['$in'], blogIds, 'should find correct property');
+      checkStringEq(userIdsRestriction['userIds']['$in'], userIds, 'should find correct property');
 
       const createQueryNoLink = () => {
         tyranidGracl.createInQueries(queryAgainstChartMap, Tyr.byName['organization'], '$in');
@@ -123,7 +129,7 @@ describe('tyranid-gracl', () => {
         blogIds, Tyr.byName['blog'], Tyr.byName['post']
       );
 
-      expect(steppedPostIds, 'ids after stepping should be all relevant ids').to.deep.equal(postIds);
+      checkStringEq(steppedPostIds, postIds, 'ids after stepping should be all relevant ids');
 
       await expectAsyncToThrow(
         () => tyranidGracl.stepThroughCollectionPath(
@@ -381,9 +387,11 @@ describe('tyranid-gracl', () => {
 
       const query = await secure.query(Post, 'view', ben);
 
-      expect(_.get(query, '$or.0'), 'query should find correct blogs').to.deep.equal({
-        blogId: { $in: _.map(choppedBlogs, '_id') }
-      });
+      checkStringEq(
+        <string[]> _.get(query, '$or.0.blogId.$in'),
+        <string[]> _.map(choppedBlogs, '_id'),
+        'query should find correct blogs'
+      );
     });
 
     it('should produce $and clause with excluded and included ids', async () => {
@@ -406,30 +414,26 @@ describe('tyranid-gracl', () => {
       const query = await secure.query(Tyr.byName['post'], 'view', ted);
       const [ positive, negative ] = <any[]> _.get(query, '$and');
 
-      const _idRestriction = _.find(positive['$or'], v => _.contains(_.keys(v), '_id')),
-            blogIdRestriction = _.find(positive['$or'], v => _.contains(_.keys(v), 'blogId'));
+      const _idRestriction    = _.find(positive['$or'], v => _.contains(_.keys(v), '_id')),
+            blogIdRestriction = _.find(positive['$or'], v => _.contains(_.keys(v), 'blogId')),
+            blogIdNegative    = _.find(negative['$and'], v => _.contains(_.keys(v), 'blogId'));
 
-      expect(_idRestriction).to.deep.equal({
-        '_id': {
-          '$in': [
-            post.$id
-          ]
-        }
-      });
 
-      expect(blogIdRestriction).to.deep.equal({
-        'blogId': {
-          '$in': cavaBlogs.map(b => b.$id)
-        }
-      });
+      checkStringEq(
+        <string[]> _.get(_idRestriction, '_id.$in'),
+        [ post.$id ]
+      );
 
-      const blogIdNegative = _.find(negative['$and'], v => _.contains(_.keys(v), 'blogId'));
+      checkStringEq(
+        <string[]> _.get(blogIdRestriction, 'blogId.$in'),
+        cavaBlogs.map(b => b.$id)
+      );
 
-      expect(blogIdNegative).to.deep.equal({
-        blogId: {
-          $nin: chipotleBlogs.map(b => b.$id)
-        }
-      });
+      checkStringEq(
+        <string[]> _.get(blogIdNegative, 'blogId.$nin'),
+        chipotleBlogs.map(b => b.$id)
+      );
+
     });
 
   });
@@ -461,7 +465,12 @@ describe('tyranid-gracl', () => {
         blogId: { $in: _.map(choppedBlogs, '_id') }
       }, null, insecure);
 
-      expect(postsBenCanSee, 'ben should only see chopped posts').to.deep.equal(choppedPosts);
+      checkStringEq(
+        <string[]> _.map(postsBenCanSee, '_id'),
+        <string[]> _.map(choppedPosts, '_id'),
+        'ben should only see chopped posts'
+      );
+
     });
 
     it('should default to lowest hierarchy permission', async () => {

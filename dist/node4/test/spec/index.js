@@ -38,6 +38,11 @@ const db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),
       root = __dirname.replace(/test\/spec/, ''),
       secure = new tyranidGracl.GraclPlugin(),
       insecure = { tyranid: { insecure: true } };
+const checkStringEq = function checkStringEq(got, want) {
+    let message = arguments.length <= 2 || arguments[2] === undefined ? '' : arguments[2];
+
+    chai_1.expect(_.map(got, s => s.toString()), message).to.deep.equal(_.map(want, s => s.toString()));
+};
 function giveBenAccessToChoppedPosts() {
     return __awaiter(this, void 0, void 0, function* () {
         const ben = yield Tyr.byName['user'].findOne({ name: 'ben' }),
@@ -89,9 +94,9 @@ describe('tyranid-gracl', () => {
             const _idRestriction = _.find(query['$or'], v => _.contains(_.keys(v), '_id')),
                   blogIdRestriction = _.find(query['$or'], v => _.contains(_.keys(v), 'blogId')),
                   userIdsRestriction = _.find(query['$or'], v => _.contains(_.keys(v), 'userIds'));
-            chai_1.expect(_idRestriction['_id'], 'should correctly map own _id field').to.deep.equal({ $in: chartIds });
-            chai_1.expect(blogIdRestriction['blogId'], 'should find correct property').to.deep.equal({ $in: blogIds });
-            chai_1.expect(userIdsRestriction['userIds'], 'should find correct property').to.deep.equal({ $in: userIds });
+            checkStringEq(_idRestriction['_id']['$in'], chartIds, 'should correctly map own _id field');
+            checkStringEq(blogIdRestriction['blogId']['$in'], blogIds, 'should find correct property');
+            checkStringEq(userIdsRestriction['userIds']['$in'], userIds, 'should find correct property');
             const createQueryNoLink = () => {
                 tyranidGracl.createInQueries(queryAgainstChartMap, Tyr.byName['organization'], '$in');
             };
@@ -104,7 +109,7 @@ describe('tyranid-gracl', () => {
                   chipotlePosts = yield Tyr.byName['post'].find({ blogId: { $in: blogIds } }),
                   postIds = _.map(chipotlePosts, '_id');
             const steppedPostIds = yield tyranidGracl.stepThroughCollectionPath(blogIds, Tyr.byName['blog'], Tyr.byName['post']);
-            chai_1.expect(steppedPostIds, 'ids after stepping should be all relevant ids').to.deep.equal(postIds);
+            checkStringEq(steppedPostIds, postIds, 'ids after stepping should be all relevant ids');
             yield expectAsyncToThrow_1.expectAsyncToThrow(() => tyranidGracl.stepThroughCollectionPath(blogIds, Tyr.byName['blog'], Tyr.byName['user']), /cannot step through collection path, as no link to collection/, 'stepping to a collection with no connection to previous col should throw');
         }));
     });
@@ -232,9 +237,7 @@ describe('tyranid-gracl', () => {
                   chopped = yield Org.findOne({ name: 'Chopped' });
             const choppedBlogs = yield Blog.find({ organizationId: chopped.$id }, { _id: 1 }, insecure);
             const query = yield secure.query(Post, 'view', ben);
-            chai_1.expect(_.get(query, '$or.0'), 'query should find correct blogs').to.deep.equal({
-                blogId: { $in: _.map(choppedBlogs, '_id') }
-            });
+            checkStringEq(_.get(query, '$or.0.blogId.$in'), _.map(choppedBlogs, '_id'), 'query should find correct blogs');
         }));
         it('should produce $and clause with excluded and included ids', () => __awaiter(undefined, void 0, void 0, function* () {
             const ted = yield Tyr.byName['user'].findOne({ name: 'ted' }),
@@ -256,23 +259,11 @@ describe('tyranid-gracl', () => {
             const negative = _$get2[1];
 
             const _idRestriction = _.find(positive['$or'], v => _.contains(_.keys(v), '_id')),
-                  blogIdRestriction = _.find(positive['$or'], v => _.contains(_.keys(v), 'blogId'));
-            chai_1.expect(_idRestriction).to.deep.equal({
-                '_id': {
-                    '$in': [post.$id]
-                }
-            });
-            chai_1.expect(blogIdRestriction).to.deep.equal({
-                'blogId': {
-                    '$in': cavaBlogs.map(b => b.$id)
-                }
-            });
-            const blogIdNegative = _.find(negative['$and'], v => _.contains(_.keys(v), 'blogId'));
-            chai_1.expect(blogIdNegative).to.deep.equal({
-                blogId: {
-                    $nin: chipotleBlogs.map(b => b.$id)
-                }
-            });
+                  blogIdRestriction = _.find(positive['$or'], v => _.contains(_.keys(v), 'blogId')),
+                  blogIdNegative = _.find(negative['$and'], v => _.contains(_.keys(v), 'blogId'));
+            checkStringEq(_.get(_idRestriction, '_id.$in'), [post.$id]);
+            checkStringEq(_.get(blogIdRestriction, 'blogId.$in'), cavaBlogs.map(b => b.$id));
+            checkStringEq(_.get(blogIdNegative, 'blogId.$nin'), chipotleBlogs.map(b => b.$id));
         }));
     });
     describe('Collection.find()', () => {
@@ -290,7 +281,7 @@ describe('tyranid-gracl', () => {
             const choppedPosts = yield Post.find({
                 blogId: { $in: _.map(choppedBlogs, '_id') }
             }, null, insecure);
-            chai_1.expect(postsBenCanSee, 'ben should only see chopped posts').to.deep.equal(choppedPosts);
+            checkStringEq(_.map(postsBenCanSee, '_id'), _.map(choppedPosts, '_id'), 'ben should only see chopped posts');
         }));
         it('should default to lowest hierarchy permission', () => __awaiter(undefined, void 0, void 0, function* () {
             const chopped = yield giveBenAccessToChoppedPosts(),
