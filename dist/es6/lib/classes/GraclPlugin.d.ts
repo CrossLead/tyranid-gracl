@@ -5,6 +5,9 @@ import { PermissionsModel } from '../models/PermissionsModel';
 import { Hash } from '../util';
 export declare class GraclPlugin {
     verbose: boolean;
+    static isAllowed: typeof PermissionsModel.isAllowed;
+    static setPermissionAccess: typeof PermissionsModel.setPermissionAccess;
+    static deletePermissions: typeof PermissionsModel.deletePermissions;
     static documentMethods: {
         $setPermissionAccess(permissionType: string, access: boolean, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
         $isAllowed(permissionType: string, subjectDocument?: Tyr.Document): Promise<boolean>;

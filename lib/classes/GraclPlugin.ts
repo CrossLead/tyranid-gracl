@@ -17,7 +17,20 @@ import {
 export class GraclPlugin {
 
 
+  /**
+   *  Reference permissions model methods here
+   */
+  static isAllowed = (
+    <typeof PermissionsModel.isAllowed> PermissionsModel.isAllowed.bind(PermissionsModel)
+  );
 
+  static setPermissionAccess = (
+    <typeof PermissionsModel.setPermissionAccess> PermissionsModel.setPermissionAccess.bind(PermissionsModel)
+  );
+
+  static deletePermissions = (
+    <typeof PermissionsModel.deletePermissions> PermissionsModel.deletePermissions.bind(PermissionsModel)
+  );
 
 
   /**
@@ -157,20 +170,10 @@ export class GraclPlugin {
     PermissionLocks.def.name
   ]);
 
-  /**
-   *  Reference permissions model methods here
-   */
-  isAllowed = (
-    <typeof PermissionsModel.isAllowed> PermissionsModel.isAllowed.bind(PermissionsModel)
-  );
-
-  setPermissionAccess = (
-    <typeof PermissionsModel.setPermissionAccess> PermissionsModel.setPermissionAccess.bind(PermissionsModel)
-  );
-
-  deletePermissions = (
-    <typeof PermissionsModel.deletePermissions> PermissionsModel.deletePermissions.bind(PermissionsModel)
-  );
+  // bind static methods to instance as well
+  isAllowed = GraclPlugin.isAllowed;
+  setPermissionAccess = GraclPlugin.setPermissionAccess;
+  deletePermissions = GraclPlugin.deletePermissions;
 
 
   constructor(public verbose = false) {

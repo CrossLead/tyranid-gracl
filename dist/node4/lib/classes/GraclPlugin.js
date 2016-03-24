@@ -38,9 +38,9 @@ class GraclPlugin {
 
         this.verbose = verbose;
         this.unsecuredCollections = new Set([PermissionsModel_1.PermissionsModel.def.name, PermissionsLocks_1.PermissionLocks.def.name]);
-        this.isAllowed = PermissionsModel_1.PermissionsModel.isAllowed.bind(PermissionsModel_1.PermissionsModel);
-        this.setPermissionAccess = PermissionsModel_1.PermissionsModel.setPermissionAccess.bind(PermissionsModel_1.PermissionsModel);
-        this.deletePermissions = PermissionsModel_1.PermissionsModel.deletePermissions.bind(PermissionsModel_1.PermissionsModel);
+        this.isAllowed = GraclPlugin.isAllowed;
+        this.setPermissionAccess = GraclPlugin.setPermissionAccess;
+        this.deletePermissions = GraclPlugin.deletePermissions;
     }
     static makeRepository(collection) {
         return {
@@ -430,6 +430,9 @@ class GraclPlugin {
         });
     }
 }
+GraclPlugin.isAllowed = PermissionsModel_1.PermissionsModel.isAllowed.bind(PermissionsModel_1.PermissionsModel);
+GraclPlugin.setPermissionAccess = PermissionsModel_1.PermissionsModel.setPermissionAccess.bind(PermissionsModel_1.PermissionsModel);
+GraclPlugin.deletePermissions = PermissionsModel_1.PermissionsModel.deletePermissions.bind(PermissionsModel_1.PermissionsModel);
 GraclPlugin.documentMethods = {
     $setPermissionAccess(permissionType, access) {
         let subjectDocument = arguments.length <= 2 || arguments[2] === undefined ? Tyr.local.user : arguments[2];
