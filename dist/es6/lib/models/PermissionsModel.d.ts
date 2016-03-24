@@ -6,7 +6,8 @@ export declare const PermissionsBaseCollection: Tyr.CollectionInstance;
 export declare class PermissionsModel extends  {
     static validPermissionActions: Set<string>;
     static getGraclPlugin(): GraclPlugin;
-    static validatePermissionType(permissionType: string): void;
+    static validatePermissionType(permissionType: string, queriedCollection: Tyr.CollectionInstance): void;
+    static validateAsResource(collection: Tyr.CollectionInstance): void;
     static getGraclClasses(resourceDocument: Tyr.Document, subjectDocument: Tyr.Document): Promise<{
         subject: gracl.Subject;
         resource: gracl.Resource;

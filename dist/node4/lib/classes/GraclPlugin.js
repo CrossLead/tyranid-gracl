@@ -28,6 +28,7 @@ var __awaiter = undefined && undefined.__awaiter || function (thisArg, _argument
 };
 const Tyr = require('tyranid');
 const PermissionsModel_1 = require('../models/PermissionsModel');
+const PermissionsLocks_1 = require('../models/PermissionsLocks');
 const gracl = require('gracl');
 const _ = require('lodash');
 const util_1 = require('../util');
@@ -36,6 +37,7 @@ class GraclPlugin {
         let verbose = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
 
         this.verbose = verbose;
+        this.unsecuredCollections = new Set([PermissionsModel_1.PermissionsModel.def.name, PermissionsLocks_1.PermissionLocks.def.name]);
     }
     static makeRepository(collection) {
         return {
@@ -158,7 +160,8 @@ class GraclPlugin {
 
                 var _linkFields = _slicedToArray(linkFields, 1);
 
-                const field = _linkFields[0];const graclType = field.def.graclType;
+                const field = _linkFields[0];
+                let graclType = field.def.graclType;
 
                 if (!graclType) return;
                 const allOutgoingFields = col.links({ direction: 'outgoing' });
@@ -168,17 +171,23 @@ class GraclPlugin {
                 if (!_.find(allOutgoingFields, validateField)) {
                     throw new Error(`Tyranid collection \"${ col.def.name }\" has \"graclType\" annotation but no \"permissionIds\" field. ` + `tyranid-gracl requires a field on secured collections of type: \n` + `\"permissionIds: { is: 'array', link: 'graclPermission' }\"`);
                 }
-                switch (graclType) {
-                    case 'subject':
-                        schemaObjects.subjects.links.push(field);
-                        schemaObjects.subjects.parents.push(field.link);
-                        break;
-                    case 'resource':
-                        schemaObjects.resources.links.push(field);
-                        schemaObjects.resources.parents.push(field.link);
-                        break;
-                    default:
-                        throw new Error(`Invalid gracl node type set on collection ${ collectionName }, type = ${ graclType }`);
+                if (!Array.isArray(graclType)) {
+                    graclType = [graclType];
+                }
+                let currentType;
+                while (currentType = graclType.pop()) {
+                    switch (currentType) {
+                        case 'subject':
+                            schemaObjects.subjects.links.push(field);
+                            schemaObjects.subjects.parents.push(field.link);
+                            break;
+                        case 'resource':
+                            schemaObjects.resources.links.push(field);
+                            schemaObjects.resources.parents.push(field.link);
+                            break;
+                        default:
+                            throw new Error(`Invalid gracl node type set on collection ${ collectionName }, type = ${ graclType }`);
+                    }
                 }
             });
             const schemaMaps = {
@@ -236,19 +245,22 @@ class GraclPlugin {
                 subjects: Array.from(schemaMaps.subjects.values()),
                 resources: Array.from(schemaMaps.resources.values())
             });
-            this.log(`created gracl hierarchy based on tyranid schemas: `);
             if (this.verbose) {
-                console.log('  | \n  | ' + JSON.stringify(this.getObjectHierarchy(), null, 4).replace(/[{},\":]/g, '').replace(/^\s*\n/gm, '').split('\n').join('\n  | ').replace(/\s+$/, '').replace(/resources/, '---- resources ----').replace(/subjects/, '---- subjects ----') + '____');
+                this.logHierarchy();
             }
         }
+    }
+    logHierarchy() {
+        console.log(`created gracl permissions hierarchy based on tyranid schemas: `);
+        console.log('  | \n  | ' + JSON.stringify(this.getObjectHierarchy(), null, 4).replace(/[{},\":]/g, '').replace(/^\s*\n/gm, '').split('\n').join('\n  | ').replace(/\s+$/, '').replace(/resources/, '---- resources ----').replace(/subjects/, '---- subjects ----') + '____');
     }
     query(queriedCollection, permissionAction) {
         let user = arguments.length <= 2 || arguments[2] === undefined ? Tyr.local.user : arguments[2];
 
         return __awaiter(this, void 0, Promise, function* () {
             const queriedCollectionName = queriedCollection.def.name;
-            if (queriedCollectionName === PermissionsModel_1.PermissionsModel.def.name) {
-                this.log(`skipping query modification for ${ PermissionsModel_1.PermissionsModel.def.name }`);
+            if (this.unsecuredCollections.has(queriedCollectionName)) {
+                this.log(`skipping query modification for ${ queriedCollectionName } as it is flagged as unsecured`);
                 return {};
             }
             const permissionType = `${ permissionAction }-${ queriedCollectionName }`;

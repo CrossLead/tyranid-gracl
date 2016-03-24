@@ -1,6 +1,8 @@
 /// <reference path='../../typings/main.d.ts' />
 import * as Tyr from 'tyranid';
 import { PermissionsModel } from '../models/PermissionsModel';
+import { PermissionLocks } from '../models/PermissionsLocks';
+
 import * as gracl from 'gracl';
 import * as _ from 'lodash';
 
@@ -126,6 +128,10 @@ export class GraclPlugin {
 
   graclHierarchy: gracl.Graph;
   outgoingLinkPaths: Hash<Hash<string>>;
+  unsecuredCollections = new Set([
+    PermissionsModel.def.name,
+    PermissionLocks.def.name
+  ]);
 
   constructor(public verbose = false) {};
 
@@ -231,8 +237,8 @@ export class GraclPlugin {
           );
         }
 
-        const [ field ] = linkFields,
-              { graclType } = field.def;
+        const [ field ] = linkFields;
+        let { graclType } = field.def;
 
         if (!graclType) return;
 
@@ -251,18 +257,26 @@ export class GraclPlugin {
         }
 
         // validate gracl type
-        switch (graclType) {
-          case 'subject':
-            schemaObjects.subjects.links.push(field);
-            schemaObjects.subjects.parents.push(field.link);
-            break;
-          case 'resource':
-            schemaObjects.resources.links.push(field);
-            schemaObjects.resources.parents.push(field.link);
-            break;
-          default:
-            throw new Error(`Invalid gracl node type set on collection ${collectionName}, type = ${graclType}`);
+        if (!Array.isArray(graclType)) {
+          graclType = [ graclType ];
         }
+
+        let currentType: string;
+        while (currentType = graclType.pop()) {
+          switch (currentType) {
+            case 'subject':
+              schemaObjects.subjects.links.push(field);
+              schemaObjects.subjects.parents.push(field.link);
+              break;
+            case 'resource':
+              schemaObjects.resources.links.push(field);
+              schemaObjects.resources.parents.push(field.link);
+              break;
+            default:
+              throw new Error(`Invalid gracl node type set on collection ${collectionName}, type = ${graclType}`);
+          }
+        }
+
       });
 
       const schemaMaps = {
@@ -335,25 +349,33 @@ export class GraclPlugin {
         resources: Array.from(schemaMaps.resources.values())
       });
 
-      this.log(`created gracl hierarchy based on tyranid schemas: `);
-
       if (this.verbose) {
-        console.log(
-          '  | \n  | ' +
-          JSON
-            .stringify(this.getObjectHierarchy(), null, 4)
-            .replace(/[{},\":]/g, '')
-            .replace(/^\s*\n/gm, '')
-            .split('\n')
-            .join('\n  | ')
-            .replace(/\s+$/, '')
-            .replace(/resources/, '---- resources ----')
-            .replace(/subjects/, '---- subjects ----') +
-          '____'
-        );
+        this.logHierarchy();
       }
 
     }
+  }
+
+
+
+  /**
+   *  Display neatly formatted view of permissions hierarchy
+   */
+  logHierarchy() {
+    console.log(`created gracl permissions hierarchy based on tyranid schemas: `);
+    console.log(
+      '  | \n  | ' +
+      JSON
+        .stringify(this.getObjectHierarchy(), null, 4)
+        .replace(/[{},\":]/g, '')
+        .replace(/^\s*\n/gm, '')
+        .split('\n')
+        .join('\n  | ')
+        .replace(/\s+$/, '')
+        .replace(/resources/, '---- resources ----')
+        .replace(/subjects/, '---- subjects ----') +
+      '____'
+    );
   }
 
 
@@ -367,8 +389,8 @@ export class GraclPlugin {
 
     const queriedCollectionName = queriedCollection.def.name;
 
-    if (queriedCollectionName === PermissionsModel.def.name) {
-      this.log(`skipping query modification for ${PermissionsModel.def.name}`);
+    if (this.unsecuredCollections.has(queriedCollectionName)) {
+      this.log(`skipping query modification for ${queriedCollectionName} as it is flagged as unsecured`);
       return {};
     }
 

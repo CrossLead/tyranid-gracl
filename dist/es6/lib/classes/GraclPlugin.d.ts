@@ -14,6 +14,7 @@ export declare class GraclPlugin {
     static buildLinkGraph(): Hash<Hash<string>>;
     graclHierarchy: gracl.Graph;
     outgoingLinkPaths: Hash<Hash<string>>;
+    unsecuredCollections: Set<string>;
     constructor(verbose?: boolean);
     log(message: string): this;
     getObjectHierarchy(): {
@@ -22,5 +23,6 @@ export declare class GraclPlugin {
     };
     getShortestPath(colA: Tyr.CollectionInstance, colB: Tyr.CollectionInstance): string[];
     boot(stage: Tyr.BootStage): void;
+    logHierarchy(): void;
     query(queriedCollection: Tyr.CollectionInstance, permissionAction: string, user?: Tyr.Document): Promise<boolean | {}>;
 }

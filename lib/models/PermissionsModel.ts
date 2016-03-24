@@ -44,7 +44,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   }
 
 
-  static validatePermissionType(permissionType: string) {
+  static validatePermissionType(permissionType: string, queriedCollection: Tyr.CollectionInstance) {
     const [ action, collectionName ] = permissionType.split('-'),
           { validPermissionActions } = PermissionsModel;
 
@@ -64,13 +64,50 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
     const plugin = PermissionsModel.getGraclPlugin();
 
-    if (!plugin.graclHierarchy.resources.has(collectionName)) {
+    PermissionsModel.validateAsResource(Tyr.byName[collectionName]);
+    PermissionsModel.validateAsResource(queriedCollection);
+
+    const queriedResourceHierarchy = plugin
+      .graclHierarchy
+      .getResource(queriedCollection.def.name)
+      .getHierarchyClassNames();
+
+    const permissionResourceHierarchy = plugin
+      .graclHierarchy
+      .getResource(collectionName)
+      .getHierarchyClassNames();
+
+    /** ensure that one collection is in another's hierarchy
+      TODO: Not sure if this level of check is necessary for performance hit
+     */
+    if (!(
+          _.contains(permissionResourceHierarchy, queriedCollection.def.name) ||
+          _.contains(queriedResourceHierarchy, collectionName)
+        )) {
       throw new Error(
-        `Invalid permissionType ${permissionType}! ` +
-        `collection given ${collectionName} is not valid as there is no associated resource class.`
+        `Cannot set permission "${permissionType}" on collection ` +
+        `"${collectionName}" as resource, as collection "${queriedCollection.def.name}" ` +
+        `does not exist in the resource hierarchy of "${collectionName}"`
       );
     }
   }
+
+
+  static validateAsResource(collection: Tyr.CollectionInstance) {
+    const plugin = PermissionsModel.getGraclPlugin();
+
+    if (!collection) {
+      throw new Error(`Attempted to validate undefined collection!`);
+    }
+
+    if (!plugin.graclHierarchy.resources.has(collection.def.name)) {
+      throw new Error(
+        `Attempted to set/get permission using ${collection.def.name} as resource, ` +
+        `no relevant resource class found in tyranid-gracl plugin!`
+      );
+    }
+  }
+
 
   static async getGraclClasses(
     resourceDocument: Tyr.Document,
@@ -132,7 +169,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       access: boolean,
       subjectDocument = Tyr.local.user
     ): Promise<Tyr.Document> {
-    PermissionsModel.validatePermissionType(permissionType);
+    PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
 
     const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
 
@@ -150,7 +187,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       permissionType: string,
       subjectDocument = Tyr.local.user
     ): Promise<boolean> {
-    PermissionsModel.validatePermissionType(permissionType);
+    PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
 
     const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
 
@@ -223,25 +260,24 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
    *  Given a tyranid document <doc>, update its permissions based on doc.permissions
    */
   static async updatePermissions(resourceDocument: Tyr.Document): Promise<Tyr.Document> {
+
+    if (!resourceDocument) {
+      throw new TypeError(`called PermissionsModel.updatePermissions() on undefined`);
+    }
+
+    PermissionsModel.validateAsResource(resourceDocument.$model);
+
     const permissions         = <gracl.Permission[]> _.get(resourceDocument, 'permissions', []),
           existingPermissions = <gracl.Permission[]> [],
           newPermissions      = <gracl.Permission[]> [],
           updated             = <Tyr.Document[]> [],
           permIdField         = PermissionsModel.def.primaryKey.field;
 
+
     // lock permission for this resource
     await PermissionsModel.lockPermissionsForResource(resourceDocument);
 
-    // extract secure and cast to plugin
-    const plugin = PermissionsModel.getGraclPlugin(),
-          resourceCollectionName = resourceDocument.$model.def.name;
-
-    if (!plugin.graclHierarchy.resources.has(resourceCollectionName)) {
-      throw new Error(
-        `Attempted to update permissions for document in ${resourceCollectionName} collection as resource ` +
-        `but no resource class for that collection was found!`
-      );
-    }
+    const resourceCollectionName = resourceDocument.$model.def.name;
 
     const subjectIds = <string[]> _.chain(permissions)
       .map('subjectId')
@@ -378,7 +414,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
         {},
         {
           $pull: {
-            [PermissionsModel.def.primaryKey.field]: {
+            permissionIds: {
               $in: idList
             }
           }

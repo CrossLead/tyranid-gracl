@@ -36,6 +36,16 @@ const db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),
       root = __dirname.replace(/test\/spec/, ''),
       secure = new tyranidGracl.GraclPlugin(),
       insecure = { tyranid: { insecure: true } };
+function giveBenAccessToChipotle() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const ben = yield Tyr.byName['user'].findOne({ name: 'ben' }),
+              chopped = yield Tyr.byName['organization'].findOne({ name: 'Chopped' });
+        chai_1.expect(ben, 'ben should exist').to.exist;
+        chai_1.expect(chopped, 'chopped should exist').to.exist;
+        const updatedChopped = yield tyranidGracl.PermissionsModel.setPermissionAccess(chopped, 'view-post', true, ben);
+        return updatedChopped;
+    });
+}
 describe('tyranid-gracl', () => {
     before(() => __awaiter(undefined, void 0, void 0, function* () {
         Tyr.config({
@@ -47,6 +57,7 @@ describe('tyranid-gracl', () => {
         yield createTestData_1.createTestData();
     }));
     beforeEach(() => __awaiter(undefined, void 0, void 0, function* () {
+        yield createTestData_1.createTestData();
         Tyr.local.user = undefined;
     }));
     describe('utility functions', () => {
@@ -89,7 +100,7 @@ describe('tyranid-gracl', () => {
                   postIds = _.map(chipotlePosts, '_id');
             const steppedPostIds = yield tyranidGracl.stepThroughCollectionPath(blogIds, Tyr.byName['blog'], Tyr.byName['post']);
             chai_1.expect(steppedPostIds, 'ids after stepping should be all relevant ids').to.deep.equal(postIds);
-            expectAsyncToThrow_1.expectAsyncToThrow(() => tyranidGracl.stepThroughCollectionPath(blogIds, Tyr.byName['blog'], Tyr.byName['user']), /cannot step through collection path, as no link to collection/, 'stepping to a collection with no connection to previous col should throw');
+            yield expectAsyncToThrow_1.expectAsyncToThrow(() => tyranidGracl.stepThroughCollectionPath(blogIds, Tyr.byName['blog'], Tyr.byName['user']), /cannot step through collection path, as no link to collection/, 'stepping to a collection with no connection to previous col should throw');
         }));
     });
     describe('Creating the plugin', () => {
@@ -110,11 +121,7 @@ describe('tyranid-gracl', () => {
     });
     describe('Working with permissions', () => {
         it('should successfully add permissions', () => __awaiter(undefined, void 0, void 0, function* () {
-            const ben = yield Tyr.byName['user'].findOne({ name: 'ben' }),
-                  chopped = yield Tyr.byName['organization'].findOne({ name: 'Chopped' });
-            chai_1.expect(ben, 'ben should exist').to.exist;
-            chai_1.expect(chopped, 'chopped should exist').to.exist;
-            const updatedChopped = yield tyranidGracl.PermissionsModel.setPermissionAccess(chopped, 'view-post', true, ben);
+            const updatedChopped = yield giveBenAccessToChipotle();
             const existingPermissions = yield tyranidGracl.PermissionsModel.find({}, null, insecure);
             chai_1.expect(existingPermissions).to.have.lengthOf(1);
             chai_1.expect(existingPermissions[0]['resourceId'].toString(), 'resourceId').to.equal(updatedChopped['permissions'][0]['resourceId'].toString());
@@ -122,6 +129,7 @@ describe('tyranid-gracl', () => {
             chai_1.expect(existingPermissions[0]['access']['view-post'], 'access').to.equal(updatedChopped['permissions'][0]['access']['view-post']);
         }));
         it('should respect permissions hierarchy', () => __awaiter(undefined, void 0, void 0, function* () {
+            yield giveBenAccessToChipotle();
             const ben = yield Tyr.byName['user'].findOne({ name: 'ben' }),
                   choppedBlog = yield Tyr.byName['blog'].findOne({ name: 'Salads are great' });
             chai_1.expect(ben, 'ben should exist').to.exist;
@@ -133,26 +141,69 @@ describe('tyranid-gracl', () => {
                   chipotleCorporateBlog = yield Tyr.byName['blog'].findOne({ name: 'Mexican Empire' });
             chai_1.expect(ben, 'ben should exist').to.exist;
             chai_1.expect(chipotleCorporateBlog, 'chipotleCorporateBlog should exist').to.exist;
-            expectAsyncToThrow_1.expectAsyncToThrow(() => chipotleCorporateBlog['$isAllowed']('view', ben), /No collection name in permission type/g, 'checking \'view\' without collection should throw');
+            yield expectAsyncToThrow_1.expectAsyncToThrow(() => chipotleCorporateBlog['$isAllowed']('view', ben), /No collection name in permission type/g, 'checking \'view\' without collection should throw');
         }));
         it('should create a lock when updating permission and set to false when complete', () => __awaiter(undefined, void 0, void 0, function* () {
+            yield giveBenAccessToChipotle();
             const locks = yield tyranidGracl.PermissionLocks.find({}, null, insecure),
                   chopped = yield Tyr.byName['organization'].findOne({ name: 'Chopped' });
-            chai_1.expect(locks.length).to.be.greaterThan(0);
+            chai_1.expect(locks).to.have.lengthOf(1);
             chai_1.expect(locks[0]['resourceId']).to.equal(chopped.$uid);
             chai_1.expect(locks[0]['locked']).to.equal(false);
         }));
         it('should throw error when trying to lock same resource twice', () => __awaiter(undefined, void 0, void 0, function* () {
             const chipotle = yield Tyr.byName['organization'].findOne({ name: 'Chipotle' });
             yield tyranidGracl.PermissionsModel.lockPermissionsForResource(chipotle);
-            expectAsyncToThrow_1.expectAsyncToThrow(() => tyranidGracl.PermissionsModel.lockPermissionsForResource(chipotle), /another update is in progress/, 'cannot lock resource that is already locked');
+            yield expectAsyncToThrow_1.expectAsyncToThrow(() => tyranidGracl.PermissionsModel.lockPermissionsForResource(chipotle), /another update is in progress/, 'cannot lock resource that is already locked');
             yield tyranidGracl.PermissionsModel.unlockPermissionsForResource(chipotle);
         }));
         it('should modify existing permissions instead of creating new ones', () => __awaiter(undefined, void 0, void 0, function* () {
-            console.warn('ADD TEST');
+            yield giveBenAccessToChipotle();
+            const ben = yield Tyr.byName['user'].findOne({ name: 'ben' }),
+                  chopped = yield Tyr.byName['organization'].findOne({ name: 'Chopped' });
+            chai_1.expect(chopped['permissionIds']).to.have.lengthOf(1);
+            chai_1.expect(ben, 'ben should exist').to.exist;
+            chai_1.expect(chopped, 'chopped should exist').to.exist;
+            const updatedChopped = yield tyranidGracl.PermissionsModel.setPermissionAccess(chopped, 'view-user', true, ben);
+            chai_1.expect(updatedChopped['permissions']).to.have.lengthOf(1);
+            const allPermissions = yield tyranidGracl.PermissionsModel.find({});
+            chai_1.expect(allPermissions).to.have.lengthOf(1);
         }));
         it('should successfully remove all permissions after PermissionsModel.deletePermissions()', () => __awaiter(undefined, void 0, void 0, function* () {
-            console.warn('ADD TEST');
+            const ted = yield Tyr.byName['user'].findOne({ name: 'ted' }),
+                  ben = yield Tyr.byName['user'].findOne({ name: 'ben' });
+            const chopped = yield Tyr.byName['organization'].findOne({ name: 'Chopped' }),
+                  cava = yield Tyr.byName['organization'].findOne({ name: 'Cava' }),
+                  post = yield Tyr.byName['post'].findOne({ text: 'Why burritos are amazing.' }),
+                  chipotle = yield Tyr.byName['organization'].findOne({ name: 'Chipotle' });
+            chai_1.expect(!ted['permissionIds']).to.equal(true);
+            const permissionsForTed = yield Tyr.byName['graclPermission'].find({
+                $or: [{ subjectId: ted.$uid }, { resourceId: ted.$uid }]
+            });
+            chai_1.expect(permissionsForTed).to.have.lengthOf(0);
+            const prePermissionChecks = yield Promise.all([chopped['$isAllowed']('view-user', ted), cava['$isAllowed']('view-post', ted), post['$isAllowed']('edit-post', ted), ted['$isAllowed']('view-user', ben), chipotle['$isAllowed']('view-post', ted)]);
+            chai_1.expect(_.all(prePermissionChecks)).to.equal(false);
+            const permissionOperations = yield Promise.all([chopped['$allow']('view-user', ted), cava['$allow']('view-post', ted), post['$allow']('edit-post', ted), chipotle['$deny']('view-post', ted), ted['$allow']('view-user', ben)]);
+            const updatedTed = yield Tyr.byName['user'].findOne({ name: 'ted' });
+            chai_1.expect(ted['permissionIds']).to.have.lengthOf(1);
+            const updatedPermissionsForTed = yield Tyr.byName['graclPermission'].find({
+                $or: [{ subjectId: ted.$uid }, { resourceId: ted.$uid }]
+            });
+            chai_1.expect(updatedPermissionsForTed).to.have.lengthOf(permissionOperations.length);
+            const permissionChecks = yield Promise.all([chopped['$isAllowed']('view-user', ted), cava['$isAllowed']('view-post', ted), post['$isAllowed']('edit-post', ted), ted['$isAllowed']('view-user', ben)]);
+            chai_1.expect(_.all(permissionChecks)).to.equal(true);
+            chai_1.expect((yield chipotle['$isAllowed']('view-post', ted))).to.equal(false);
+            yield tyranidGracl.PermissionsModel.deletePermissions(ted);
+            const postPermissionChecks = yield Promise.all([chopped['$isAllowed']('view-user', ted), cava['$isAllowed']('view-post', ted), post['$isAllowed']('edit-post', ted), ted['$isAllowed']('view-user', ben)]);
+            chai_1.expect(_.all(postPermissionChecks)).to.equal(false);
+            const updatedChopped = yield Tyr.byName['organization'].findOne({ name: 'Chopped' }),
+                  updatedCava = yield Tyr.byName['organization'].findOne({ name: 'Cava' }),
+                  updatedPost = yield Tyr.byName['post'].findOne({ text: 'Why burritos are amazing.' }),
+                  updatedChipotle = yield Tyr.byName['organization'].findOne({ name: 'Chipotle' });
+            chai_1.expect(updatedChopped['permissionIds']).to.have.length(0);
+            chai_1.expect(updatedCava['permissionIds']).to.have.length(0);
+            chai_1.expect(updatedPost['permissionIds']).to.have.length(0);
+            chai_1.expect(updatedChipotle['permissionIds']).to.have.length(0);
         }));
     });
     describe('plugin.query()', () => {
@@ -168,6 +219,7 @@ describe('tyranid-gracl', () => {
             chai_1.expect(query, 'query should be {}').to.deep.equal({});
         }));
         it('should produce query restriction based on permissions', () => __awaiter(undefined, void 0, void 0, function* () {
+            yield giveBenAccessToChipotle();
             const Post = Tyr.byName['post'],
                   Blog = Tyr.byName['blog'],
                   Org = Tyr.byName['organization'],
@@ -185,6 +237,7 @@ describe('tyranid-gracl', () => {
     });
     describe('Collection.find()', () => {
         it('should be appropriately filtered based on permissions', () => __awaiter(undefined, void 0, void 0, function* () {
+            yield giveBenAccessToChipotle();
             const Post = Tyr.byName['post'],
                   User = Tyr.byName['user'],
                   Blog = Tyr.byName['blog'],
