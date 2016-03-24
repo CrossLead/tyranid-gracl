@@ -156,10 +156,13 @@ describe('tyranid-gracl', () => {
 
     it('should add permissions methods to documents', async () => {
       const ben = await Tyr.byName['user'].findOne({ name: 'ben' });
-      expect(ben, 'should have method: $isAllowed').to.have.property('$isAllowed');
       expect(ben, 'should have method: $setPermissionAccess').to.have.property('$setPermissionAccess');
+      expect(ben, 'should have method: $isAllowed').to.have.property('$isAllowed');
       expect(ben, 'should have method: $allow').to.have.property('$allow');
       expect(ben, 'should have method: $deny').to.have.property('$deny');
+      expect(ben, 'should have method: $isAllowedForThis').to.have.property('$isAllowedForThis');
+      expect(ben, 'should have method: $allowForThis').to.have.property('$allowForThis');
+      expect(ben, 'should have method: $denyForThis').to.have.property('$denyForThis');
     });
 
   });

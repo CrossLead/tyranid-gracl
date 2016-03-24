@@ -123,10 +123,13 @@ describe('tyranid-gracl', () => {
         });
         it('should add permissions methods to documents', () => __awaiter(undefined, void 0, void 0, function* () {
             const ben = yield Tyr.byName['user'].findOne({ name: 'ben' });
-            chai_1.expect(ben, 'should have method: $isAllowed').to.have.property('$isAllowed');
             chai_1.expect(ben, 'should have method: $setPermissionAccess').to.have.property('$setPermissionAccess');
+            chai_1.expect(ben, 'should have method: $isAllowed').to.have.property('$isAllowed');
             chai_1.expect(ben, 'should have method: $allow').to.have.property('$allow');
             chai_1.expect(ben, 'should have method: $deny').to.have.property('$deny');
+            chai_1.expect(ben, 'should have method: $isAllowedForThis').to.have.property('$isAllowedForThis');
+            chai_1.expect(ben, 'should have method: $allowForThis').to.have.property('$allowForThis');
+            chai_1.expect(ben, 'should have method: $denyForThis').to.have.property('$denyForThis');
         }));
     });
     describe('Working with permissions', () => {

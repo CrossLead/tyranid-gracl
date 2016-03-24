@@ -1,38 +1,18 @@
-## `tyranid` plugin for `gracl` permissions library
+# a [gracl](https://github.com/CrossLead/gracl) plugin for [tyranid](http://tyranid.org/)
 
 [![Build Status](https://travis-ci.org/CrossLead/tyranid-gracl.svg?branch=master)](https://travis-ci.org/CrossLead/tyranid-gracl)
 
-- [`tyranid`](http://tyranid.org/)
-- [`gracl`](https://github.com/CrossLead/gracl)
 
 This repository contains a plugin for `tyranid` that allows for graph-based acl permissions to be enforced / utilized
 within tyranid simply by adding a few schema annotations.
 
-### Usage example
+## Usage
 
+### Annotate your tyranid schemas
 
-First, you need to annotate your tyranid collections with the necessary information
-for `tyranid-gracl`. For example, if we have a permissions hierarchy as follows (see gracl for more information on hierarchies)...
-
-```
-Subject Hierarchy           Resource Hierarchy
-
-  +------------+             +------------+
-  |Organization|             |Organization|
-  +------+-----+             +------+-----+
-         |                          |
-         v                          v
-      +--+-+                     +--+-+
-      |Team|                     |Blog|
-      +--+-+                     +--+-+
-         |                          |
-         v                          v
-      +--+-+                     +--+-+
-      |User|                     |Post|
-      +----+                     +----+
-```
-
-We need to annotate our collections as follows...
+You need to add a `permissionIds` property to collections that
+will have permissions set _for_ them (the "resources"), as well
+as add annotations indicating the "hierarchy parents"...
 
 ```javascript
 
@@ -45,6 +25,7 @@ const OrganizationBaseCollection = new Tyr.Collection({
   fields: {
     _id: { is: 'mongoid' },
     name: { is: 'string' },
+    // permissionsIds should be exactly like this
     permissionIds: { is: 'array', link: 'graclPermission' }
   }
 });
@@ -57,32 +38,15 @@ const TeamBaseCollection = new Tyr.Collection({
   fields: {
     _id: { is: 'mongoid' },
     name: { is: 'string' },
+    // here we indicate that "organization" is both the
+    // parent subject and parent resource in the permissions
+    // hierarchy
     organizationId: {
       link: 'organization',
       relate: 'ownedBy',
-      graclType: 'subject'
+      graclType: [ 'subject', 'resource' ] // can be both!
     },
-    permissionIds: { is: 'array', link: 'graclPermission' }
-  }
-});
-
-
-const UserBaseCollection = new Tyr.Collection({
-  id: 'u00',
-  name: 'user',
-  dbName: 'users',
-  fields: {
-    _id: { is: 'mongoid' },
-    name: { is: 'string' },
-    teamIds: {
-      is: 'array',
-      of: {
-        link: 'team',
-        relate: 'ownedBy',
-        graclType: 'subject'
-      }
-    },
-    organizationId: { link: 'organization' },
+    // also need permissions prop!
     permissionIds: { is: 'array', link: 'graclPermission' }
   }
 });
@@ -103,39 +67,23 @@ export const BlogBaseCollection = new Tyr.Collection({
     permissionIds: { is: 'array', link: 'graclPermission' }
   }
 });
-
-
-export const PostBaseCollection = new Tyr.Collection({
-  id: 'p00',
-  name: 'post',
-  dbName: 'posts',
-  fields: {
-    _id: { is: 'mongoid' },
-    title: { is: 'string' },
-    text: { is: 'string' },
-    blogId: {
-      link: 'blog',
-      relate: 'ownedBy',
-      graclType: 'resource'
-    },
-    permissionIds: { is: 'array', link: 'graclPermission' }
-  }
-});
 ```
 
-  Note the `relate: ownedBy` and `graclType` properties.
+### Register the plugin
 
-
-Next, the plugin must be created and the permissions model must go through validation.
+With annotated schemas, we can create and register the plugin with tyranid.
 
 ```javascript
 import Tyr from 'tyranid';
-import tpmongo from 'tpmongo';
+import pmongo from 'promised-mongo';
+
+// import plugin class
 import { GraclPlugin } from 'tyranid-gracl';
 
+// instantiate
 const secure = new GraclPlugin();
 
-const db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []);
+const db = pmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test');
 
 Tyr.config({
   db: db,
@@ -143,12 +91,15 @@ Tyr.config({
     { dir: root + '/test/models', fileMatch: '[a-z].js' },
     { dir: root + '/lib/models', fileMatch: '[a-z].js' }
   ],
+  // add to tyranid config...
   secure: secure
 })
 ```
 
 This will install the gracl plugin in tyranid and validate your permissions hierarchies as declared through the collection schema.
 
+
+### Using permissions
 
 Now, we can utilize the provided tyranid Document prototype extensions to check/set permissions. Additioanlly, `collection.find()` queries will be automatically filtered using the hierarchy.
 
@@ -157,16 +108,15 @@ Method usage examples:
 ```javascript
 import Tyr from 'tyranid';
 
-const Organization = Tyr.byName['organization'],
-      User = Tyr.byName['user'];
+/**
+ *  Example express controller
+ */
+export async function checkCanViewUid(req, res) {
+  // assume this is a user document mixed in via middlewhere
+  const user = req.user,
+        // uid of entity we want to check if <user> has view access to
+        uid = req.query.uid;
 
-// get a document
-const crosslead = await Organization.findOne({ name: 'CrossLead' }),
-      user = await User.findOne({ name: 'ben' });
-
-
-// give user ben access to all posts within crosslead organization.
-await crosslead.$setPermissionAccess('view-post', true, ben);
-
-// (more examples coming soon!)
+  return await Tyr.byUid(uid).$isAllowedForThis('view', ben);
+}
 ```

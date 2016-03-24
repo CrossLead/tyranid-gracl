@@ -426,6 +426,13 @@ GraclPlugin.documentMethods = {
         const doc = this;
         return PermissionsModel_1.PermissionsModel.isAllowed(doc, permissionType, subjectDocument);
     },
+    $isAllowedForThis(permissionAction) {
+        let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? Tyr.local.user : arguments[1];
+
+        const doc = this;
+        const permissionType = `${ permissionAction }-${ doc.$model.def.name }`;
+        return this.$isAllowed(permissionType, subjectDocument);
+    },
     $allow(permissionType) {
         let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? Tyr.local.user : arguments[1];
 
@@ -435,6 +442,20 @@ GraclPlugin.documentMethods = {
         let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? Tyr.local.user : arguments[1];
 
         return this.$setPermissionAccess(permissionType, false, subjectDocument);
+    },
+    $allowForThis(permissionAction) {
+        let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? Tyr.local.user : arguments[1];
+
+        const doc = this;
+        const permissionType = `${ permissionAction }-${ doc.$model.def.name }`;
+        return this.$allow(permissionType, subjectDocument);
+    },
+    $denyForThis(permissionAction) {
+        let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? Tyr.local.user : arguments[1];
+
+        const doc = this;
+        const permissionType = `${ permissionAction }-${ doc.$model.def.name }`;
+        return this.$deny(permissionType, subjectDocument);
     }
 };
 exports.GraclPlugin = GraclPlugin;

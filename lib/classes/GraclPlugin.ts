@@ -33,12 +33,30 @@ export class GraclPlugin {
       return PermissionsModel.isAllowed(doc, permissionType, subjectDocument);
     },
 
+    $isAllowedForThis(permissionAction: string, subjectDocument = Tyr.local.user): Promise<boolean> {
+      const doc = <Tyr.Document> this;
+      const permissionType = `${permissionAction}-${doc.$model.def.name}`;
+      return this.$isAllowed(permissionType, subjectDocument);
+    },
+
     $allow(permissionType: string, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
       return this.$setPermissionAccess(permissionType, true, subjectDocument);
     },
 
     $deny(permissionType: string, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
       return this.$setPermissionAccess(permissionType, false, subjectDocument);
+    },
+
+    $allowForThis(permissionAction: string, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
+      const doc = <Tyr.Document> this;
+      const permissionType = `${permissionAction}-${doc.$model.def.name}`;
+      return this.$allow(permissionType, subjectDocument);
+    },
+
+    $denyForThis(permissionAction: string, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
+      const doc = <Tyr.Document> this;
+      const permissionType = `${permissionAction}-${doc.$model.def.name}`;
+      return this.$deny(permissionType, subjectDocument);
     }
 
   };

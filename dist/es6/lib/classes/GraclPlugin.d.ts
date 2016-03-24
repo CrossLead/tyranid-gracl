@@ -7,8 +7,11 @@ export declare class GraclPlugin {
     static documentMethods: {
         $setPermissionAccess(permissionType: string, access: boolean, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
         $isAllowed(permissionType: string, subjectDocument?: Tyr.Document): Promise<boolean>;
+        $isAllowedForThis(permissionAction: string, subjectDocument?: Tyr.Document): Promise<boolean>;
         $allow(permissionType: string, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
         $deny(permissionType: string, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
+        $allowForThis(permissionAction: string, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
+        $denyForThis(permissionAction: string, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
     };
     static makeRepository(collection: Tyr.CollectionInstance): gracl.Repository;
     static buildLinkGraph(): Hash<Hash<string>>;
