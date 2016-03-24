@@ -1,6 +1,7 @@
 /// <reference path="../../../../typings/main.d.ts" />
 import * as Tyr from 'tyranid';
 import * as gracl from 'gracl';
+import { PermissionsModel } from '../models/PermissionsModel';
 import { Hash } from '../util';
 export declare class GraclPlugin {
     verbose: boolean;
@@ -18,6 +19,9 @@ export declare class GraclPlugin {
     graclHierarchy: gracl.Graph;
     outgoingLinkPaths: Hash<Hash<string>>;
     unsecuredCollections: Set<string>;
+    isAllowed: typeof PermissionsModel.isAllowed;
+    setPermissionAccess: typeof PermissionsModel.setPermissionAccess;
+    deletePermissions: typeof PermissionsModel.deletePermissions;
     constructor(verbose?: boolean);
     log(message: string): this;
     getObjectHierarchy(): {

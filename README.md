@@ -130,8 +130,6 @@ Method usage examples:
 
 ```javascript
 import Tyr from 'tyranid';
-// import PermissionsModel from plugin for deletion
-import { PermissionsModel } from 'tyranid-gracl';
 
 /**
  *  Example express controller to set a permission
@@ -206,7 +204,7 @@ export async function deletePermissionsRelatingToUid(req, res) {
   const uid = req.query.uid;
 
   try {
-    await PermissionsModel.deletePermissions(await Tyr.byUid(uid));
+    await Tyr.secure.deletePermissions(await Tyr.byUid(uid));
   } catch (error) {
     if (/another update is in progress/.test(error.message)) {
       // the permissions model found a simultaneous update request, and denied this update

@@ -9,6 +9,7 @@ import { expectedLinkPaths } from '../helpers/expectedLinkPaths';
 import { createTestData } from '../helpers/createTestData';
 import { expectAsyncToThrow } from '../helpers/expectAsyncToThrow';
 
+type GraclPlugin = tyranidGracl.GraclPlugin;
 
 const db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),
       root = __dirname.replace(/test\/spec/, ''),
@@ -29,9 +30,7 @@ async function giveBenAccessToChoppedPosts() {
   expect(ben, 'ben should exist').to.exist;
   expect(chopped, 'chopped should exist').to.exist;
 
-  const updatedChopped = await tyranidGracl
-    .PermissionsModel
-    .setPermissionAccess(chopped, 'view-post', true, ben);
+  const updatedChopped = secure.setPermissionAccess(chopped, 'view-post', true, ben);
 
   return updatedChopped;
 }
@@ -177,7 +176,7 @@ describe('tyranid-gracl', () => {
     it('should successfully add permissions', async () => {
       const updatedChopped = await giveBenAccessToChoppedPosts();
 
-      const existingPermissions = await tyranidGracl.PermissionsModel.find(
+      const existingPermissions = await Tyr.byName['graclPermission'].find(
         {}, null, insecure
       );
 
@@ -256,9 +255,7 @@ describe('tyranid-gracl', () => {
       expect(ben, 'ben should exist').to.exist;
       expect(chopped, 'chopped should exist').to.exist;
 
-      const updatedChopped = await tyranidGracl
-        .PermissionsModel
-        .setPermissionAccess(chopped, 'view-user', true, ben);
+      const updatedChopped = await secure.setPermissionAccess(chopped, 'view-user', true, ben);
 
       expect(updatedChopped['permissions']).to.have.lengthOf(1);
 
@@ -268,7 +265,7 @@ describe('tyranid-gracl', () => {
     });
 
 
-    it('should successfully remove all permissions after PermissionsModel.deletePermissions()', async () => {
+    it('should successfully remove all permissions after secure.deletePermissions()', async () => {
       const ted = await Tyr.byName['user'].findOne({ name: 'ted' }),
             ben = await Tyr.byName['user'].findOne({ name: 'ben' });
 
@@ -329,7 +326,7 @@ describe('tyranid-gracl', () => {
       expect(_.all(permissionChecks)).to.equal(true);
       expect(await chipotle['$isAllowed']('view-post', ted)).to.equal(false);
 
-      await tyranidGracl.PermissionsModel.deletePermissions(ted);
+      await secure.deletePermissions(ted);
 
       const postPermissionChecks = await Promise.all([
         chopped['$isAllowed']('view-user', ted),

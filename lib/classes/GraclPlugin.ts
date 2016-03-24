@@ -18,6 +18,8 @@ export class GraclPlugin {
 
 
 
+
+
   /**
    *  Methods to mixin to Tyr.documentPrototype for working with permissions
    */
@@ -155,6 +157,20 @@ export class GraclPlugin {
     PermissionLocks.def.name
   ]);
 
+  /**
+   *  Reference permissions model methods here
+   */
+  isAllowed = (
+    <typeof PermissionsModel.isAllowed> PermissionsModel.isAllowed.bind(PermissionsModel)
+  );
+
+  setPermissionAccess = (
+    <typeof PermissionsModel.setPermissionAccess> PermissionsModel.setPermissionAccess.bind(PermissionsModel)
+  );
+
+  deletePermissions = (
+    <typeof PermissionsModel.deletePermissions> PermissionsModel.deletePermissions.bind(PermissionsModel)
+  );
 
 
   constructor(public verbose = false) {

@@ -49,7 +49,7 @@ function giveBenAccessToChoppedPosts() {
               chopped = yield Tyr.byName['organization'].findOne({ name: 'Chopped' });
         chai_1.expect(ben, 'ben should exist').to.exist;
         chai_1.expect(chopped, 'chopped should exist').to.exist;
-        const updatedChopped = yield tyranidGracl.PermissionsModel.setPermissionAccess(chopped, 'view-post', true, ben);
+        const updatedChopped = secure.setPermissionAccess(chopped, 'view-post', true, ben);
         return updatedChopped;
     });
 }
@@ -139,7 +139,7 @@ describe('tyranid-gracl', () => {
     describe('Working with permissions', () => {
         it('should successfully add permissions', () => __awaiter(undefined, void 0, void 0, function* () {
             const updatedChopped = yield giveBenAccessToChoppedPosts();
-            const existingPermissions = yield tyranidGracl.PermissionsModel.find({}, null, insecure);
+            const existingPermissions = yield Tyr.byName['graclPermission'].find({}, null, insecure);
             chai_1.expect(existingPermissions).to.have.lengthOf(1);
             chai_1.expect(existingPermissions[0]['resourceId'].toString(), 'resourceId').to.equal(updatedChopped['permissions'][0]['resourceId'].toString());
             chai_1.expect(existingPermissions[0]['subjectId'].toString(), 'subjectId').to.equal(updatedChopped['permissions'][0]['subjectId'].toString());
@@ -181,12 +181,12 @@ describe('tyranid-gracl', () => {
             chai_1.expect(chopped['permissionIds']).to.have.lengthOf(1);
             chai_1.expect(ben, 'ben should exist').to.exist;
             chai_1.expect(chopped, 'chopped should exist').to.exist;
-            const updatedChopped = yield tyranidGracl.PermissionsModel.setPermissionAccess(chopped, 'view-user', true, ben);
+            const updatedChopped = yield secure.setPermissionAccess(chopped, 'view-user', true, ben);
             chai_1.expect(updatedChopped['permissions']).to.have.lengthOf(1);
             const allPermissions = yield tyranidGracl.PermissionsModel.find({});
             chai_1.expect(allPermissions).to.have.lengthOf(1);
         }));
-        it('should successfully remove all permissions after PermissionsModel.deletePermissions()', () => __awaiter(undefined, void 0, void 0, function* () {
+        it('should successfully remove all permissions after secure.deletePermissions()', () => __awaiter(undefined, void 0, void 0, function* () {
             const ted = yield Tyr.byName['user'].findOne({ name: 'ted' }),
                   ben = yield Tyr.byName['user'].findOne({ name: 'ben' });
             const chopped = yield Tyr.byName['organization'].findOne({ name: 'Chopped' }),
@@ -210,7 +210,7 @@ describe('tyranid-gracl', () => {
             const permissionChecks = yield Promise.all([chopped['$isAllowed']('view-user', ted), cava['$isAllowed']('view-post', ted), post['$isAllowed']('edit-post', ted), ted['$isAllowed']('view-user', ben)]);
             chai_1.expect(_.all(permissionChecks)).to.equal(true);
             chai_1.expect((yield chipotle['$isAllowed']('view-post', ted))).to.equal(false);
-            yield tyranidGracl.PermissionsModel.deletePermissions(ted);
+            yield secure.deletePermissions(ted);
             const postPermissionChecks = yield Promise.all([chopped['$isAllowed']('view-user', ted), cava['$isAllowed']('view-post', ted), post['$isAllowed']('edit-post', ted), ted['$isAllowed']('view-user', ben)]);
             chai_1.expect(_.all(postPermissionChecks)).to.equal(false);
             const updatedChopped = yield Tyr.byName['organization'].findOne({ name: 'Chopped' }),
