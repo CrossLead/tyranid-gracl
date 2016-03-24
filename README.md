@@ -101,15 +101,33 @@ This will install the gracl plugin in tyranid and validate your permissions hier
 
 ### Using permissions
 
-Now, we can utilize the provided tyranid Document prototype extensions to check/set permissions. Additioanlly, `collection.find()` queries will be automatically filtered using the hierarchy.
+Now, we can utilize the provided tyranid Document prototype extensions to check/set permissions. Additionally, `collection.find()` queries will be automatically filtered using the hierarchy.
 
 Method usage examples:
 
 ```javascript
 import Tyr from 'tyranid';
 
+
 /**
- *  Example express controller
+ *  Example express controller to set a permission
+ */
+export async function giveUserBlogViewAccessToOrg(req, res) {
+  // assume this is a user document mixed in via middlewhere
+  const user = req.user,
+        // organizationId of org we want to give user view access to
+        organizationId = req.query.organizationId;
+
+  const updatedOrg = await Tyr.byName['organization']
+    .byId(organizationId)       // get the organization document by its id
+    .$allow('view-blog', user); // set view-blog access to true for user
+
+  return res.json(updatedOrg);
+}
+
+
+/**
+ *  Example express controller to check a permission
  */
 export async function checkCanViewUid(req, res) {
   // assume this is a user document mixed in via middlewhere
@@ -117,6 +135,22 @@ export async function checkCanViewUid(req, res) {
         // uid of entity we want to check if <user> has view access to
         uid = req.query.uid;
 
-  return await Tyr.byUid(uid).$isAllowedForThis('view', ben);
+  const canView = await Tyr.byUid(uid).$isAllowedForThis('view', user);
+
+  return res.json(canView);
+}
+
+
+
+/**
+ *  Example express controller using filtered queries
+    NOTE: requires 'cls' to be enabled for tyranid! and that a user is
+          mixed into Tyr.local.user on each request!
+ */
+export async function findBlogs(req, res) {
+  // no extra api needed! already filtered!
+  const blogs = await Tyr.byName['blog'].find({});
+
+  return res.json(blogs);
 }
 ```

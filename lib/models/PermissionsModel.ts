@@ -62,7 +62,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     if (!validPermissionActions.has(action)) {
       throw new Error(
         `Invalid permissionType ${permissionType}! ` +
-        `permission action given ${action} is not valid. Must be one of ${[...validPermissionActions].join(', ')}`
+        `permission action given ("${action}") is not valid. Must be one of (${[...validPermissionActions].join(', ')})`
       );
     }
 
