@@ -3,8 +3,9 @@ import * as Tyr from 'tyranid';
 import * as gracl from 'gracl';
 import { PermissionsModel } from '../models/PermissionsModel';
 import { Hash } from '../util';
+export declare type permissionTypeList = Hash<string>[];
+export declare type permissionHierarchy = Hash<any>;
 export declare class GraclPlugin {
-    verbose: boolean;
     static isAllowed: typeof PermissionsModel.isAllowed;
     static setPermissionAccess: typeof PermissionsModel.setPermissionAccess;
     static deletePermissions: typeof PermissionsModel.deletePermissions;
@@ -19,13 +20,21 @@ export declare class GraclPlugin {
     };
     static makeRepository(collection: Tyr.CollectionInstance): gracl.Repository;
     static buildLinkGraph(): Hash<Hash<string>>;
+    static constructPermissionHierarchy(permissionsTypes: permissionTypeList): permissionHierarchy;
     graclHierarchy: gracl.Graph;
     outgoingLinkPaths: Hash<Hash<string>>;
     unsecuredCollections: Set<string>;
     isAllowed: typeof PermissionsModel.isAllowed;
     setPermissionAccess: typeof PermissionsModel.setPermissionAccess;
     deletePermissions: typeof PermissionsModel.deletePermissions;
-    constructor(verbose?: boolean);
+    verbose: boolean;
+    permissionHierarchy: permissionHierarchy;
+    permissionTypes: permissionTypeList;
+    constructor(opts?: {
+        verbose: boolean;
+        permissionType: permissionTypeList;
+    });
+    nextPermission(permissionString: string): string;
     log(message: string): this;
     getObjectHierarchy(): {
         subjects: {};

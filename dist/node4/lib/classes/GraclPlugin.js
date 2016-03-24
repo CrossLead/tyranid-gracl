@@ -34,13 +34,18 @@ const PermissionsLocks_1 = require('../models/PermissionsLocks');
 const util_1 = require('../util');
 class GraclPlugin {
     constructor() {
-        let verbose = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
+        let opts = arguments.length <= 0 || arguments[0] === undefined ? { verbose: false, permissionType: [] } : arguments[0];
 
-        this.verbose = verbose;
         this.unsecuredCollections = new Set([PermissionsModel_1.PermissionsModel.def.name, PermissionsLocks_1.PermissionLocks.def.name]);
         this.isAllowed = GraclPlugin.isAllowed;
         this.setPermissionAccess = GraclPlugin.setPermissionAccess;
         this.deletePermissions = GraclPlugin.deletePermissions;
+        this.verbose = false;
+        this.permissionTypes = [{ name: 'edit' }, { name: 'view', parent: 'edit' }, { name: 'delete' }];
+        if (Array.isArray(opts.permissionType) && opts.permissionType.length) {
+            this.permissionTypes = opts.permissionType;
+        }
+        this.verbose = opts.verbose;
     }
     static makeRepository(collection) {
         return {
@@ -100,7 +105,36 @@ class GraclPlugin {
         });
         return next;
     }
+    static constructPermissionHierarchy(permissionsTypes) {
+        const sorted = gracl.topologicalSort(permissionsTypes);
+        if (_.uniq(sorted, false, 'name').length !== sorted.length) {
+            throw new Error(`Duplicate permission types provided: ${ permissionsTypes }`);
+        }
+        const hierarchy = {};
+        for (const node of sorted) {
+            const name = node['name'];
+            hierarchy[name] = {
+                name: name,
+                parent: hierarchy[node['parent']]
+            };
+        }
+        return hierarchy;
+    }
 
+    nextPermission(permissionString) {
+        var _permissionString$spl = permissionString.split('-');
+
+        var _permissionString$spl2 = _slicedToArray(_permissionString$spl, 2);
+
+        const action = _permissionString$spl2[0];
+        const collection = _permissionString$spl2[1];
+
+        const obj = this.permissionHierarchy[action];
+        if (obj && obj['parent']) {
+            return `${ obj['parent']['name'] }-${ collection }`;
+        }
+        return void 0;
+    }
     log(message) {
         if (this.verbose) {
             console.log(`tyranid-gracl: ${ message }`);
@@ -140,6 +174,7 @@ class GraclPlugin {
     boot(stage) {
         if (stage === 'post-link') {
             this.log(`starting boot.`);
+            this.permissionHierarchy = GraclPlugin.constructPermissionHierarchy(this.permissionTypes);
             Object.assign(Tyr.documentPrototype, GraclPlugin.documentMethods);
             const collections = Tyr.collections,
                   nodeSet = new Set();

@@ -162,10 +162,11 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
                 resourceDocument: Tyr.Document,
                 permissionType: string,
                 access: boolean,
-                subjectDocument = Tyr.local.user
+                subjectDocument = Tyr.local.user,
+                abstract = false
               ): Promise<Tyr.Document> {
 
-    PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
+    if (!abstract) PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
 
     const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
 
@@ -179,13 +180,22 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   static async isAllowed(
       resourceDocument: Tyr.Document,
       permissionType: string,
-      subjectDocument = Tyr.local.user
+      subjectDocument = Tyr.local.user,
+      abstract = false
     ): Promise<boolean> {
-    PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
+    if (!abstract) PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
 
-    const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
+    const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument),
+          plugin = PermissionsModel.getGraclPlugin(),
+          nextPermission = plugin.nextPermission(permissionType);
 
-    return await resource.isAllowed(subject, permissionType);
+    const access = await resource.isAllowed(subject, permissionType);
+
+    if (!access && nextPermission) {
+      return PermissionsModel.isAllowed(resourceDocument, nextPermission, subjectDocument, abstract);
+    }
+
+    return access;
   }
 
 

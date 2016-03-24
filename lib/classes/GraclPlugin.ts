@@ -13,6 +13,9 @@ import {
 } from '../util';
 
 
+export type permissionTypeList = Hash<string>[];
+export type permissionHierarchy = Hash<any>;
+
 
 export class GraclPlugin {
 
@@ -38,12 +41,20 @@ export class GraclPlugin {
    */
   static documentMethods = {
 
-    $setPermissionAccess(permissionType: string, access: boolean, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
+    $setPermissionAccess(
+        permissionType: string,
+        access: boolean,
+        subjectDocument = Tyr.local.user
+      ): Promise<Tyr.Document> {
+
       const doc = <Tyr.Document> this;
       return PermissionsModel.setPermissionAccess(doc, permissionType, access, subjectDocument);
     },
 
-    $isAllowed(permissionType: string, subjectDocument = Tyr.local.user): Promise<boolean> {
+    $isAllowed(
+      permissionType: string,
+      subjectDocument = Tyr.local.user
+    ): Promise<boolean> {
       const doc = <Tyr.Document> this;
       return PermissionsModel.isAllowed(doc, permissionType, subjectDocument);
     },
@@ -160,6 +171,33 @@ export class GraclPlugin {
 
 
 
+  /**
+   * validate and insert provided permissionHierarchy into model
+   */
+  static constructPermissionHierarchy(permissionsTypes: permissionTypeList ): permissionHierarchy {
+
+    // sort to find circular deps
+    const sorted = gracl.topologicalSort(permissionsTypes);
+
+    if (_.uniq(sorted, false, 'name').length !== sorted.length) {
+      throw new Error(`Duplicate permission types provided: ${permissionsTypes}`);
+    }
+
+    const hierarchy: permissionHierarchy = {};
+
+    for (const node of sorted) {
+      const name = node['name'];
+      hierarchy[name] = {
+        name,
+        parent: hierarchy[node['parent']]
+      };
+    }
+
+    return hierarchy;
+  }
+
+
+
   /*
    * Instance properties
    */
@@ -170,15 +208,43 @@ export class GraclPlugin {
     PermissionLocks.def.name
   ]);
 
+
+
   // bind static methods to instance as well
-  isAllowed = GraclPlugin.isAllowed;
+  isAllowed           = GraclPlugin.isAllowed;
   setPermissionAccess = GraclPlugin.setPermissionAccess;
-  deletePermissions = GraclPlugin.deletePermissions;
+  deletePermissions   = GraclPlugin.deletePermissions;
 
 
-  constructor(public verbose = false) {
+  verbose = false;
 
+  permissionHierarchy: permissionHierarchy;
+
+  permissionTypes: permissionTypeList = [
+    { name: 'edit' },
+    { name: 'view', parent: 'edit' },
+    { name: 'delete' }
+  ];
+
+
+
+  constructor(opts: { verbose: boolean, permissionType: permissionTypeList } = {verbose: false, permissionType: []}) {
+    if (Array.isArray(opts.permissionType) && opts.permissionType.length) {
+      this.permissionTypes = opts.permissionType;
+    }
+    this.verbose = opts.verbose;
   };
+
+
+
+  nextPermission(permissionString: string) {
+    const [ action, collection ] = permissionString.split('-');
+    const obj = this.permissionHierarchy[action];
+    if (obj && obj['parent']) {
+      return `${obj['parent']['name']}-${collection}`;
+    }
+    return void 0;
+  }
 
 
 
@@ -244,6 +310,8 @@ export class GraclPlugin {
   boot(stage: Tyr.BootStage) {
     if (stage === 'post-link') {
       this.log(`starting boot.`);
+
+      this.permissionHierarchy = GraclPlugin.constructPermissionHierarchy(this.permissionTypes);
 
       Object.assign(Tyr.documentPrototype, GraclPlugin.documentMethods);
 

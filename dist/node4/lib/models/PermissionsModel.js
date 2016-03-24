@@ -117,9 +117,10 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
     }
     static setPermissionAccess(resourceDocument, permissionType, access) {
         let subjectDocument = arguments.length <= 3 || arguments[3] === undefined ? Tyr.local.user : arguments[3];
+        let abstract = arguments.length <= 4 || arguments[4] === undefined ? false : arguments[4];
 
         return __awaiter(this, void 0, Promise, function* () {
-            PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
+            if (!abstract) PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
 
             var _ref = yield PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
 
@@ -132,16 +133,20 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
     }
     static isAllowed(resourceDocument, permissionType) {
         let subjectDocument = arguments.length <= 2 || arguments[2] === undefined ? Tyr.local.user : arguments[2];
+        let abstract = arguments.length <= 3 || arguments[3] === undefined ? false : arguments[3];
 
         return __awaiter(this, void 0, Promise, function* () {
-            PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
+            if (!abstract) PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
 
             var _ref2 = yield PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
 
             const subject = _ref2.subject;
-            const resource = _ref2.resource;
-
-            return yield resource.isAllowed(subject, permissionType);
+            const resource = _ref2.resource;const plugin = PermissionsModel.getGraclPlugin();const nextPermission = plugin.nextPermission(permissionType);
+            const access = yield resource.isAllowed(subject, permissionType);
+            if (!access && nextPermission) {
+                return PermissionsModel.isAllowed(resourceDocument, nextPermission, subjectDocument, abstract);
+            }
+            return access;
         });
     }
     static lockPermissionsForResource(resourceDocument) {
