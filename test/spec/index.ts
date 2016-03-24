@@ -94,9 +94,13 @@ describe('tyranid-gracl', () => {
 
       const query = tyranidGracl.createInQueries(queryAgainstChartMap, Tyr.byName['chart'], '$in');
 
-      expect(query['_id'], 'should correctly map own _id field').to.deep.equal({ $in: chartIds });
-      expect(query['blogId'], 'should find correct property').to.deep.equal({ $in: blogIds });
-      expect(query['userIds'], 'should find correct property').to.deep.equal({ $in: userIds });
+      const _idRestriction = _.find(query.$or, v => _.contains(_.keys(v), '_id')),
+            blogIdRestriction = _.find(query.$or, v => _.contains(_.keys(v), 'blogId')),
+            userIdsRestriction = _.find(query.$or, v => _.contains(_.keys(v), 'userIds'));
+
+      expect(_idRestriction['_id'], 'should correctly map own _id field').to.deep.equal({ $in: chartIds });
+      expect(blogIdRestriction['blogId'], 'should find correct property').to.deep.equal({ $in: blogIds });
+      expect(userIdsRestriction['userIds'], 'should find correct property').to.deep.equal({ $in: userIds });
 
       const createQueryNoLink = () => {
         tyranidGracl.createInQueries(queryAgainstChartMap, Tyr.byName['organization'], '$in');
@@ -376,13 +380,55 @@ describe('tyranid-gracl', () => {
 
       const query = await secure.query(Post, 'view', ben);
 
-      expect(query, 'query should find correct blogs').to.deep.equal({
+      expect(_.get(query, '$or.0'), 'query should find correct blogs').to.deep.equal({
         blogId: { $in: _.map(choppedBlogs, '_id') }
       });
     });
 
-    it('should produce $and clause with excluded and included ids', () => {
-      console.warn('ADD TEST');
+    it('should produce $and clause with excluded and included ids', async () => {
+      const ted = await Tyr.byName['user'].findOne({ name: 'ted' }),
+            ben = await Tyr.byName['user'].findOne({ name: 'ben' });
+
+      const chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' }),
+            cava = await Tyr.byName['organization'].findOne({ name: 'Cava' }),
+            chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
+            cavaBlogs = await Tyr.byName['blog'].find({ organizationId: cava['_id'] }, null, insecure),
+            chipotleBlogs = await Tyr.byName['blog'].find({ organizationId: chipotle['_id'] }, null, insecure),
+            post = await Tyr.byName['post'].findOne({ text: 'Why burritos are amazing.' });
+
+      const permissionOperations = await Promise.all([
+        cava['$allow']('view-post', ted),
+        post['$allow']('view-post', ted),
+        chipotle['$deny']('view-post', ted)
+      ]);
+
+      const query = await secure.query(Tyr.byName['post'], 'view', ted);
+      const [ positive, negative ] = <any[]> _.get(query, '$and');
+
+      const _idRestriction = _.find(positive['$or'], v => _.contains(_.keys(v), '_id')),
+            blogIdRestriction = _.find(positive['$or'], v => _.contains(_.keys(v), 'blogId'));
+
+      expect(_idRestriction).to.deep.equal({
+        '_id': {
+          '$in': [
+            post.$uid
+          ]
+        }
+      });
+
+      expect(blogIdRestriction).to.deep.equal({
+        'blogId': {
+          '$in': cavaBlogs.map(b => b['_id'])
+        }
+      });
+
+      const blogIdNegative = _.find(negative['$and'], v => _.contains(_.keys(v), 'blogId'));
+
+      expect(blogIdNegative).to.deep.equal({
+        blogId: {
+          $nin: chipotleBlogs.map(b => b['_id'])
+        }
+      });
     });
 
   });

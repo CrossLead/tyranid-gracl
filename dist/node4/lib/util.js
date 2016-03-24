@@ -58,7 +58,10 @@ function findLinkInCollection(col, linkCollection) {
 }
 exports.findLinkInCollection = findLinkInCollection;
 function createInQueries(map, queriedCollection, key) {
-    const query = {};
+    if (!(key === '$in' || key === '$nin')) {
+        throw new TypeError(`key must be $nin or $in!`);
+    }
+    const conditions = [];
     for (const _ref of map.entries()) {
         var _ref2 = _slicedToArray(_ref, 2);
 
@@ -75,9 +78,9 @@ function createInQueries(map, queriedCollection, key) {
             }
             prop = link.spath;
         }
-        query[prop] = { [key]: [].concat(_toConsumableArray(uids)) };
+        conditions.push({ [prop]: { [key]: [].concat(_toConsumableArray(uids)) } });
     }
-    return query;
+    return { [key === '$in' ? '$or' : '$and']: conditions };
 }
 exports.createInQueries = createInQueries;
 ;

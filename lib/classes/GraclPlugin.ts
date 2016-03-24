@@ -495,8 +495,8 @@ export class GraclPlugin {
     for (const [ collectionName, { collection, permissions } ] of resourceMap) {
 
       let queryRestrictionSet = false;
-      // check to see if the collection we are querying has a field linked to <collectionName>
-      if (queriedCollectionLinkFields.has(collectionName)) {
+      if (queriedCollectionLinkFields.has(collectionName) ||
+          queriedCollectionName === collectionName) {
         for (const permission of permissions.values()) {
           // grab access boolean for given permissionType
           const access = permission.access[permissionType];
@@ -655,9 +655,9 @@ export class GraclPlugin {
     const positiveRestriction = createInQueries(queryMaps['positive'], queriedCollection, '$in'),
           negativeRestriction = createInQueries(queryMaps['negative'], queriedCollection, '$nin');
 
-    const restricted: any = {},
-          hasPositive = _.chain(positiveRestriction).keys().any().value(),
-          hasNegative = _.chain(negativeRestriction).keys().any().value();
+    const restricted: Hash<any> = {},
+          hasPositive = !!positiveRestriction.$or.length,
+          hasNegative = !!negativeRestriction.$and.length;
 
     if (hasNegative && hasPositive) {
       restricted['$and'] = [
@@ -670,7 +670,7 @@ export class GraclPlugin {
       Object.assign(restricted, positiveRestriction);
     }
 
-    return restricted;
+    return <Hash<any>> restricted;
   }
 
 

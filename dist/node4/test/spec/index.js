@@ -1,5 +1,7 @@
 "use strict";
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 var __awaiter = undefined && undefined.__awaiter || function (thisArg, _arguments, P, generator) {
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) {
@@ -84,9 +86,12 @@ describe('tyranid-gracl', () => {
                   chartIds = yield getIdsForCol('chart');
             const queryAgainstChartMap = new Map([['blog', new Set(blogIds)], ['user', new Set(userIds)], ['chart', new Set(chartIds)]]);
             const query = tyranidGracl.createInQueries(queryAgainstChartMap, Tyr.byName['chart'], '$in');
-            chai_1.expect(query['_id'], 'should correctly map own _id field').to.deep.equal({ $in: chartIds });
-            chai_1.expect(query['blogId'], 'should find correct property').to.deep.equal({ $in: blogIds });
-            chai_1.expect(query['userIds'], 'should find correct property').to.deep.equal({ $in: userIds });
+            const _idRestriction = _.find(query.$or, v => _.contains(_.keys(v), '_id')),
+                  blogIdRestriction = _.find(query.$or, v => _.contains(_.keys(v), 'blogId')),
+                  userIdsRestriction = _.find(query.$or, v => _.contains(_.keys(v), 'userIds'));
+            chai_1.expect(_idRestriction['_id'], 'should correctly map own _id field').to.deep.equal({ $in: chartIds });
+            chai_1.expect(blogIdRestriction['blogId'], 'should find correct property').to.deep.equal({ $in: blogIds });
+            chai_1.expect(userIdsRestriction['userIds'], 'should find correct property').to.deep.equal({ $in: userIds });
             const createQueryNoLink = () => {
                 tyranidGracl.createInQueries(queryAgainstChartMap, Tyr.byName['organization'], '$in');
             };
@@ -227,13 +232,48 @@ describe('tyranid-gracl', () => {
                   chopped = yield Org.findOne({ name: 'Chopped' });
             const choppedBlogs = yield Blog.find({ organizationId: chopped['_id'] }, { _id: 1 }, insecure);
             const query = yield secure.query(Post, 'view', ben);
-            chai_1.expect(query, 'query should find correct blogs').to.deep.equal({
+            chai_1.expect(_.get(query, '$or.0'), 'query should find correct blogs').to.deep.equal({
                 blogId: { $in: _.map(choppedBlogs, '_id') }
             });
         }));
-        it('should produce $and clause with excluded and included ids', () => {
-            console.warn('ADD TEST');
-        });
+        it('should produce $and clause with excluded and included ids', () => __awaiter(undefined, void 0, void 0, function* () {
+            const ted = yield Tyr.byName['user'].findOne({ name: 'ted' }),
+                  ben = yield Tyr.byName['user'].findOne({ name: 'ben' });
+            const chopped = yield Tyr.byName['organization'].findOne({ name: 'Chopped' }),
+                  cava = yield Tyr.byName['organization'].findOne({ name: 'Cava' }),
+                  chipotle = yield Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
+                  cavaBlogs = yield Tyr.byName['blog'].find({ organizationId: cava['_id'] }, null, insecure),
+                  chipotleBlogs = yield Tyr.byName['blog'].find({ organizationId: chipotle['_id'] }, null, insecure),
+                  post = yield Tyr.byName['post'].findOne({ text: 'Why burritos are amazing.' });
+            const permissionOperations = yield Promise.all([cava['$allow']('view-post', ted), post['$allow']('view-post', ted), chipotle['$deny']('view-post', ted)]);
+            const query = yield secure.query(Tyr.byName['post'], 'view', ted);
+
+            var _$get = _.get(query, '$and');
+
+            var _$get2 = _slicedToArray(_$get, 2);
+
+            const positive = _$get2[0];
+            const negative = _$get2[1];
+
+            const _idRestriction = _.find(positive['$or'], v => _.contains(_.keys(v), '_id')),
+                  blogIdRestriction = _.find(positive['$or'], v => _.contains(_.keys(v), 'blogId'));
+            chai_1.expect(_idRestriction).to.deep.equal({
+                '_id': {
+                    '$in': [post.$uid]
+                }
+            });
+            chai_1.expect(blogIdRestriction).to.deep.equal({
+                'blogId': {
+                    '$in': cavaBlogs.map(b => b['_id'])
+                }
+            });
+            const blogIdNegative = _.find(negative['$and'], v => _.contains(_.keys(v), 'blogId'));
+            chai_1.expect(blogIdNegative).to.deep.equal({
+                blogId: {
+                    $nin: chipotleBlogs.map(b => b['_id'])
+                }
+            });
+        }));
     });
     describe('Collection.find()', () => {
         it('should be appropriately filtered based on permissions', () => __awaiter(undefined, void 0, void 0, function* () {

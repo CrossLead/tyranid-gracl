@@ -74,7 +74,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
         }
     }
     static getGraclClasses(resourceDocument, subjectDocument) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, Promise, function* () {
             if (!(resourceDocument && resourceDocument.$uid)) {
                 throw new Error('No resource document provided!');
             }
@@ -100,7 +100,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
         });
     }
     static setPermissionAccess(resourceDocument, permissionType, access, subjectDocument = Tyr.local.user) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, Promise, function* () {
             PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
             const { subject, resource } = yield PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
             yield resource.setPermissionAccess(subject, permissionType, access);
@@ -108,14 +108,14 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
         });
     }
     static isAllowed(resourceDocument, permissionType, subjectDocument = Tyr.local.user) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, Promise, function* () {
             PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
             const { subject, resource } = yield PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
             return yield resource.isAllowed(subject, permissionType);
         });
     }
     static lockPermissionsForResource(resourceDocument) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, Promise, function* () {
             if (!(resourceDocument && resourceDocument.$uid)) {
                 throw new Error('No resource document provided!');
             }
@@ -137,7 +137,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
         });
     }
     static unlockPermissionsForResource(resourceDocument) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, Promise, function* () {
             if (!(resourceDocument && resourceDocument.$uid)) {
                 throw new Error('No resource document provided!');
             }
@@ -159,7 +159,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
         });
     }
     static updatePermissions(resourceDocument) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, Promise, function* () {
             if (!resourceDocument) {
                 throw new TypeError(`called PermissionsModel.updatePermissions() on undefined`);
             }
@@ -223,7 +223,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
         });
     }
     static deletePermissions(doc) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, void 0, Promise, function* () {
             const uid = doc.$uid;
             if (!uid) {
                 throw new Error('No $uid property on document!');

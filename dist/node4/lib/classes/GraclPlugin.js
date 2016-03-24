@@ -323,7 +323,7 @@ class GraclPlugin {
                 const permissions = _ref2$.permissions;
 
                 let queryRestrictionSet = false;
-                if (queriedCollectionLinkFields.has(collectionName)) {
+                if (queriedCollectionLinkFields.has(collectionName) || queriedCollectionName === collectionName) {
                     for (const permission of permissions.values()) {
                         const access = permission.access[permissionType];
                         switch (access) {
@@ -399,8 +399,8 @@ class GraclPlugin {
             const positiveRestriction = util_1.createInQueries(queryMaps['positive'], queriedCollection, '$in'),
                   negativeRestriction = util_1.createInQueries(queryMaps['negative'], queriedCollection, '$nin');
             const restricted = {},
-                  hasPositive = _.chain(positiveRestriction).keys().any().value(),
-                  hasNegative = _.chain(negativeRestriction).keys().any().value();
+                  hasPositive = !!positiveRestriction.$or.length,
+                  hasNegative = !!negativeRestriction.$and.length;
             if (hasNegative && hasPositive) {
                 restricted['$and'] = [positiveRestriction, negativeRestriction];
             } else if (hasNegative) {

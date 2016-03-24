@@ -89,10 +89,14 @@ export function findLinkInCollection(
 export function createInQueries(
                   map: Map<string, Set<string>>,
                   queriedCollection: Tyr.CollectionInstance,
-                  key: string
-                ) {
+                  key: '$nin' | '$in'
+                ): { $and?: Hash<Hash<string[]>>[], $or?: Hash<Hash<string[]>>[] } {
 
-  const query: Hash<Hash<string[]>> = {};
+  if (!(key === '$in' || key === '$nin')) {
+    throw new TypeError(`key must be $nin or $in!`);
+  }
+
+  const conditions: Hash<Hash<string[]>>[] = [];
 
   for (const [col, uids] of map.entries()) {
     // if the collection is the same as the one being queried, use the primary id field
@@ -111,10 +115,10 @@ export function createInQueries(
       prop = link.spath;
     }
 
-    query[prop] = { [key]: [...uids] };
+    conditions.push({ [<string> prop]: { [<string> key]: [...uids] } });
   }
 
-  return query;
+  return { [key === '$in' ? '$or' : '$and']: conditions };
 };
 
 
