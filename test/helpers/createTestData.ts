@@ -32,9 +32,9 @@ export async function createTestData() {
     choppedInventory,
     cavaInventory
   ] = await Promise.all([
-    Inventory.insert({ name: 'Chipotle', organizationId: chipotle['_id'] }),
-    Inventory.insert({ name: 'Chopped', organizationId: chopped['_id'] }),
-    Inventory.insert({ name: 'Cava', organizationId: cava['_id'] })
+    Inventory.insert({ name: 'Chipotle', organizationId: chipotle.$id }),
+    Inventory.insert({ name: 'Chopped', organizationId: chopped.$id }),
+    Inventory.insert({ name: 'Cava', organizationId: cava.$id })
   ]);
 
   /**
@@ -46,10 +46,10 @@ export async function createTestData() {
     choppedBlog,
     cavaBlog
   ] = await Promise.all([
-    Blog.insert({ name: 'Burritos Etc', organizationId: chipotle['_id'] }),
-    Blog.insert({ name: 'Mexican Empire', organizationId: chipotle['_id'] }),
-    Blog.insert({ name: 'Salads are great', organizationId: chopped['_id'] }),
-    Blog.insert({ name: 'Spinach + Lentils', organizationId: cava['_id'] })
+    Blog.insert({ name: 'Burritos Etc', organizationId: chipotle.$id }),
+    Blog.insert({ name: 'Mexican Empire', organizationId: chipotle.$id }),
+    Blog.insert({ name: 'Salads are great', organizationId: chopped.$id }),
+    Blog.insert({ name: 'Spinach + Lentils', organizationId: cava.$id })
   ]);
 
 
@@ -71,7 +71,7 @@ export async function createTestData() {
     Blog.addPost('We don\' actually know why people got sick.', chipotleFoodBlog),
     Blog.addPost('Re-evaluating the way we clean up.', chipotleCorporateBlog),
     Blog.addPost('Burrito Management, a new paradigm.', chipotleCorporateBlog),
-    Blog.addPost('Salads are great.', choppedBlog ),
+    Blog.addPost('Salads are great, the post.', choppedBlog ),
     Blog.addPost('Guacamole Greens to the rescue!.', choppedBlog),
     Blog.addPost('Lentils are great', cavaBlog)
   ]);
@@ -86,10 +86,10 @@ export async function createTestData() {
     choppedExec,
     cavaEngineers
   ] = await Promise.all([
-    Team.insert({ name: 'burritoMakers', organizationId: chipotle['_id'] }),
-    Team.insert({ name: 'chipotleMarketing', organizationId: chipotle['_id'] }),
-    Team.insert({ name: 'choppedExec', organizationId: chopped['_id'] }),
-    Team.insert({ name: 'cavaEngineers', organizationId: cava['_id'] })
+    Team.insert({ name: 'burritoMakers', organizationId: chipotle.$id }),
+    Team.insert({ name: 'chipotleMarketing', organizationId: chipotle.$id }),
+    Team.insert({ name: 'choppedExec', organizationId: chopped.$id }),
+    Team.insert({ name: 'cavaEngineers', organizationId: cava.$id })
   ]);
 
 
@@ -103,18 +103,18 @@ export async function createTestData() {
 
     User.insert({
       name: 'ben',
-      organizationId: chipotle['_id'],
+      organizationId: chipotle.$id,
       teamIds: [
-        burritoMakers['_id'],
-        chipotleMarketing['_id']
+        burritoMakers.$id,
+        chipotleMarketing.$id
       ]
     }),
 
     User.insert({
       name: 'ted',
-      organizationId: cava['_id'],
+      organizationId: cava.$id,
       teamIds: [
-        cavaEngineers['_id']
+        cavaEngineers.$id
       ]
     })
 
@@ -123,9 +123,9 @@ export async function createTestData() {
   await Promise.all([
     Chart.insert({
       name: 'test1',
-      blogId: cavaBlog['_id'],
-      organizationId: cava['_id'],
-      userIds: [ ben['_id'], ted['_id'] ]
+      blogId: cavaBlog.$id,
+      organizationId: cava.$id,
+      userIds: [ ben.$id, ted.$id ]
     })
   ]);
 

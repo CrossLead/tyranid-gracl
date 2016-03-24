@@ -516,7 +516,7 @@ export class GraclPlugin {
               if (!queryMaps[key].has(collectionName)) {
                 queryMaps[key].set(collectionName, new Set());
               }
-              queryMaps[key].get(collectionName).add(permission.resourceId);
+              queryMaps[key].get(collectionName).add(Tyr.parseUid(permission.resourceId).id);
               break;
           }
           queryRestrictionSet = true;

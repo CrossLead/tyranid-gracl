@@ -45,7 +45,7 @@ function createTestData() {
         const chopped = _ref2[1];
         const cava = _ref2[2];
 
-        var _ref3 = yield Promise.all([Inventory_1.Inventory.insert({ name: 'Chipotle', organizationId: chipotle['_id'] }), Inventory_1.Inventory.insert({ name: 'Chopped', organizationId: chopped['_id'] }), Inventory_1.Inventory.insert({ name: 'Cava', organizationId: cava['_id'] })]);
+        var _ref3 = yield Promise.all([Inventory_1.Inventory.insert({ name: 'Chipotle', organizationId: chipotle.$id }), Inventory_1.Inventory.insert({ name: 'Chopped', organizationId: chopped.$id }), Inventory_1.Inventory.insert({ name: 'Cava', organizationId: cava.$id })]);
 
         var _ref4 = _slicedToArray(_ref3, 3);
 
@@ -53,7 +53,7 @@ function createTestData() {
         const choppedInventory = _ref4[1];
         const cavaInventory = _ref4[2];
 
-        var _ref5 = yield Promise.all([Blog_1.Blog.insert({ name: 'Burritos Etc', organizationId: chipotle['_id'] }), Blog_1.Blog.insert({ name: 'Mexican Empire', organizationId: chipotle['_id'] }), Blog_1.Blog.insert({ name: 'Salads are great', organizationId: chopped['_id'] }), Blog_1.Blog.insert({ name: 'Spinach + Lentils', organizationId: cava['_id'] })]);
+        var _ref5 = yield Promise.all([Blog_1.Blog.insert({ name: 'Burritos Etc', organizationId: chipotle.$id }), Blog_1.Blog.insert({ name: 'Mexican Empire', organizationId: chipotle.$id }), Blog_1.Blog.insert({ name: 'Salads are great', organizationId: chopped.$id }), Blog_1.Blog.insert({ name: 'Spinach + Lentils', organizationId: cava.$id })]);
 
         var _ref6 = _slicedToArray(_ref5, 4);
 
@@ -62,7 +62,7 @@ function createTestData() {
         const choppedBlog = _ref6[2];
         const cavaBlog = _ref6[3];
 
-        var _ref7 = yield Promise.all([Blog_1.Blog.addPost('Why burritos are amazing.', chipotleFoodBlog), Blog_1.Blog.addPost('Ecoli challenges.', chipotleFoodBlog), Blog_1.Blog.addPost('We don\' actually know why people got sick.', chipotleFoodBlog), Blog_1.Blog.addPost('Re-evaluating the way we clean up.', chipotleCorporateBlog), Blog_1.Blog.addPost('Burrito Management, a new paradigm.', chipotleCorporateBlog), Blog_1.Blog.addPost('Salads are great.', choppedBlog), Blog_1.Blog.addPost('Guacamole Greens to the rescue!.', choppedBlog), Blog_1.Blog.addPost('Lentils are great', cavaBlog)]);
+        var _ref7 = yield Promise.all([Blog_1.Blog.addPost('Why burritos are amazing.', chipotleFoodBlog), Blog_1.Blog.addPost('Ecoli challenges.', chipotleFoodBlog), Blog_1.Blog.addPost('We don\' actually know why people got sick.', chipotleFoodBlog), Blog_1.Blog.addPost('Re-evaluating the way we clean up.', chipotleCorporateBlog), Blog_1.Blog.addPost('Burrito Management, a new paradigm.', chipotleCorporateBlog), Blog_1.Blog.addPost('Salads are great, the post.', choppedBlog), Blog_1.Blog.addPost('Guacamole Greens to the rescue!.', choppedBlog), Blog_1.Blog.addPost('Lentils are great', cavaBlog)]);
 
         var _ref8 = _slicedToArray(_ref7, 8);
 
@@ -75,7 +75,7 @@ function createTestData() {
         const guacGreens = _ref8[6];
         const lentilsAreGreat = _ref8[7];
 
-        var _ref9 = yield Promise.all([Team_1.Team.insert({ name: 'burritoMakers', organizationId: chipotle['_id'] }), Team_1.Team.insert({ name: 'chipotleMarketing', organizationId: chipotle['_id'] }), Team_1.Team.insert({ name: 'choppedExec', organizationId: chopped['_id'] }), Team_1.Team.insert({ name: 'cavaEngineers', organizationId: cava['_id'] })]);
+        var _ref9 = yield Promise.all([Team_1.Team.insert({ name: 'burritoMakers', organizationId: chipotle.$id }), Team_1.Team.insert({ name: 'chipotleMarketing', organizationId: chipotle.$id }), Team_1.Team.insert({ name: 'choppedExec', organizationId: chopped.$id }), Team_1.Team.insert({ name: 'cavaEngineers', organizationId: cava.$id })]);
 
         var _ref10 = _slicedToArray(_ref9, 4);
 
@@ -86,12 +86,12 @@ function createTestData() {
 
         var _ref11 = yield Promise.all([User_1.User.insert({
             name: 'ben',
-            organizationId: chipotle['_id'],
-            teamIds: [burritoMakers['_id'], chipotleMarketing['_id']]
+            organizationId: chipotle.$id,
+            teamIds: [burritoMakers.$id, chipotleMarketing.$id]
         }), User_1.User.insert({
             name: 'ted',
-            organizationId: cava['_id'],
-            teamIds: [cavaEngineers['_id']]
+            organizationId: cava.$id,
+            teamIds: [cavaEngineers.$id]
         })]);
 
         var _ref12 = _slicedToArray(_ref11, 2);
@@ -101,9 +101,9 @@ function createTestData() {
 
         yield Promise.all([Chart_1.Chart.insert({
             name: 'test1',
-            blogId: cavaBlog['_id'],
-            organizationId: cava['_id'],
-            userIds: [ben['_id'], ted['_id']]
+            blogId: cavaBlog.$id,
+            organizationId: cava.$id,
+            userIds: [ben.$id, ted.$id]
         })]);
     });
 }

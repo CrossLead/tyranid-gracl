@@ -66,7 +66,7 @@ function createInQueries(map, queriedCollection, key) {
         var _ref2 = _slicedToArray(_ref, 2);
 
         const col = _ref2[0];
-        const uids = _ref2[1];
+        const idSet = _ref2[1];
 
         let prop;
         if (col === queriedCollection.def.name) {
@@ -78,7 +78,7 @@ function createInQueries(map, queriedCollection, key) {
             }
             prop = link.spath;
         }
-        conditions.push({ [prop]: { [key]: [].concat(_toConsumableArray(uids)) } });
+        conditions.push({ [prop]: { [key]: [].concat(_toConsumableArray(idSet)) } });
     }
     return { [key === '$in' ? '$or' : '$and']: conditions };
 }

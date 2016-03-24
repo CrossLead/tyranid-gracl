@@ -15,7 +15,8 @@ const db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),
       secure = new tyranidGracl.GraclPlugin(),
       insecure = { tyranid: { insecure: true } };
 
-async function giveBenAccessToChipotle() {
+
+async function giveBenAccessToChoppedPosts() {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
@@ -113,7 +114,7 @@ describe('tyranid-gracl', () => {
 
     it('should return correct ids after calling stepThroughCollectionPath', async () => {
       const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
-            chipotleBlogs = await Tyr.byName['blog'].find({ organizationId: chipotle['_id'] }, null, insecure),
+            chipotleBlogs = await Tyr.byName['blog'].find({ organizationId: chipotle.$id }, null, insecure),
             blogIds = <string[]> _.map(chipotleBlogs, '_id'),
             chipotlePosts = await Tyr.byName['post'].find({ blogId: { $in: blogIds } }),
             postIds = <string[]> _.map(chipotlePosts, '_id');
@@ -160,7 +161,7 @@ describe('tyranid-gracl', () => {
 
   describe('Working with permissions', () => {
     it('should successfully add permissions', async () => {
-      const updatedChopped = await giveBenAccessToChipotle();
+      const updatedChopped = await giveBenAccessToChoppedPosts();
 
       const existingPermissions = await tyranidGracl.PermissionsModel.find(
         {}, null, insecure
@@ -177,7 +178,7 @@ describe('tyranid-gracl', () => {
 
 
     it('should respect permissions hierarchy', async () => {
-      await giveBenAccessToChipotle();
+      await giveBenAccessToChoppedPosts();
 
       const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
             choppedBlog = await Tyr.byName['blog'].findOne({ name: 'Salads are great' });
@@ -207,7 +208,7 @@ describe('tyranid-gracl', () => {
 
 
     it('should create a lock when updating permission and set to false when complete', async () => {
-      await giveBenAccessToChipotle();
+      await giveBenAccessToChoppedPosts();
 
       const locks = await tyranidGracl.PermissionLocks.find({}, null, insecure),
             chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
@@ -231,7 +232,7 @@ describe('tyranid-gracl', () => {
 
 
     it('should modify existing permissions instead of creating new ones', async () => {
-      await giveBenAccessToChipotle();
+      await giveBenAccessToChoppedPosts();
 
       const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
             chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
@@ -364,7 +365,7 @@ describe('tyranid-gracl', () => {
 
 
     it('should produce query restriction based on permissions', async () => {
-      await giveBenAccessToChipotle();
+      await giveBenAccessToChoppedPosts();
 
       const Post = Tyr.byName['post'],
             Blog = Tyr.byName['blog'],
@@ -373,7 +374,7 @@ describe('tyranid-gracl', () => {
             chopped = await Org.findOne({ name: 'Chopped' });
 
       const choppedBlogs = await Blog.find(
-        { organizationId: chopped['_id'] },
+        { organizationId: chopped.$id },
         { _id: 1 },
         insecure
       );
@@ -392,8 +393,8 @@ describe('tyranid-gracl', () => {
       const chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' }),
             cava = await Tyr.byName['organization'].findOne({ name: 'Cava' }),
             chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
-            cavaBlogs = await Tyr.byName['blog'].find({ organizationId: cava['_id'] }, null, insecure),
-            chipotleBlogs = await Tyr.byName['blog'].find({ organizationId: chipotle['_id'] }, null, insecure),
+            cavaBlogs = await Tyr.byName['blog'].find({ organizationId: cava.$id }, null, insecure),
+            chipotleBlogs = await Tyr.byName['blog'].find({ organizationId: chipotle.$id }, null, insecure),
             post = await Tyr.byName['post'].findOne({ text: 'Why burritos are amazing.' });
 
       const permissionOperations = await Promise.all([
@@ -411,14 +412,14 @@ describe('tyranid-gracl', () => {
       expect(_idRestriction).to.deep.equal({
         '_id': {
           '$in': [
-            post.$uid
+            post.$id
           ]
         }
       });
 
       expect(blogIdRestriction).to.deep.equal({
         'blogId': {
-          '$in': cavaBlogs.map(b => b['_id'])
+          '$in': cavaBlogs.map(b => b.$id)
         }
       });
 
@@ -426,7 +427,7 @@ describe('tyranid-gracl', () => {
 
       expect(blogIdNegative).to.deep.equal({
         blogId: {
-          $nin: chipotleBlogs.map(b => b['_id'])
+          $nin: chipotleBlogs.map(b => b.$id)
         }
       });
     });
@@ -436,7 +437,7 @@ describe('tyranid-gracl', () => {
 
   describe('Collection.find()', () => {
     it('should be appropriately filtered based on permissions', async () => {
-      await giveBenAccessToChipotle();
+      await giveBenAccessToChoppedPosts();
 
       const Post = Tyr.byName['post'],
             User = Tyr.byName['user'],
@@ -451,7 +452,7 @@ describe('tyranid-gracl', () => {
       const chopped = await Org.findOne({ name: 'Chopped' });
 
       const choppedBlogs = await Blog.find(
-        { organizationId: chopped['_id'] },
+        { organizationId: chopped.$id },
         { _id: 1 },
         insecure
       );
@@ -463,8 +464,30 @@ describe('tyranid-gracl', () => {
       expect(postsBenCanSee, 'ben should only see chopped posts').to.deep.equal(choppedPosts);
     });
 
-    it('should default to lowest hierarchy permission', () => {
-      console.warn('ADD TEST');
+    it('should default to lowest hierarchy permission', async () => {
+      const chopped      = await giveBenAccessToChoppedPosts(),
+            ben          = await Tyr.byName['user'].findOne({ name: 'ben' }),
+            post         = await Tyr.byName['post'].findOne({ text: 'Salads are great, the post.' }),
+            choppedBlogs = await Tyr.byName['blog'].find({ organizationId: chopped.$id }, null, insecure),
+            choppedPosts = await Tyr.byName['post'].find(
+              { blogId: { $in: choppedBlogs.map(b => b.$id) } }, null, insecure
+            );
+
+      // all chopped posts
+      expect(choppedPosts).to.have.lengthOf(2);
+      expect(_.map(choppedPosts, '$id')).to.contain(post.$id);
+
+      // explicitly deny view access to this post
+      await post['$deny']('view-post', ben);
+
+      const query = await secure.query(Tyr.byName['post'], 'view', ben);
+
+      Tyr.local.user = ben;
+
+      const postsBenCanSee = await Tyr.byName['post'].find({});
+
+      expect(postsBenCanSee).to.have.lengthOf(1);
+      expect(_.map(postsBenCanSee, '$id')).to.not.contain(post.$id);
     });
 
   });

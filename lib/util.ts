@@ -97,7 +97,7 @@ export function createInQueries(
 
   const conditions: Hash<Hash<string[]>>[] = [];
 
-  for (const [col, uids] of map.entries()) {
+  for (const [col, idSet] of map.entries()) {
     // if the collection is the same as the one being queried, use the primary id field
     let prop: string;
     if (col === queriedCollection.def.name) {
@@ -114,7 +114,7 @@ export function createInQueries(
       prop = link.spath;
     }
 
-    conditions.push({ [<string> prop]: { [<string> key]: [...uids] } });
+    conditions.push({ [<string> prop]: { [<string> key]: [...idSet] } });
   }
 
   return { [key === '$in' ? '$or' : '$and']: conditions };
