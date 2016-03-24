@@ -187,6 +187,13 @@ export async function findBlogs(req, res) {
   // no extra api needed! already filtered!
   const blogs = await Tyr.byName.blog.find({});
 
+  /**
+    NOTE: if you *don't* want find() results to be filtered,
+          you can disable the filtering like so...
+
+    const blogs = await Tyr.byName.blog.find({}, null, { tyranid: { insecure: true } });
+   */
+
   return res.json(blogs);
 }
 
