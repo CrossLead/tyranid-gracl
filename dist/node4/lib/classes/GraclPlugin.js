@@ -121,7 +121,7 @@ class GraclPlugin {
         return hierarchy;
     }
 
-    nextPermission(permissionString) {
+    getPermissionObject(permissionString) {
         var _permissionString$spl = permissionString.split('-');
 
         var _permissionString$spl2 = _slicedToArray(_permissionString$spl, 2);
@@ -129,7 +129,15 @@ class GraclPlugin {
         const action = _permissionString$spl2[0];
         const collection = _permissionString$spl2[1];
 
-        const obj = this.permissionHierarchy[action];
+        return this.permissionHierarchy[action];
+    }
+    nextPermission(permissionString) {
+        var _permissionString$spl3 = permissionString.split('-');
+
+        var _permissionString$spl4 = _slicedToArray(_permissionString$spl3, 2);
+
+        const action = _permissionString$spl4[0];
+        const collection = _permissionString$spl4[1];const obj = this.permissionHierarchy[action];
         if (obj && obj['parent']) {
             return `${ obj['parent']['name'] }-${ collection }`;
         }

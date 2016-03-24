@@ -44,12 +44,14 @@ const checkStringEq = function checkStringEq(got, want) {
     chai_1.expect(_.map(got, s => s.toString()), message).to.deep.equal(_.map(want, s => s.toString()));
 };
 function giveBenAccessToChoppedPosts() {
+    let perm = arguments.length <= 0 || arguments[0] === undefined ? 'view' : arguments[0];
+
     return __awaiter(this, void 0, void 0, function* () {
         const ben = yield Tyr.byName['user'].findOne({ name: 'ben' }),
               chopped = yield Tyr.byName['organization'].findOne({ name: 'Chopped' });
         chai_1.expect(ben, 'ben should exist').to.exist;
         chai_1.expect(chopped, 'chopped should exist').to.exist;
-        const updatedChopped = secure.setPermissionAccess(chopped, 'view-post', true, ben);
+        const updatedChopped = secure.setPermissionAccess(chopped, `${ perm }-post`, true, ben);
         return updatedChopped;
     });
 }
@@ -145,13 +147,21 @@ describe('tyranid-gracl', () => {
             chai_1.expect(existingPermissions[0]['subjectId'].toString(), 'subjectId').to.equal(updatedChopped['permissions'][0]['subjectId'].toString());
             chai_1.expect(existingPermissions[0]['access']['view-post'], 'access').to.equal(updatedChopped['permissions'][0]['access']['view-post']);
         }));
-        it('should respect permissions hierarchy', () => __awaiter(undefined, void 0, void 0, function* () {
+        it('should respect subject / resource hierarchy', () => __awaiter(undefined, void 0, void 0, function* () {
             yield giveBenAccessToChoppedPosts();
             const ben = yield Tyr.byName['user'].findOne({ name: 'ben' }),
                   choppedBlog = yield Tyr.byName['blog'].findOne({ name: 'Salads are great' });
             chai_1.expect(ben, 'ben should exist').to.exist;
             chai_1.expect(choppedBlog, 'choppedBlog should exist').to.exist;
             chai_1.expect((yield choppedBlog['$isAllowed']('view-post', ben)), 'ben should have access to choppedBlog through access to chopped org').to.equal(true);
+        }));
+        it('should respect permissions hierarchy', () => __awaiter(undefined, void 0, void 0, function* () {
+            yield giveBenAccessToChoppedPosts('edit');
+            const ben = yield Tyr.byName['user'].findOne({ name: 'ben' }),
+                  choppedBlog = yield Tyr.byName['blog'].findOne({ name: 'Salads are great' });
+            chai_1.expect(ben, 'ben should exist').to.exist;
+            chai_1.expect(choppedBlog, 'choppedBlog should exist').to.exist;
+            chai_1.expect((yield choppedBlog['$isAllowed']('view-post', ben)), 'ben should have \'view\' access to choppedBlog through \'edit\' access to chopped org').to.equal(true);
         }));
         it('should validate permissions', () => __awaiter(undefined, void 0, void 0, function* () {
             const ben = yield Tyr.byName['user'].findOne({ name: 'ben' }),

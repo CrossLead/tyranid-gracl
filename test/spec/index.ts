@@ -23,14 +23,14 @@ const checkStringEq = (got: string[], want: string[], message = '') => {
 };
 
 
-async function giveBenAccessToChoppedPosts() {
+async function giveBenAccessToChoppedPosts(perm = 'view') {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
   expect(ben, 'ben should exist').to.exist;
   expect(chopped, 'chopped should exist').to.exist;
 
-  const updatedChopped = secure.setPermissionAccess(chopped, 'view-post', true, ben);
+  const updatedChopped = secure.setPermissionAccess(chopped, `${perm}-post`, true, ben);
 
   return updatedChopped;
 }
@@ -190,7 +190,7 @@ describe('tyranid-gracl', () => {
     });
 
 
-    it('should respect permissions hierarchy', async () => {
+    it('should respect subject / resource hierarchy', async () => {
       await giveBenAccessToChoppedPosts();
 
       const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
@@ -202,6 +202,21 @@ describe('tyranid-gracl', () => {
       expect(
         await choppedBlog['$isAllowed']('view-post', ben),
         'ben should have access to choppedBlog through access to chopped org'
+      ).to.equal(true);
+    });
+
+    it('should respect permissions hierarchy', async () => {
+      await giveBenAccessToChoppedPosts('edit');
+
+      const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+            choppedBlog = await Tyr.byName['blog'].findOne({ name: 'Salads are great' });
+
+      expect(ben, 'ben should exist').to.exist;
+      expect(choppedBlog, 'choppedBlog should exist').to.exist;
+
+      expect(
+        await choppedBlog['$isAllowed']('view-post', ben),
+        'ben should have \'view\' access to choppedBlog through \'edit\' access to chopped org'
       ).to.equal(true);
     });
 

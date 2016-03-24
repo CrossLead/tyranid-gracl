@@ -34,6 +34,7 @@ export declare class GraclPlugin {
         verbose: boolean;
         permissionType: permissionTypeList;
     });
+    getPermissionObject(permissionString: string): any;
     nextPermission(permissionString: string): string;
     log(message: string): this;
     getObjectHierarchy(): {

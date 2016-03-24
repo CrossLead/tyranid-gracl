@@ -236,10 +236,16 @@ export class GraclPlugin {
   };
 
 
+  getPermissionObject(permissionString: string) {
+    const [ action, collection ] = permissionString.split('-');
+    return this.permissionHierarchy[action];
+  }
+
 
   nextPermission(permissionString: string) {
-    const [ action, collection ] = permissionString.split('-');
-    const obj = this.permissionHierarchy[action];
+    const [ action, collection ] = permissionString.split('-'),
+          obj = this.permissionHierarchy[action];
+
     if (obj && obj['parent']) {
       return `${obj['parent']['name']}-${collection}`;
     }

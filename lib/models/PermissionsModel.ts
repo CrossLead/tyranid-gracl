@@ -59,14 +59,16 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       );
     }
 
-    if (!validPermissionActions.has(action)) {
+    const plugin = PermissionsModel.getGraclPlugin();
+
+    if (!plugin.getPermissionObject(permissionType)) {
       throw new Error(
         `Invalid permissionType ${permissionType}! ` +
-        `permission action given ("${action}") is not valid. Must be one of (${[...validPermissionActions].join(', ')})`
+        `permission action given ("${action}") is not valid. Must be one of (${
+          _.keys(plugin.permissionHierarchy).join(', ')
+        })`
       );
     }
-
-    const plugin = PermissionsModel.getGraclPlugin();
 
     PermissionsModel.validateAsResource(Tyr.byName[collectionName]);
     PermissionsModel.validateAsResource(queriedCollection);

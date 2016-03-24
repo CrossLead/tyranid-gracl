@@ -67,10 +67,10 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
         if (!collectionName) {
             throw new Error(`Invalid permissionType ${ permissionType }! ` + `No collection name in permission type, permissions must be formatted as <action>-<collection>`);
         }
-        if (!validPermissionActions.has(action)) {
-            throw new Error(`Invalid permissionType ${ permissionType }! ` + `permission action given ("${ action }") is not valid. Must be one of (${ [].concat(_toConsumableArray(validPermissionActions)).join(', ') })`);
-        }
         const plugin = PermissionsModel.getGraclPlugin();
+        if (!plugin.getPermissionObject(permissionType)) {
+            throw new Error(`Invalid permissionType ${ permissionType }! ` + `permission action given ("${ action }") is not valid. Must be one of (${ _.keys(plugin.permissionHierarchy).join(', ') })`);
+        }
         PermissionsModel.validateAsResource(Tyr.byName[collectionName]);
         PermissionsModel.validateAsResource(queriedCollection);
         const queriedResourceHierarchy = plugin.graclHierarchy.getResource(queriedCollection.def.name).getHierarchyClassNames();
