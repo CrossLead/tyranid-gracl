@@ -1,6 +1,7 @@
 /// <reference path='../../typings/main.d.ts' />
 import * as Tyr from 'tyranid';
 
+
 export const PermissionLockBaseCollection = new Tyr.Collection({
   id: '_gl',
   name: 'graclPermissionLock',
@@ -12,6 +13,5 @@ export const PermissionLockBaseCollection = new Tyr.Collection({
   }
 });
 
-export class PermissionLocks extends (<Tyr.CollectionInstance> PermissionLockBaseCollection) {
 
-}
+export class PermissionLocks extends (<Tyr.CollectionInstance> PermissionLockBaseCollection) {}

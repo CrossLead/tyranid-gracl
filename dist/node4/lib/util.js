@@ -54,7 +54,7 @@ exports.compareCollectionWithField = compareCollectionWithField;
 function findLinkInCollection(col, linkCollection) {
     const links = exports.getCollectionLinksSorted(col),
           index = gracl.binaryIndexOf(links, linkCollection, compareCollectionWithField);
-    return index >= 0 ? links[index] : undefined;
+    return links[index];
 }
 exports.findLinkInCollection = findLinkInCollection;
 function createInQueries(map, queriedCollection, key) {

@@ -5,6 +5,7 @@ import * as gracl from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { PermissionLocks } from './PermissionsLocks';
 
+
 export const PermissionsBaseCollection = new Tyr.Collection({
   id: '_gp',
   name: 'graclPermission',
@@ -32,7 +33,9 @@ export const PermissionsBaseCollection = new Tyr.Collection({
 export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseCollection) {
 
 
+
   static validPermissionActions = new Set(['view', 'edit', 'update', 'delete']);
+
 
 
   static getGraclPlugin(): GraclPlugin {
@@ -42,6 +45,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     }
     return plugin;
   }
+
 
 
   static validatePermissionType(permissionType: string, queriedCollection: Tyr.CollectionInstance) {
@@ -77,9 +81,6 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       .getResource(collectionName)
       .getHierarchyClassNames();
 
-    /** ensure that one collection is in another's hierarchy
-      TODO: Not sure if this level of check is necessary for performance hit
-     */
     if (!(
           _.contains(permissionResourceHierarchy, queriedCollection.def.name) ||
           _.contains(queriedResourceHierarchy, collectionName)
@@ -91,6 +92,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       );
     }
   }
+
 
 
   static validateAsResource(collection: Tyr.CollectionInstance) {
@@ -109,13 +111,11 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   }
 
 
+
   static async getGraclClasses(
-    resourceDocument: Tyr.Document,
-    subjectDocument: Tyr.Document
-    ): Promise<{
-      subject: gracl.Subject,
-      resource: gracl.Resource
-    }> {
+                resourceDocument: Tyr.Document,
+                subjectDocument: Tyr.Document
+              ): Promise<{ subject: gracl.Subject, resource: gracl.Resource }> {
 
     if (!(resourceDocument && resourceDocument.$uid)) {
       throw new Error('No resource document provided!');
@@ -125,19 +125,16 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       throw new Error('No subject document provided (or Tyr.local.user is unavailable)!');
     }
 
-    // extract secure and cast to plugin
-    const plugin = PermissionsModel.getGraclPlugin();
-
-    const resourceCollectionName = resourceDocument.$model.def.name,
-          subjectCollectionName = subjectDocument.$model.def.name;
+    const plugin = PermissionsModel.getGraclPlugin(),
+          resourceCollectionName = resourceDocument.$model.def.name,
+          subjectCollectionName  = subjectDocument.$model.def.name,
+          ResourceClass          = plugin.graclHierarchy.getResource(resourceCollectionName),
+          SubjectClass           = plugin.graclHierarchy.getSubject(subjectCollectionName);
 
     if (!resourceDocument['permissions']) {
-      await Tyr.byName[resourceCollectionName].populate('permissionIds', resourceDocument);
+      await Tyr.byName[resourceCollectionName]
+        .populate('permissionIds', resourceDocument);
     }
-
-    // extract subject and resource Gracl classes
-    const ResourceClass = plugin.graclHierarchy.getResource(resourceCollectionName),
-          SubjectClass = plugin.graclHierarchy.getSubject(subjectCollectionName);
 
     if (!ResourceClass) {
       throw new Error(
@@ -153,33 +150,30 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       );
     }
 
-    /**
-     *  Instantiate gracl objects and set permission
-     */
-    const subject = new SubjectClass(subjectDocument),
+    const subject  = new SubjectClass(subjectDocument),
           resource = new ResourceClass(resourceDocument);
 
     return { subject, resource };
   }
 
 
+
   static async setPermissionAccess(
-      resourceDocument: Tyr.Document,
-      permissionType: string,
-      access: boolean,
-      subjectDocument = Tyr.local.user
-    ): Promise<Tyr.Document> {
+                resourceDocument: Tyr.Document,
+                permissionType: string,
+                access: boolean,
+                subjectDocument = Tyr.local.user
+              ): Promise<Tyr.Document> {
+
     PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
 
     const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
 
-    // setPermissionAccess calls resource.getClass().repository.saveEntity()
-    // which in turn calls PermissionsModel.updatePermissions(doc)
     await resource.setPermissionAccess(subject, permissionType, access);
 
-    // manage permissions
     return <Tyr.Document> resource.doc;
   }
+
 
 
   static async isAllowed(
@@ -193,6 +187,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
     return await resource.isAllowed(subject, permissionType);
   }
+
 
 
   /**
@@ -274,7 +269,6 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
           permIdField         = PermissionsModel.def.primaryKey.field;
 
 
-    // lock permission for this resource
     await PermissionsModel.lockPermissionsForResource(resourceDocument);
 
     const resourceCollectionName = resourceDocument.$model.def.name;
@@ -302,32 +296,33 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
     const uniquenessCheck = new Set();
 
-    // validate + partition
     _.chain(permissions)
       .filter(perm => {
         return (perm.subjectId && existingSubjectIdsFromPermissions.has(perm.subjectId));
       })
       .each(perm => {
-      if (!perm.resourceId) throw new Error(`Tried to add permission for ${resourceDocument.$uid} without resourceId!`);
+        if (!perm.resourceId) {
+          throw new Error(`Tried to add permission for ${resourceDocument.$uid} without resourceId!`);
+        }
 
-      const hash = `${perm.resourceId}-${perm.subjectId}`;
+        const hash = `${perm.resourceId}-${perm.subjectId}`;
 
-      if (uniquenessCheck.has(hash)) {
-        throw new Error(
-          `Attempted to set duplicate permission for combination of ` +
-          `resource = ${perm.resourceId}, subject = ${perm.subjectId}`
-        );
-      }
+        if (uniquenessCheck.has(hash)) {
+          throw new Error(
+            `Attempted to set duplicate permission for combination of ` +
+            `resource = ${perm.resourceId}, subject = ${perm.subjectId}`
+          );
+        }
 
-      uniquenessCheck.add(hash);
+        uniquenessCheck.add(hash);
 
-      if (perm[permIdField]) {
-        existingPermissions.push(perm);
-      } else {
-        newPermissions.push(perm);
-      }
-    })
-    .value();
+        if (perm[permIdField]) {
+          existingPermissions.push(perm);
+        } else {
+          newPermissions.push(perm);
+        }
+      })
+      .value();
 
 
     const existingUpdatePromises = existingPermissions.map(perm => {
@@ -345,7 +340,6 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     updated.push(...(await Promise.all(existingUpdatePromises)));
     updated.push(...(await Promise.all(newPermissionPromises)));
 
-    // extract all the ids from the updated permissions
     resourceDocument['permissionIds'] = _.map(updated, permIdField);
 
     // remove permissions for this resource that are not in the given ids
@@ -361,11 +355,11 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
         .populate('permissionIds', updatedResourceDocument)
     );
 
-    // unlock permissions before returning
     await PermissionsModel.unlockPermissionsForResource(resourceDocument);
 
     return populated;
   }
+
 
 
   /**
@@ -380,9 +374,6 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
     await PermissionsModel.lockPermissionsForResource(doc);
 
-    /**
-     * Get all permissions relevant to this uid
-     */
     const permissions = await PermissionsModel.find({
       $or: [
         { subjectId: uid },
@@ -408,10 +399,12 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     });
 
     for (const [collectionName, idList] of permissionsByCollection) {
-      // pull all permissions ids out of documents in this collection
-      // that relate to the resourceDocument
       await Tyr.byName[collectionName].update(
-        {},
+        {
+          permissionIds: {
+            $in: idList
+          }
+        },
         {
           $pull: {
             permissionIds: {
@@ -431,6 +424,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
     return doc;
   }
+
 
 
 }

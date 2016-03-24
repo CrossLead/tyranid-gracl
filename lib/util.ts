@@ -1,8 +1,8 @@
 /// <reference path='../typings/main.d.ts' />
-
 import * as Tyr from 'tyranid';
 import * as _ from 'lodash';
 import * as gracl from 'gracl';
+
 
 
 /**
@@ -11,6 +11,7 @@ import * as gracl from 'gracl';
 export type Hash<T> = {
   [key: string]: T;
 };
+
 
 
 /**
@@ -29,9 +30,9 @@ export const getCollectionLinksSorted = (function() {
 
   // create and cast function
   const fn = <memoized> function getCollectionLinksSorted(
-      col: Tyr.CollectionInstance,
-      opts: any = defaultOpts
-    ): Array<Tyr.Field> {
+                                    col: Tyr.CollectionInstance,
+                                    opts: any = defaultOpts
+                                  ): Tyr.Field[] {
 
     const collectionFieldCache = fn.cache,
           hash = `${col.def.name}:${_.pairs(opts).map(e => e.join('=')).sort().join(':')}`;
@@ -44,7 +45,6 @@ export const getCollectionLinksSorted = (function() {
     return collectionFieldCache[hash] = links;
   };
 
-  // add cache
   fn.cache = {};
   return fn;
 })();
@@ -55,9 +55,10 @@ export const getCollectionLinksSorted = (function() {
  *  Compare a collection by name with a field by name
  */
 export function compareCollectionWithField(
-    aCol: Tyr.CollectionInstance,
-    bCol: Tyr.Field
-  ) {
+                  aCol: Tyr.CollectionInstance,
+                  bCol: Tyr.Field
+                ) {
+
   const a = aCol.def.name,
         b = bCol.link.def.name;
 
@@ -72,16 +73,14 @@ export function compareCollectionWithField(
     and binary search for feild search => O(log(n)) lookup
  */
 export function findLinkInCollection(
-    col: Tyr.CollectionInstance,
-    linkCollection: Tyr.CollectionInstance
-  ): Tyr.Field {
+                  col: Tyr.CollectionInstance,
+                  linkCollection: Tyr.CollectionInstance
+                ): Tyr.Field {
 
   const links = getCollectionLinksSorted(col),
         index = gracl.binaryIndexOf(links, linkCollection, compareCollectionWithField);
 
-  return (index >= 0)
-    ? links[index]
-    : undefined;
+  return links[index];
 }
 
 
@@ -90,7 +89,7 @@ export function createInQueries(
                   map: Map<string, Set<string>>,
                   queriedCollection: Tyr.CollectionInstance,
                   key: '$nin' | '$in'
-                ): { $and?: Hash<Hash<string[]>>[], $or?: Hash<Hash<string[]>>[] } {
+                ): Hash<Hash<Hash<string[]>>[]> {
 
   if (!(key === '$in' || key === '$nin')) {
     throw new TypeError(`key must be $nin or $in!`);

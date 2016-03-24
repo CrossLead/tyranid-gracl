@@ -1,11 +1,9 @@
 /// <reference path='../../typings/main.d.ts' />
 import * as Tyr from 'tyranid';
-import { PermissionsModel } from '../models/PermissionsModel';
-import { PermissionLocks } from '../models/PermissionsLocks';
-
 import * as gracl from 'gracl';
 import * as _ from 'lodash';
-
+import { PermissionsModel } from '../models/PermissionsModel';
+import { PermissionLocks } from '../models/PermissionsLocks';
 import {
   Hash,
   findLinkInCollection,
@@ -15,7 +13,9 @@ import {
 } from '../util';
 
 
+
 export class GraclPlugin {
+
 
 
   /**
@@ -44,7 +44,7 @@ export class GraclPlugin {
   };
 
 
-  // create a repository object for a given collection
+
   static makeRepository(collection: Tyr.CollectionInstance): gracl.Repository {
     return {
       async getEntity(id: string, node: gracl.Node): Promise<Tyr.Document> {
@@ -60,6 +60,7 @@ export class GraclPlugin {
       }
     };
   }
+
 
 
   /**
@@ -90,7 +91,6 @@ export class GraclPlugin {
           keys = _.keys(g);
 
 
-    // initialize dist and next matricies
     _.each(keys, a => {
       _.each(keys, b => {
         _.set(dist, `${a}.${b}`, Infinity);
@@ -126,6 +126,10 @@ export class GraclPlugin {
   }
 
 
+
+  /*
+   * Instance properties
+   */
   graclHierarchy: gracl.Graph;
   outgoingLinkPaths: Hash<Hash<string>>;
   unsecuredCollections = new Set([
@@ -133,7 +137,12 @@ export class GraclPlugin {
     PermissionLocks.def.name
   ]);
 
-  constructor(public verbose = false) {};
+
+
+  constructor(public verbose = false) {
+
+  };
+
 
 
   log(message: string) {
@@ -142,6 +151,7 @@ export class GraclPlugin {
     }
     return this;
   }
+
 
 
   getObjectHierarchy() {
@@ -162,6 +172,7 @@ export class GraclPlugin {
     this.graclHierarchy.resources.forEach(build(hierarchy.resources));
     return hierarchy;
   }
+
 
 
   /**
@@ -188,6 +199,7 @@ export class GraclPlugin {
   }
 
 
+
   /**
     Create Gracl class hierarchy from tyranid schemas,
     needs to be called after all the tyranid collections are validated
@@ -196,12 +208,8 @@ export class GraclPlugin {
     if (stage === 'post-link') {
       this.log(`starting boot.`);
 
-      /**
-       *  Add methods to document prototype
-       */
       Object.assign(Tyr.documentPrototype, GraclPlugin.documentMethods);
 
-      // type alias for convienience
       type TyrSchemaGraphObjects = {
         links: Tyr.Field[];
         parents: Tyr.CollectionInstance[];
@@ -210,7 +218,7 @@ export class GraclPlugin {
       const collections = Tyr.collections,
             nodeSet = new Set<string>();
 
-      const schemaObjects = {
+      const graclGraphNodes = {
         subjects: <TyrSchemaGraphObjects> {
           links: [],
           parents: []
@@ -227,6 +235,7 @@ export class GraclPlugin {
         const linkFields = col.links({ relate: 'ownedBy', direction: 'outgoing' }),
               collectionName = col.def.name;
 
+        // if no links at all, skip
         if (!linkFields.length) return;
 
         // validate that we can only have one parent of each field.
@@ -240,13 +249,13 @@ export class GraclPlugin {
         const [ field ] = linkFields;
         let { graclType } = field.def;
 
+        // if no graclType property on this collection, skip the collection
         if (!graclType) return;
 
-        const allOutgoingFields = col.links({ direction: 'outgoing' });
-
-        const validateField = (f: Tyr.Field) => {
-          return f.def.link === 'graclPermission' && f.name === 'permissionIds';
-        };
+        const allOutgoingFields = col.links({ direction: 'outgoing' }),
+              validateField = (f: Tyr.Field) => {
+                return f.def.link === 'graclPermission' && f.name === 'permissionIds';
+              };
 
         if (!_.find(allOutgoingFields, validateField)) {
           throw new Error(
@@ -265,12 +274,12 @@ export class GraclPlugin {
         while (currentType = graclType.pop()) {
           switch (currentType) {
             case 'subject':
-              schemaObjects.subjects.links.push(field);
-              schemaObjects.subjects.parents.push(field.link);
+              graclGraphNodes.subjects.links.push(field);
+              graclGraphNodes.subjects.parents.push(field.link);
               break;
             case 'resource':
-              schemaObjects.resources.links.push(field);
-              schemaObjects.resources.parents.push(field.link);
+              graclGraphNodes.resources.links.push(field);
+              graclGraphNodes.resources.parents.push(field.link);
               break;
             default:
               throw new Error(`Invalid gracl node type set on collection ${collectionName}, type = ${graclType}`);
@@ -290,10 +299,10 @@ export class GraclPlugin {
 
         if (type === 'subjects') {
           nodes = schemaMaps.subjects;
-          tyrObjects = schemaObjects.subjects;
+          tyrObjects = graclGraphNodes.subjects;
         } else {
           nodes = schemaMaps.resources;
-          tyrObjects = schemaObjects.resources;
+          tyrObjects = graclGraphNodes.resources;
         }
 
         for (const node of tyrObjects.links) {
@@ -301,31 +310,32 @@ export class GraclPlugin {
                 parentName = node.link.def.name,
                 parentNamePath = node.collection.parsePath(node.path);
 
-          nodes.set(name,
-            { name,
-              id: '$uid',
-              parent: parentName,
-              repository: GraclPlugin.makeRepository(node.collection),
-              async getParents(): Promise<gracl.Node[]> {
-                const thisNode = <gracl.Node> this;
+          /**
+           * Create node in Gracl graph with a custom getParents() method
+           */
+          nodes.set(name, {
+            name,
+            id: '$uid',
+            parent: parentName,
+            repository: GraclPlugin.makeRepository(node.collection),
+            async getParents(): Promise<gracl.Node[]> {
+              const thisNode = <gracl.Node> this;
 
-                let ids: any = parentNamePath.get(thisNode.doc);
+              let ids: any = parentNamePath.get(thisNode.doc);
 
-                if (!(ids instanceof Array)) {
-                  ids = [ ids ];
-                }
-
-                const linkCollection = node.link;
-
-                const parentObjects = await linkCollection.find({
-                        [linkCollection.def.primaryKey.field]: { $in: ids }
-                      }, null, { tyranid: { insecure: true } }),
-                      ParentClass = thisNode.getParentClass();
-
-                return parentObjects.map(doc => new ParentClass(doc));
+              if (!(ids instanceof Array)) {
+                ids = [ ids ];
               }
+
+              const linkCollection = node.link,
+                    parentObjects  = await linkCollection.find({
+                                        [linkCollection.def.primaryKey.field]: { $in: ids }
+                                     }, null, { tyranid: { insecure: true } }),
+                    ParentClass    = thisNode.getParentClass();
+
+              return parentObjects.map(doc => new ParentClass(doc));
             }
-          );
+          });
         }
 
         for (const parent of tyrObjects.parents) {
@@ -385,7 +395,7 @@ export class GraclPlugin {
    */
   async query(queriedCollection: Tyr.CollectionInstance,
               permissionAction: string,
-              user = Tyr.local.user): Promise<boolean | {}> {
+              subjectDocument = Tyr.local.user): Promise<boolean | {}> {
 
     const queriedCollectionName = queriedCollection.def.name;
 
@@ -397,28 +407,22 @@ export class GraclPlugin {
     const permissionType = `${permissionAction}-${queriedCollectionName}`;
 
     if (!permissionAction) {
-      throw new Error(`No permissionAction given to GraclPlugin.query()!`);
+      throw new Error(`No permissionAction given to GraclPlugin.query()`);
     }
 
     if (!this.graclHierarchy) {
-      throw new Error(`Must call GraclPlugin.boot() before using GraclPlugin.query()!`);
+      throw new Error(`Must call GraclPlugin.boot() before using GraclPlugin.query()`);
     }
 
-    // if no user, no restriction...
-    if (!user) {
-      this.log(`No user passed to GraclPlugin.query() (or found on Tyr.local) -- no documents allowed!`);
+    // if no subjectDocument, no restriction...
+    if (!subjectDocument) {
+      this.log(`No subjectDocument passed to GraclPlugin.query() (or found on Tyr.local) -- no documents allowed`);
       return false;
     }
 
-    this.log(
-      `restricting query for collection = ${queriedCollectionName} ` +
-      `permissionType = ${permissionType} ` +
-      `user = ${JSON.stringify(user.$toClient())}`
-    );
-
     if (!this.graclHierarchy.resources.has(queriedCollectionName)) {
       this.log(
-        `Querying against collection (${queriedCollectionName}) with no resource class -- no restriction enforced!`
+        `Querying against collection (${queriedCollectionName}) with no resource class -- no restriction enforced`
       );
       return {};
     }
@@ -426,9 +430,14 @@ export class GraclPlugin {
 
     // extract subject and resource Gracl classes
     const ResourceClass = this.graclHierarchy.getResource(queriedCollectionName),
-          SubjectClass = this.graclHierarchy.getSubject(user.$model.def.name);
+          SubjectClass  = this.graclHierarchy.getSubject(subjectDocument.$model.def.name),
+          subject       = new SubjectClass(subjectDocument);
 
-    const subject = new SubjectClass(user);
+    this.log(
+      `restricting query for collection = ${queriedCollectionName} ` +
+      `permissionType = ${permissionType} ` +
+      `subject = ${subject.toString()}`
+    );
 
     const errorMessageHeader = (
       `Unable to construct query object for ${queriedCollection.name} ` +
@@ -437,20 +446,19 @@ export class GraclPlugin {
 
     // get list of all ids in the subject hierarchy,
     // as well as the names of the classes in the resource hierarchy
-    const subjectHierarchyIds = await subject.getHierarchyIds();
-
-    const resourceHierarchyClasses = ResourceClass.getHierarchyClassNames();
-
-    const permissionsQuery = {
-      subjectId:    { $in: subjectHierarchyIds },
-      resourceType: { $in: resourceHierarchyClasses }
-    };
-
-    const permissions = await PermissionsModel.find(permissionsQuery, null, { tyranid: { insecure: true } });
+    const subjectHierarchyIds      = await subject.getHierarchyIds(),
+          resourceHierarchyClasses = ResourceClass.getHierarchyClassNames(),
+          permissionsQuery = {
+            subjectId:    { $in: subjectHierarchyIds },
+            resourceType: { $in: resourceHierarchyClasses }
+          },
+          permissions = await PermissionsModel.find(
+            permissionsQuery, null, { tyranid: { insecure: true } }
+          );
 
     // no permissions found, return no restriction
     if (!Array.isArray(permissions) || permissions.length === 0) {
-      this.log(`No permissions found, returning false!`);
+      this.log(`No permissions found, returning false`);
       return false;
     }
 
@@ -497,8 +505,8 @@ export class GraclPlugin {
       let queryRestrictionSet = false;
       if (queriedCollectionLinkFields.has(collectionName) ||
           queriedCollectionName === collectionName) {
+
         for (const permission of permissions.values()) {
-          // grab access boolean for given permissionType
           const access = permission.access[permissionType];
           switch (access) {
             // access needs to be exactly true or false
@@ -513,6 +521,7 @@ export class GraclPlugin {
           }
           queryRestrictionSet = true;
         }
+
       }
       // otherwise, we need determine how to restricting a query of this object by
       // permissions concerning parents of this object...
@@ -560,7 +569,7 @@ export class GraclPlugin {
 
         if (collectionName !== pathEndCollectionName) {
           throw new Error(
-            `Path returned for collection pair ${queriedCollectionName} and ${collectionName} is invalid!`
+            `Path returned for collection pair ${queriedCollectionName} and ${collectionName} is invalid`
           );
         }
 
@@ -656,8 +665,8 @@ export class GraclPlugin {
           negativeRestriction = createInQueries(queryMaps['negative'], queriedCollection, '$nin');
 
     const restricted: Hash<any> = {},
-          hasPositive = !!positiveRestriction.$or.length,
-          hasNegative = !!negativeRestriction.$and.length;
+          hasPositive = !!positiveRestriction['$or'].length,
+          hasNegative = !!negativeRestriction['$and'].length;
 
     if (hasNegative && hasPositive) {
       restricted['$and'] = [
@@ -672,6 +681,7 @@ export class GraclPlugin {
 
     return <Hash<any>> restricted;
   }
+
 
 
 }

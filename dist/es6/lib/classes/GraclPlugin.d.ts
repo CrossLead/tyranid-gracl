@@ -24,5 +24,5 @@ export declare class GraclPlugin {
     getShortestPath(colA: Tyr.CollectionInstance, colB: Tyr.CollectionInstance): string[];
     boot(stage: Tyr.BootStage): void;
     logHierarchy(): void;
-    query(queriedCollection: Tyr.CollectionInstance, permissionAction: string, user?: Tyr.Document): Promise<boolean | {}>;
+    query(queriedCollection: Tyr.CollectionInstance, permissionAction: string, subjectDocument?: Tyr.Document): Promise<boolean | {}>;
 }

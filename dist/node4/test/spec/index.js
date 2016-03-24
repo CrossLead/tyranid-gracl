@@ -86,9 +86,9 @@ describe('tyranid-gracl', () => {
                   chartIds = yield getIdsForCol('chart');
             const queryAgainstChartMap = new Map([['blog', new Set(blogIds)], ['user', new Set(userIds)], ['chart', new Set(chartIds)]]);
             const query = tyranidGracl.createInQueries(queryAgainstChartMap, Tyr.byName['chart'], '$in');
-            const _idRestriction = _.find(query.$or, v => _.contains(_.keys(v), '_id')),
-                  blogIdRestriction = _.find(query.$or, v => _.contains(_.keys(v), 'blogId')),
-                  userIdsRestriction = _.find(query.$or, v => _.contains(_.keys(v), 'userIds'));
+            const _idRestriction = _.find(query['$or'], v => _.contains(_.keys(v), '_id')),
+                  blogIdRestriction = _.find(query['$or'], v => _.contains(_.keys(v), 'blogId')),
+                  userIdsRestriction = _.find(query['$or'], v => _.contains(_.keys(v), 'userIds'));
             chai_1.expect(_idRestriction['_id'], 'should correctly map own _id field').to.deep.equal({ $in: chartIds });
             chai_1.expect(blogIdRestriction['blogId'], 'should find correct property').to.deep.equal({ $in: blogIds });
             chai_1.expect(userIdsRestriction['userIds'], 'should find correct property').to.deep.equal({ $in: userIds });

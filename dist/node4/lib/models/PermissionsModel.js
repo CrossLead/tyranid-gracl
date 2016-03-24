@@ -96,14 +96,14 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
             if (!(subjectDocument && subjectDocument.$uid)) {
                 throw new Error('No subject document provided (or Tyr.local.user is unavailable)!');
             }
-            const plugin = PermissionsModel.getGraclPlugin();
-            const resourceCollectionName = resourceDocument.$model.def.name,
-                  subjectCollectionName = subjectDocument.$model.def.name;
+            const plugin = PermissionsModel.getGraclPlugin(),
+                  resourceCollectionName = resourceDocument.$model.def.name,
+                  subjectCollectionName = subjectDocument.$model.def.name,
+                  ResourceClass = plugin.graclHierarchy.getResource(resourceCollectionName),
+                  SubjectClass = plugin.graclHierarchy.getSubject(subjectCollectionName);
             if (!resourceDocument['permissions']) {
                 yield Tyr.byName[resourceCollectionName].populate('permissionIds', resourceDocument);
             }
-            const ResourceClass = plugin.graclHierarchy.getResource(resourceCollectionName),
-                  SubjectClass = plugin.graclHierarchy.getSubject(subjectCollectionName);
             if (!ResourceClass) {
                 throw new Error(`Attempted to set/get permission using ${ resourceCollectionName } as resource, ` + `no relevant resource class found in tyranid-gracl plugin!`);
             }
@@ -211,7 +211,9 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
             _.chain(permissions).filter(perm => {
                 return perm.subjectId && existingSubjectIdsFromPermissions.has(perm.subjectId);
             }).each(perm => {
-                if (!perm.resourceId) throw new Error(`Tried to add permission for ${ resourceDocument.$uid } without resourceId!`);
+                if (!perm.resourceId) {
+                    throw new Error(`Tried to add permission for ${ resourceDocument.$uid } without resourceId!`);
+                }
                 const hash = `${ perm.resourceId }-${ perm.subjectId }`;
                 if (uniquenessCheck.has(hash)) {
                     throw new Error(`Attempted to set duplicate permission for combination of ` + `resource = ${ perm.resourceId }, subject = ${ perm.subjectId }`);
@@ -272,7 +274,11 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
                 const collectionName = _ref4[0];
                 const idList = _ref4[1];
 
-                yield Tyr.byName[collectionName].update({}, {
+                yield Tyr.byName[collectionName].update({
+                    permissionIds: {
+                        $in: idList
+                    }
+                }, {
                     $pull: {
                         permissionIds: {
                             $in: idList

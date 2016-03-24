@@ -27,10 +27,10 @@ var __awaiter = undefined && undefined.__awaiter || function (thisArg, _argument
     });
 };
 const Tyr = require('tyranid');
-const PermissionsModel_1 = require('../models/PermissionsModel');
-const PermissionsLocks_1 = require('../models/PermissionsLocks');
 const gracl = require('gracl');
 const _ = require('lodash');
+const PermissionsModel_1 = require('../models/PermissionsModel');
+const PermissionsLocks_1 = require('../models/PermissionsLocks');
 const util_1 = require('../util');
 class GraclPlugin {
     constructor() {
@@ -140,7 +140,7 @@ class GraclPlugin {
             Object.assign(Tyr.documentPrototype, GraclPlugin.documentMethods);
             const collections = Tyr.collections,
                   nodeSet = new Set();
-            const schemaObjects = {
+            const graclGraphNodes = {
                 subjects: {
                     links: [],
                     parents: []
@@ -164,8 +164,8 @@ class GraclPlugin {
                 let graclType = field.def.graclType;
 
                 if (!graclType) return;
-                const allOutgoingFields = col.links({ direction: 'outgoing' });
-                const validateField = f => {
+                const allOutgoingFields = col.links({ direction: 'outgoing' }),
+                      validateField = f => {
                     return f.def.link === 'graclPermission' && f.name === 'permissionIds';
                 };
                 if (!_.find(allOutgoingFields, validateField)) {
@@ -178,12 +178,12 @@ class GraclPlugin {
                 while (currentType = graclType.pop()) {
                     switch (currentType) {
                         case 'subject':
-                            schemaObjects.subjects.links.push(field);
-                            schemaObjects.subjects.parents.push(field.link);
+                            graclGraphNodes.subjects.links.push(field);
+                            graclGraphNodes.subjects.parents.push(field.link);
                             break;
                         case 'resource':
-                            schemaObjects.resources.links.push(field);
-                            schemaObjects.resources.parents.push(field.link);
+                            graclGraphNodes.resources.links.push(field);
+                            graclGraphNodes.resources.parents.push(field.link);
                             break;
                         default:
                             throw new Error(`Invalid gracl node type set on collection ${ collectionName }, type = ${ graclType }`);
@@ -198,16 +198,17 @@ class GraclPlugin {
                 let nodes, tyrObjects;
                 if (type === 'subjects') {
                     nodes = schemaMaps.subjects;
-                    tyrObjects = schemaObjects.subjects;
+                    tyrObjects = graclGraphNodes.subjects;
                 } else {
                     nodes = schemaMaps.resources;
-                    tyrObjects = schemaObjects.resources;
+                    tyrObjects = graclGraphNodes.resources;
                 }
                 for (const node of tyrObjects.links) {
                     const name = node.collection.def.name,
                           parentName = node.link.def.name,
                           parentNamePath = node.collection.parsePath(node.path);
-                    nodes.set(name, { name: name,
+                    nodes.set(name, {
+                        name: name,
                         id: '$uid',
                         parent: parentName,
                         repository: GraclPlugin.makeRepository(node.collection),
@@ -218,8 +219,8 @@ class GraclPlugin {
                                 if (!(ids instanceof Array)) {
                                     ids = [ids];
                                 }
-                                const linkCollection = node.link;
-                                const parentObjects = yield linkCollection.find({
+                                const linkCollection = node.link,
+                                      parentObjects = yield linkCollection.find({
                                     [linkCollection.def.primaryKey.field]: { $in: ids }
                                 }, null, { tyranid: { insecure: true } }),
                                       ParentClass = thisNode.getParentClass();
@@ -255,7 +256,7 @@ class GraclPlugin {
         console.log('  | \n  | ' + JSON.stringify(this.getObjectHierarchy(), null, 4).replace(/[{},\":]/g, '').replace(/^\s*\n/gm, '').split('\n').join('\n  | ').replace(/\s+$/, '').replace(/resources/, '---- resources ----').replace(/subjects/, '---- subjects ----') + '____');
     }
     query(queriedCollection, permissionAction) {
-        let user = arguments.length <= 2 || arguments[2] === undefined ? Tyr.local.user : arguments[2];
+        let subjectDocument = arguments.length <= 2 || arguments[2] === undefined ? Tyr.local.user : arguments[2];
 
         return __awaiter(this, void 0, Promise, function* () {
             const queriedCollectionName = queriedCollection.def.name;
@@ -265,33 +266,33 @@ class GraclPlugin {
             }
             const permissionType = `${ permissionAction }-${ queriedCollectionName }`;
             if (!permissionAction) {
-                throw new Error(`No permissionAction given to GraclPlugin.query()!`);
+                throw new Error(`No permissionAction given to GraclPlugin.query()`);
             }
             if (!this.graclHierarchy) {
-                throw new Error(`Must call GraclPlugin.boot() before using GraclPlugin.query()!`);
+                throw new Error(`Must call GraclPlugin.boot() before using GraclPlugin.query()`);
             }
-            if (!user) {
-                this.log(`No user passed to GraclPlugin.query() (or found on Tyr.local) -- no documents allowed!`);
+            if (!subjectDocument) {
+                this.log(`No subjectDocument passed to GraclPlugin.query() (or found on Tyr.local) -- no documents allowed`);
                 return false;
             }
-            this.log(`restricting query for collection = ${ queriedCollectionName } ` + `permissionType = ${ permissionType } ` + `user = ${ JSON.stringify(user.$toClient()) }`);
             if (!this.graclHierarchy.resources.has(queriedCollectionName)) {
-                this.log(`Querying against collection (${ queriedCollectionName }) with no resource class -- no restriction enforced!`);
+                this.log(`Querying against collection (${ queriedCollectionName }) with no resource class -- no restriction enforced`);
                 return {};
             }
             const ResourceClass = this.graclHierarchy.getResource(queriedCollectionName),
-                  SubjectClass = this.graclHierarchy.getSubject(user.$model.def.name);
-            const subject = new SubjectClass(user);
+                  SubjectClass = this.graclHierarchy.getSubject(subjectDocument.$model.def.name),
+                  subject = new SubjectClass(subjectDocument);
+            this.log(`restricting query for collection = ${ queriedCollectionName } ` + `permissionType = ${ permissionType } ` + `subject = ${ subject.toString() }`);
             const errorMessageHeader = `Unable to construct query object for ${ queriedCollection.name } ` + `from the perspective of ${ subject.toString() }`;
-            const subjectHierarchyIds = yield subject.getHierarchyIds();
-            const resourceHierarchyClasses = ResourceClass.getHierarchyClassNames();
-            const permissionsQuery = {
+            const subjectHierarchyIds = yield subject.getHierarchyIds(),
+                  resourceHierarchyClasses = ResourceClass.getHierarchyClassNames(),
+                  permissionsQuery = {
                 subjectId: { $in: subjectHierarchyIds },
                 resourceType: { $in: resourceHierarchyClasses }
-            };
-            const permissions = yield PermissionsModel_1.PermissionsModel.find(permissionsQuery, null, { tyranid: { insecure: true } });
+            },
+                  permissions = yield PermissionsModel_1.PermissionsModel.find(permissionsQuery, null, { tyranid: { insecure: true } });
             if (!Array.isArray(permissions) || permissions.length === 0) {
-                this.log(`No permissions found, returning false!`);
+                this.log(`No permissions found, returning false`);
                 return false;
             }
             const resourceMap = permissions.reduce((map, perm) => {
@@ -345,7 +346,7 @@ class GraclPlugin {
                     }
                     const pathEndCollectionName = path.pop();
                     if (collectionName !== pathEndCollectionName) {
-                        throw new Error(`Path returned for collection pair ${ queriedCollectionName } and ${ collectionName } is invalid!`);
+                        throw new Error(`Path returned for collection pair ${ queriedCollectionName } and ${ collectionName } is invalid`);
                     }
                     if (!queriedCollectionLinkFields.has(path[1])) {
                         throw new Error(`Path returned for collection pair ${ queriedCollectionName } and ${ collectionName } ` + `must have the penultimate path exist as a link on the collection being queried, ` + `the penultimate collection path between ${ queriedCollectionName } and ${ collectionName } ` + `is ${ path[1] }, which is not linked to by ${ queriedCollectionName }`);
@@ -399,8 +400,8 @@ class GraclPlugin {
             const positiveRestriction = util_1.createInQueries(queryMaps['positive'], queriedCollection, '$in'),
                   negativeRestriction = util_1.createInQueries(queryMaps['negative'], queriedCollection, '$nin');
             const restricted = {},
-                  hasPositive = !!positiveRestriction.$or.length,
-                  hasNegative = !!negativeRestriction.$and.length;
+                  hasPositive = !!positiveRestriction['$or'].length,
+                  hasNegative = !!negativeRestriction['$and'].length;
             if (hasNegative && hasPositive) {
                 restricted['$and'] = [positiveRestriction, negativeRestriction];
             } else if (hasNegative) {
