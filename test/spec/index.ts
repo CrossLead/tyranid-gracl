@@ -7,11 +7,13 @@ import * as tyranidGracl from '../../lib/index';
 import { expect } from 'chai';
 import { expectedLinkPaths } from '../helpers/expectedLinkPaths';
 import { createTestData } from '../helpers/createTestData';
+import { expectAsyncToThrow } from '../helpers/expectAsyncToThrow';
 
 
 const db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),
       root = __dirname.replace(/test\/spec/, ''),
-      secure = new tyranidGracl.GraclPlugin();
+      secure = new tyranidGracl.GraclPlugin(),
+      insecure = { tyranid: { insecure: true } };
 
 
 describe('tyranid-gracl', () => {
@@ -59,12 +61,57 @@ describe('tyranid-gracl', () => {
       expect(linkField.spath).to.equal('userIds');
     });
 
-    it('should correctly create formatted queries using createInQueries', () => {
-      console.warn('ADD TEST');
+
+    it('should correctly create formatted queries using createInQueries', async () => {
+      const getIdsForCol = async (col: string) => {
+        return <string[]> _.map(await Tyr.byName[col].find({}, null, insecure), '_id');
+      };
+
+      const blogIds = await getIdsForCol('blog'),
+            userIds = await getIdsForCol('user'),
+            chartIds = await getIdsForCol('chart');
+
+      const queryAgainstChartMap = new Map([
+        [ 'blog', new Set(blogIds) ],
+        [ 'user', new Set(userIds) ],
+        [ 'chart', new Set(chartIds) ]
+      ]);
+
+      const query = tyranidGracl.createInQueries(queryAgainstChartMap, Tyr.byName['chart'], '$in');
+
+      expect(query['_id'], 'should correctly map own _id field').to.deep.equal({ $in: chartIds });
+      expect(query['blogId'], 'should find correct property').to.deep.equal({ $in: blogIds });
+      expect(query['userIds'], 'should find correct property').to.deep.equal({ $in: userIds });
+
+      const createQueryNoLink = () => {
+        tyranidGracl.createInQueries(queryAgainstChartMap, Tyr.byName['organization'], '$in');
+      };
+
+      expect(createQueryNoLink, 'creating query for collection with no outgoing link to mapped collection')
+        .to.throw(/No outgoing link/);
     });
 
-    it('should return correct ids after calling stepThroughCollectionPath', () => {
-      console.warn('ADD TEST');
+
+    it('should return correct ids after calling stepThroughCollectionPath', async () => {
+      const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
+            chipotleBlogs = await Tyr.byName['blog'].find({ organizationId: chipotle['_id'] }, null, insecure),
+            blogIds = <string[]> _.map(chipotleBlogs, '_id'),
+            chipotlePosts = await Tyr.byName['post'].find({ blogId: { $in: blogIds } }),
+            postIds = <string[]> _.map(chipotlePosts, '_id');
+
+      const steppedPostIds = await tyranidGracl.stepThroughCollectionPath(
+        blogIds, Tyr.byName['blog'], Tyr.byName['post']
+      );
+
+      expect(steppedPostIds, 'ids after stepping should be all relevant ids').to.deep.equal(postIds);
+
+      expectAsyncToThrow(
+        () => tyranidGracl.stepThroughCollectionPath(
+          blogIds, Tyr.byName['blog'], Tyr.byName['user']
+        ),
+        /cannot step through collection path, as no link to collection/,
+        'stepping to a collection with no connection to previous col should throw'
+      );
     });
 
   });
@@ -105,7 +152,7 @@ describe('tyranid-gracl', () => {
         .setPermissionAccess(chopped, 'view-post', true, ben);
 
       const existingPermissions = await tyranidGracl.PermissionsModel.find(
-        {}, null, { tyranid: { insecure: true } }
+        {}, null, insecure
       );
 
       expect(existingPermissions).to.have.lengthOf(1);
@@ -138,27 +185,33 @@ describe('tyranid-gracl', () => {
 
       expect(ben, 'ben should exist').to.exist;
       expect(chipotleCorporateBlog, 'chipotleCorporateBlog should exist').to.exist;
-
-      let threw = false,
-          message = '';
-      try {
-        await chipotleCorporateBlog['$isAllowed']('view', ben);
-      } catch (err) {
-        threw = true;
-        message = err.message;
-      }
-
-      expect(threw,
-        'checking \"view\" without collection should throw'
-      ).to.equal(true);
-
-      expect(message, `Error message should contain \"No collection name in permission type\"`)
-        .to.match(/No collection name in permission type/g);
+      expectAsyncToThrow(
+        () => chipotleCorporateBlog['$isAllowed']('view', ben),
+        /No collection name in permission type/g,
+        'checking \'view\' without collection should throw'
+      );
     });
 
 
-    it('should lock permissions for resource while update in progress', async () => {
-      console.warn('ADD TEST');
+    it('should create a lock when updating permission and set to false when complete', async () => {
+      const locks = await tyranidGracl.PermissionLocks.find({}, null, insecure),
+            chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
+
+      expect(locks.length).to.be.greaterThan(0);
+      expect(locks[0]['resourceId']).to.equal(chopped.$uid);
+      expect(locks[0]['locked']).to.equal(false);
+    });
+
+
+    it('should throw error when trying to lock same resource twice', async() => {
+      const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
+      await tyranidGracl.PermissionsModel.lockPermissionsForResource(chipotle);
+      expectAsyncToThrow(
+        () => tyranidGracl.PermissionsModel.lockPermissionsForResource(chipotle),
+        /another update is in progress/,
+        'cannot lock resource that is already locked'
+      );
+      await tyranidGracl.PermissionsModel.unlockPermissionsForResource(chipotle);
     });
 
 
@@ -208,7 +261,7 @@ describe('tyranid-gracl', () => {
       const choppedBlogs = await Blog.find(
         { organizationId: chopped['_id'] },
         { _id: 1 },
-        { tyranid: { insecure: true } }
+        insecure
       );
 
       const query = await secure.query(Post, 'view', ben);
@@ -217,11 +270,6 @@ describe('tyranid-gracl', () => {
         blogId: { $in: _.map(choppedBlogs, '_id') }
       });
     });
-
-    it('should produce query with primaryKey field set if permissions are directly set for collection', async () => {
-      console.warn('ADD TEST');
-    });
-
 
     it('should produce $and clause with excluded and included ids', () => {
       console.warn('ADD TEST');
@@ -247,12 +295,12 @@ describe('tyranid-gracl', () => {
       const choppedBlogs = await Blog.find(
         { organizationId: chopped['_id'] },
         { _id: 1 },
-        { tyranid: { insecure: true } }
+        insecure
       );
 
       const choppedPosts = await Post.find({
         blogId: { $in: _.map(choppedBlogs, '_id') }
-      }, null, { tyranid: { insecure: true } });
+      }, null, insecure);
 
       expect(postsBenCanSee, 'ben should only see chopped posts').to.deep.equal(choppedPosts);
     });

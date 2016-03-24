@@ -101,6 +101,13 @@ export function createInQueries(
       prop = queriedCollection.def.primaryKey.field;
     } else {
       const link = findLinkInCollection(queriedCollection, Tyr.byName[col]);
+
+      if (!link) {
+        throw new Error(
+          `No outgoing link from ${queriedCollection.def.name} to ${col}, cannot create restricted ${key} clause!`
+        );
+      }
+
       prop = link.spath;
     }
 

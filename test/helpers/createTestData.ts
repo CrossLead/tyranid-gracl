@@ -120,4 +120,13 @@ export async function createTestData() {
 
   ]);
 
+  await Promise.all([
+    Chart.insert({
+      name: 'test1',
+      blogId: cavaBlog['_id'],
+      organizationId: cava['_id'],
+      userIds: [ ben['_id'], ted['_id'] ]
+    })
+  ]);
+
 }

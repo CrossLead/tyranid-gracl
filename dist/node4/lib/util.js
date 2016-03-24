@@ -70,6 +70,9 @@ function createInQueries(map, queriedCollection, key) {
             prop = queriedCollection.def.primaryKey.field;
         } else {
             const link = findLinkInCollection(queriedCollection, Tyr.byName[col]);
+            if (!link) {
+                throw new Error(`No outgoing link from ${ queriedCollection.def.name } to ${ col }, cannot create restricted ${ key } clause!`);
+            }
             prop = link.spath;
         }
         query[prop] = { [key]: [].concat(_toConsumableArray(uids)) };

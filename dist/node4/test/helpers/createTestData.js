@@ -30,6 +30,7 @@ const Tyr = require('tyranid');
 const Blog_1 = require('../models/Blog');
 const User_1 = require('../models/User');
 const Team_1 = require('../models/Team');
+const Chart_1 = require('../models/Chart');
 const Inventory_1 = require('../models/Inventory');
 const Organization_1 = require('../models/Organization');
 function createTestData() {
@@ -97,6 +98,13 @@ function createTestData() {
 
         const ben = _ref12[0];
         const ted = _ref12[1];
+
+        yield Promise.all([Chart_1.Chart.insert({
+            name: 'test1',
+            blogId: cavaBlog['_id'],
+            organizationId: cava['_id'],
+            userIds: [ben['_id'], ted['_id']]
+        })]);
     });
 }
 exports.createTestData = createTestData;
