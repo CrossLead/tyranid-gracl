@@ -554,6 +554,29 @@ export class GraclPlugin {
       return {};
     }
 
+    const permissionActions = [ permissionAction ];
+    let next = permissionType;
+    while (next = this.nextPermission(next)) {
+      permissionActions.push(next.split('-')[0]);
+    }
+
+
+    /**
+     *  Iterate through permissions action hierarchy, getting access
+     */
+    const getAccess = (permission: gracl.Permission) => {
+      let perm: boolean;
+      for (const action of permissionActions) {
+        const type = `${action}-${queriedCollectionName}`;
+        if (permission.access[type] === true) {
+          return true;
+        } else if (permission.access[type] === false) {
+          perm = false;
+        }
+      }
+      return perm;
+    };
+
 
     // extract subject and resource Gracl classes
     const ResourceClass = this.graclHierarchy.getResource(queriedCollectionName),
@@ -634,7 +657,7 @@ export class GraclPlugin {
           queriedCollectionName === collectionName) {
 
         for (const permission of permissions.values()) {
-          const access = permission.access[permissionType];
+          const access = getAccess(permission);
           switch (access) {
             // access needs to be exactly true or false
             case true:
@@ -715,7 +738,7 @@ export class GraclPlugin {
 
         for (const permission of permissions.values()) {
           // grab access boolean for given permissionType
-          const access = permission.access[permissionType];
+          const access = getAccess(permission);
           switch (access) {
             // access needs to be exactly true or false
             case true:  positiveIds.push(Tyr.parseUid(permission.resourceId).id); break;

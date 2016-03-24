@@ -339,6 +339,23 @@ class GraclPlugin {
                 this.log(`Querying against collection (${ queriedCollectionName }) with no resource class -- no restriction enforced`);
                 return {};
             }
+            const permissionActions = [permissionAction];
+            let next = permissionType;
+            while (next = this.nextPermission(next)) {
+                permissionActions.push(next.split('-')[0]);
+            }
+            const getAccess = permission => {
+                let perm;
+                for (const action of permissionActions) {
+                    const type = `${ action }-${ queriedCollectionName }`;
+                    if (permission.access[type] === true) {
+                        return true;
+                    } else if (permission.access[type] === false) {
+                        perm = false;
+                    }
+                }
+                return perm;
+            };
             const ResourceClass = this.graclHierarchy.getResource(queriedCollectionName),
                   SubjectClass = this.graclHierarchy.getSubject(subjectDocument.$model.def.name),
                   subject = new SubjectClass(subjectDocument);
@@ -386,7 +403,7 @@ class GraclPlugin {
                 let queryRestrictionSet = false;
                 if (queriedCollectionLinkFields.has(collectionName) || queriedCollectionName === collectionName) {
                     for (const permission of permissions.values()) {
-                        const access = permission.access[permissionType];
+                        const access = getAccess(permission);
                         switch (access) {
                             case true:
                             case false:
@@ -414,7 +431,7 @@ class GraclPlugin {
                     let positiveIds = [],
                         negativeIds = [];
                     for (const permission of permissions.values()) {
-                        const access = permission.access[permissionType];
+                        const access = getAccess(permission);
                         switch (access) {
                             case true:
                                 positiveIds.push(Tyr.parseUid(permission.resourceId).id);
