@@ -174,6 +174,12 @@ class GraclPlugin {
                 if (!Array.isArray(graclType)) {
                     graclType = [graclType];
                 }
+                if (field && _.contains(graclType, 'resource')) {
+                    const linkCollectionPermissionsLink = util_1.findLinkInCollection(field.link, PermissionsModel_1.PermissionsModel);
+                    if (!linkCollectionPermissionsLink) {
+                        throw new Error(`Collection ${ col.def.name } has a resource link to collection ${ field.link.def.name } ` + `but ${ field.link.def.name } has no permissionIds field!`);
+                    }
+                }
                 let currentType;
                 while (currentType = graclType.pop()) {
                     switch (currentType) {

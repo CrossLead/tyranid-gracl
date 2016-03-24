@@ -284,6 +284,18 @@ export class GraclPlugin {
           graclType = [ graclType ];
         }
 
+        // if there is a gracl link field, validate that the link collection has permissions set on it, if
+        // the gracl type for the link is a resource
+        if (field && _.contains(graclType, 'resource')) {
+          const linkCollectionPermissionsLink = findLinkInCollection(field.link, PermissionsModel);
+          if (!linkCollectionPermissionsLink) {
+            throw new Error(
+              `Collection ${col.def.name} has a resource link to collection ${field.link.def.name} ` +
+              `but ${field.link.def.name} has no permissionIds field!`
+            );
+          }
+        }
+
         let currentType: string;
         while (currentType = graclType.pop()) {
           switch (currentType) {
