@@ -111,8 +111,7 @@ const db = pmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test');
 Tyr.config({
   db: db,
   validate: [
-    { dir: root + '/test/models', fileMatch: '[a-z].js' },
-    { dir: root + '/lib/models', fileMatch: '[a-z].js' }
+    { dir: root + '/test/models', fileMatch: '[a-z].js' }
   ],
   // add to tyranid config...
   secure: secure

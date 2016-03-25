@@ -59,7 +59,8 @@ describe('tyranid-gracl', () => {
     before(() => __awaiter(undefined, void 0, void 0, function* () {
         Tyr.config({
             db: db,
-            validate: [{ dir: root + '/test/models', fileMatch: '[a-z].js' }, { dir: root + '/lib/models', fileMatch: '[a-z].js' }],
+            validate: [{ dir: root + '/test/models',
+                fileMatch: '[a-z].js' }],
             secure: secure,
             cls: false
         });

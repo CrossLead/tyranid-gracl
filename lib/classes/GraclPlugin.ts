@@ -569,8 +569,10 @@ export class GraclPlugin {
       for (const action of permissionActions) {
         const type = `${action}-${queriedCollectionName}`;
         if (permission.access[type] === true) {
+          // short circuit on true
           return true;
         } else if (permission.access[type] === false) {
+          // continue on false, as superior permissions may be true
           perm = false;
         }
       }
