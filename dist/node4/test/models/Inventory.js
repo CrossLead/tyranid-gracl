@@ -1,7 +1,7 @@
 "use strict";
 
-const Tyr = require('tyranid');
-exports.InventoryBaseCollection = new Tyr.Collection({
+const tyranid_1 = require('tyranid');
+exports.InventoryBaseCollection = new tyranid_1.default.Collection({
     id: 'i00',
     name: 'inventory',
     dbName: 'inventories',

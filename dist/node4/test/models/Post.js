@@ -1,7 +1,7 @@
 "use strict";
 
-const Tyr = require('tyranid');
-exports.PostBaseCollection = new Tyr.Collection({
+const tyranid_1 = require('tyranid');
+exports.PostBaseCollection = new tyranid_1.default.Collection({
     id: 'p00',
     name: 'post',
     dbName: 'posts',

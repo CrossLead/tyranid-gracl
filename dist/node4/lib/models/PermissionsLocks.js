@@ -1,7 +1,7 @@
 "use strict";
 
-const Tyr = require('tyranid');
-exports.PermissionLockBaseCollection = new Tyr.Collection({
+const tyranid_1 = require('tyranid');
+exports.PermissionLockBaseCollection = new tyranid_1.default.Collection({
     id: '_gl',
     name: 'graclPermissionLock',
     dbName: 'graclPermissionLocks',

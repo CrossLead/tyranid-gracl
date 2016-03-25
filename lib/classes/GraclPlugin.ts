@@ -1,5 +1,5 @@
 /// <reference path='../../typings/main.d.ts' />
-import * as Tyr from 'tyranid';
+import Tyr from 'tyranid';
 import * as gracl from 'gracl';
 import * as _ from 'lodash';
 import { PermissionsModel } from '../models/PermissionsModel';
@@ -228,7 +228,7 @@ export class GraclPlugin {
 
 
 
-  constructor(opts: { verbose: boolean, permissionType: permissionTypeList } = {verbose: false, permissionType: []}) {
+  constructor(opts: { verbose?: boolean, permissionType?: permissionTypeList } = {verbose: false, permissionType: []}) {
     if (Array.isArray(opts.permissionType) && opts.permissionType.length) {
       this.permissionTypes = opts.permissionType;
     }
@@ -457,7 +457,7 @@ export class GraclPlugin {
               const linkCollection = node.link,
                     parentObjects  = await linkCollection.find({
                                         [linkCollection.def.primaryKey.field]: { $in: ids }
-                                     }, null, { tyranid: { insecure: true } }),
+                                     }),
                     ParentClass    = thisNode.getParentClass();
 
               return parentObjects.map(doc => new ParentClass(doc));
@@ -604,9 +604,7 @@ export class GraclPlugin {
             subjectId:    { $in: subjectHierarchyIds },
             resourceType: { $in: resourceHierarchyClasses }
           },
-          permissions = await PermissionsModel.find(
-            permissionsQuery, null, { tyranid: { insecure: true } }
-          );
+          permissions = await PermissionsModel.find(permissionsQuery);
 
     // no permissions found, return no restriction
     if (!Array.isArray(permissions) || permissions.length === 0) {

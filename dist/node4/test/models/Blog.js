@@ -24,9 +24,9 @@ var __awaiter = undefined && undefined.__awaiter || function (thisArg, _argument
         step((generator = generator.apply(thisArg, _arguments)).next());
     });
 };
-const Tyr = require('tyranid');
+const tyranid_1 = require('tyranid');
 const Post_1 = require('./Post');
-exports.BlogBaseCollection = new Tyr.Collection({
+exports.BlogBaseCollection = new tyranid_1.default.Collection({
     id: 'b00',
     name: 'blog',
     dbName: 'blogs',

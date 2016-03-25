@@ -1,5 +1,5 @@
 /// <reference path="../../../../typings/main.d.ts" />
-import * as Tyr from 'tyranid';
+import Tyr from 'tyranid';
 import * as gracl from 'gracl';
 import { PermissionsModel } from '../models/PermissionsModel';
 import { Hash } from '../util';
@@ -31,8 +31,8 @@ export declare class GraclPlugin {
     permissionHierarchy: permissionHierarchy;
     permissionTypes: permissionTypeList;
     constructor(opts?: {
-        verbose: boolean;
-        permissionType: permissionTypeList;
+        verbose?: boolean;
+        permissionType?: permissionTypeList;
     });
     getPermissionObject(permissionString: string): any;
     nextPermission(permissionString: string): string;

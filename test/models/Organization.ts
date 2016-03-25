@@ -1,4 +1,4 @@
-import * as Tyr from 'tyranid';
+import Tyr from 'tyranid';
 
 const OrganizationBaseCollection = new Tyr.Collection({
   id: 'o00',

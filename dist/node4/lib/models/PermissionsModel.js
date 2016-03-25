@@ -29,9 +29,9 @@ var __awaiter = undefined && undefined.__awaiter || function (thisArg, _argument
     });
 };
 const _ = require('lodash');
-const Tyr = require('tyranid');
+const tyranid_1 = require('tyranid');
 const PermissionsLocks_1 = require('./PermissionsLocks');
-exports.PermissionsBaseCollection = new Tyr.Collection({
+exports.PermissionsBaseCollection = new tyranid_1.default.Collection({
     id: '_gp',
     name: 'graclPermission',
     dbName: 'graclPermissions',
@@ -50,7 +50,7 @@ exports.PermissionsBaseCollection = new Tyr.Collection({
 });
 class PermissionsModel extends exports.PermissionsBaseCollection {
     static getGraclPlugin() {
-        const plugin = Tyr.secure;
+        const plugin = tyranid_1.default.secure;
         if (!plugin) {
             throw new Error(`No gracl plugin available, must instantiate GraclPlugin and pass to Tyr.config()!`);
         }
@@ -71,7 +71,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
         if (!plugin.getPermissionObject(permissionType)) {
             throw new Error(`Invalid permissionType ${ permissionType }! ` + `permission action given ("${ action }") is not valid. Must be one of (${ _.keys(plugin.permissionHierarchy).join(', ') })`);
         }
-        PermissionsModel.validateAsResource(Tyr.byName[collectionName]);
+        PermissionsModel.validateAsResource(tyranid_1.default.byName[collectionName]);
         PermissionsModel.validateAsResource(queriedCollection);
         const queriedResourceHierarchy = plugin.graclHierarchy.getResource(queriedCollection.def.name).getHierarchyClassNames();
         const permissionResourceHierarchy = plugin.graclHierarchy.getResource(collectionName).getHierarchyClassNames();
@@ -102,7 +102,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
                   ResourceClass = plugin.graclHierarchy.getResource(resourceCollectionName),
                   SubjectClass = plugin.graclHierarchy.getSubject(subjectCollectionName);
             if (!resourceDocument['permissions']) {
-                yield Tyr.byName[resourceCollectionName].populate('permissionIds', resourceDocument);
+                yield tyranid_1.default.byName[resourceCollectionName].populate('permissionIds', resourceDocument);
             }
             if (!ResourceClass) {
                 throw new Error(`Attempted to set/get permission using ${ resourceCollectionName } as resource, ` + `no relevant resource class found in tyranid-gracl plugin!`);
@@ -116,7 +116,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
         });
     }
     static setPermissionAccess(resourceDocument, permissionType, access) {
-        let subjectDocument = arguments.length <= 3 || arguments[3] === undefined ? Tyr.local.user : arguments[3];
+        let subjectDocument = arguments.length <= 3 || arguments[3] === undefined ? tyranid_1.default.local.user : arguments[3];
         let abstract = arguments.length <= 4 || arguments[4] === undefined ? false : arguments[4];
 
         return __awaiter(this, void 0, Promise, function* () {
@@ -132,7 +132,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
         });
     }
     static isAllowed(resourceDocument, permissionType) {
-        let subjectDocument = arguments.length <= 2 || arguments[2] === undefined ? Tyr.local.user : arguments[2];
+        let subjectDocument = arguments.length <= 2 || arguments[2] === undefined ? tyranid_1.default.local.user : arguments[2];
         let abstract = arguments.length <= 3 || arguments[3] === undefined ? false : arguments[3];
 
         return __awaiter(this, void 0, Promise, function* () {
@@ -207,7 +207,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
             yield PermissionsModel.lockPermissionsForResource(resourceDocument);
             const resourceCollectionName = resourceDocument.$model.def.name;
             const subjectIds = _.chain(permissions).map('subjectId').compact().value();
-            const existingSubjects = yield Tyr.byUids(subjectIds, { tyranid: { insecure: true } });
+            const existingSubjects = yield tyranid_1.default.byUids(subjectIds);
             const existingSubjectIdsFromPermissions = _.reduce(existingSubjects, (out, entity) => {
                 out.add(entity.$uid);
                 return out;
@@ -248,7 +248,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
                 resourceId: resourceDocument.$uid
             });
             const updatedResourceDocument = yield resourceDocument.$save();
-            const populated = yield Tyr.byName[resourceCollectionName].populate('permissionIds', updatedResourceDocument);
+            const populated = yield tyranid_1.default.byName[resourceCollectionName].populate('permissionIds', updatedResourceDocument);
             yield PermissionsModel.unlockPermissionsForResource(resourceDocument);
             return populated;
         });
@@ -262,11 +262,11 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
             yield PermissionsModel.lockPermissionsForResource(doc);
             const permissions = yield PermissionsModel.find({
                 $or: [{ subjectId: uid }, { resourceId: uid }]
-            }, null, { tyranid: { insecure: true } });
+            });
             const permissionsByCollection = new Map();
             _.each(permissions, perm => {
                 const altUid = perm['subjectId'] === uid ? perm['resourceId'] : perm['subjectId'];
-                const parsed = Tyr.parseUid(altUid),
+                const parsed = tyranid_1.default.parseUid(altUid),
                       collectionName = parsed.collection.def.name;
                 if (!permissionsByCollection.has(collectionName)) {
                     permissionsByCollection.set(collectionName, []);
@@ -279,7 +279,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
                 const collectionName = _ref4[0];
                 const idList = _ref4[1];
 
-                yield Tyr.byName[collectionName].update({
+                yield tyranid_1.default.byName[collectionName].update({
                     permissionIds: {
                         $in: idList
                     }

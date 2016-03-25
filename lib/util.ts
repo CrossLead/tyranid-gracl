@@ -1,5 +1,5 @@
 /// <reference path='../typings/main.d.ts' />
-import * as Tyr from 'tyranid';
+import Tyr from 'tyranid';
 import * as _ from 'lodash';
 import * as gracl from 'gracl';
 
@@ -130,7 +130,7 @@ export async function stepThroughCollectionPath(
                         ids: string[],
                         previousCollection: Tyr.CollectionInstance,
                         nextCollection: Tyr.CollectionInstance,
-                        insecure: boolean = true
+                        secure: boolean = false
                       ) {
 
   // find the field in the current path collection which we need to get
@@ -151,7 +151,7 @@ export async function stepThroughCollectionPath(
   const nextCollectionDocs = await nextCollection.find(
     { [nextCollectionLinkField.spath]: { $in: ids } },
     { _id: 1, [nextCollectionId]: 1 },
-    { tyranid: { insecure } }
+    { tyranid: { secure } }
   );
 
   // extract their primary ids using the primary field

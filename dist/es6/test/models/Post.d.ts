@@ -1,4 +1,4 @@
-import * as Tyr from 'tyranid';
+import Tyr from 'tyranid';
 export declare const PostBaseCollection: Tyr.CollectionInstance;
 export declare class Post extends  {
 }

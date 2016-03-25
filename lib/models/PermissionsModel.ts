@@ -1,6 +1,6 @@
 /// <reference path='../../typings/main.d.ts' />
 import * as _ from 'lodash';
-import * as Tyr from 'tyranid';
+import Tyr from 'tyranid';
 import * as gracl from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { PermissionLocks } from './PermissionsLocks';
@@ -295,7 +295,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
         helps curtail "zombie" permissions that may accumulate due to update/delete
         race condition.
      */
-    const existingSubjects: Tyr.Document[] = await Tyr.byUids(subjectIds, { tyranid: { insecure: true } });
+    const existingSubjects: Tyr.Document[] = await Tyr.byUids(subjectIds);
 
     const existingSubjectIdsFromPermissions = _.reduce(
       existingSubjects,
@@ -391,7 +391,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
         { subjectId: uid },
         { resourceId: uid }
       ]
-    }, null, { tyranid: { insecure: true } });
+    });
 
     const permissionsByCollection = new Map<string, string[]>();
 

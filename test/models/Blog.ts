@@ -1,4 +1,4 @@
-import * as Tyr from 'tyranid';
+import Tyr from 'tyranid';
 import { Post } from './Post';
 
 export const BlogBaseCollection = new Tyr.Collection({

@@ -26,7 +26,7 @@ var __awaiter = undefined && undefined.__awaiter || function (thisArg, _argument
         step((generator = generator.apply(thisArg, _arguments)).next());
     });
 };
-const Tyr = require('tyranid');
+const tyranid_1 = require('tyranid');
 const gracl = require('gracl');
 const _ = require('lodash');
 const PermissionsModel_1 = require('../models/PermissionsModel');
@@ -63,7 +63,7 @@ class GraclPlugin {
     }
     static buildLinkGraph() {
         const g = {};
-        _.each(Tyr.collections, col => {
+        _.each(tyranid_1.default.collections, col => {
             const links = col.links({ direction: 'outgoing' }),
                   colName = col.def.name;
             _.each(links, linkField => {
@@ -183,8 +183,8 @@ class GraclPlugin {
         if (stage === 'post-link') {
             this.log(`starting boot.`);
             this.permissionHierarchy = GraclPlugin.constructPermissionHierarchy(this.permissionTypes);
-            Object.assign(Tyr.documentPrototype, GraclPlugin.documentMethods);
-            const collections = Tyr.collections,
+            Object.assign(tyranid_1.default.documentPrototype, GraclPlugin.documentMethods);
+            const collections = tyranid_1.default.collections,
                   nodeSet = new Set();
             const graclGraphNodes = {
                 subjects: {
@@ -282,7 +282,7 @@ class GraclPlugin {
                                 const linkCollection = node.link,
                                       parentObjects = yield linkCollection.find({
                                     [linkCollection.def.primaryKey.field]: { $in: ids }
-                                }, null, { tyranid: { insecure: true } }),
+                                }),
                                       ParentClass = thisNode.getParentClass();
                                 return parentObjects.map(doc => new ParentClass(doc));
                             });
@@ -316,7 +316,7 @@ class GraclPlugin {
         console.log('  | \n  | ' + JSON.stringify(this.getObjectHierarchy(), null, 4).replace(/[{},\":]/g, '').replace(/^\s*\n/gm, '').split('\n').join('\n  | ').replace(/\s+$/, '').replace(/resources/, '---- resources ----').replace(/subjects/, '---- subjects ----') + '____');
     }
     query(queriedCollection, permissionAction) {
-        let subjectDocument = arguments.length <= 2 || arguments[2] === undefined ? Tyr.local.user : arguments[2];
+        let subjectDocument = arguments.length <= 2 || arguments[2] === undefined ? tyranid_1.default.local.user : arguments[2];
 
         return __awaiter(this, void 0, Promise, function* () {
             const queriedCollectionName = queriedCollection.def.name;
@@ -367,7 +367,7 @@ class GraclPlugin {
                 subjectId: { $in: subjectHierarchyIds },
                 resourceType: { $in: resourceHierarchyClasses }
             },
-                  permissions = yield PermissionsModel_1.PermissionsModel.find(permissionsQuery, null, { tyranid: { insecure: true } });
+                  permissions = yield PermissionsModel_1.PermissionsModel.find(permissionsQuery);
             if (!Array.isArray(permissions) || permissions.length === 0) {
                 this.log(`No permissions found, returning false`);
                 return false;
@@ -377,7 +377,7 @@ class GraclPlugin {
                       resourceId = perm['resourceId'];
                 if (!map.has(resourceCollectionName)) {
                     map.set(resourceCollectionName, {
-                        collection: Tyr.byName[resourceCollectionName],
+                        collection: tyranid_1.default.byName[resourceCollectionName],
                         permissions: new Map()
                     });
                 }
@@ -411,7 +411,7 @@ class GraclPlugin {
                                 if (!queryMaps[key].has(collectionName)) {
                                     queryMaps[key].set(collectionName, new Set());
                                 }
-                                queryMaps[key].get(collectionName).add(Tyr.parseUid(permission.resourceId).id);
+                                queryMaps[key].get(collectionName).add(tyranid_1.default.parseUid(permission.resourceId).id);
                                 break;
                         }
                         queryRestrictionSet = true;
@@ -434,21 +434,21 @@ class GraclPlugin {
                         const access = getAccess(permission);
                         switch (access) {
                             case true:
-                                positiveIds.push(Tyr.parseUid(permission.resourceId).id);
+                                positiveIds.push(tyranid_1.default.parseUid(permission.resourceId).id);
                                 break;
                             case false:
-                                negativeIds.push(Tyr.parseUid(permission.resourceId).id);
+                                negativeIds.push(tyranid_1.default.parseUid(permission.resourceId).id);
                                 break;
                         }
                     }
-                    const pathEndCollection = Tyr.byName[pathEndCollectionName],
-                          nextCollection = Tyr.byName[_.last(path)];
+                    const pathEndCollection = tyranid_1.default.byName[pathEndCollectionName],
+                          nextCollection = tyranid_1.default.byName[_.last(path)];
                     positiveIds = yield util_1.stepThroughCollectionPath(positiveIds, pathEndCollection, nextCollection);
                     negativeIds = yield util_1.stepThroughCollectionPath(negativeIds, pathEndCollection, nextCollection);
                     let pathCollectionName, nextCollectionName;
                     while (path.length > 2) {
-                        const pathCollection = Tyr.byName[pathCollectionName = path.pop()],
-                              nextCollection = Tyr.byName[nextCollectionName = _.last(path)];
+                        const pathCollection = tyranid_1.default.byName[pathCollectionName = path.pop()],
+                              nextCollection = tyranid_1.default.byName[nextCollectionName = _.last(path)];
                         if (!pathCollection) {
                             throw new Error(`${ errorMessageHeader }, invalid collection name given in path! collection: ${ pathCollectionName }`);
                         }
@@ -495,43 +495,43 @@ GraclPlugin.setPermissionAccess = PermissionsModel_1.PermissionsModel.setPermiss
 GraclPlugin.deletePermissions = PermissionsModel_1.PermissionsModel.deletePermissions.bind(PermissionsModel_1.PermissionsModel);
 GraclPlugin.documentMethods = {
     $setPermissionAccess(permissionType, access) {
-        let subjectDocument = arguments.length <= 2 || arguments[2] === undefined ? Tyr.local.user : arguments[2];
+        let subjectDocument = arguments.length <= 2 || arguments[2] === undefined ? tyranid_1.default.local.user : arguments[2];
 
         const doc = this;
         return PermissionsModel_1.PermissionsModel.setPermissionAccess(doc, permissionType, access, subjectDocument);
     },
     $isAllowed(permissionType) {
-        let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? Tyr.local.user : arguments[1];
+        let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? tyranid_1.default.local.user : arguments[1];
 
         const doc = this;
         return PermissionsModel_1.PermissionsModel.isAllowed(doc, permissionType, subjectDocument);
     },
     $isAllowedForThis(permissionAction) {
-        let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? Tyr.local.user : arguments[1];
+        let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? tyranid_1.default.local.user : arguments[1];
 
         const doc = this;
         const permissionType = `${ permissionAction }-${ doc.$model.def.name }`;
         return this.$isAllowed(permissionType, subjectDocument);
     },
     $allow(permissionType) {
-        let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? Tyr.local.user : arguments[1];
+        let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? tyranid_1.default.local.user : arguments[1];
 
         return this.$setPermissionAccess(permissionType, true, subjectDocument);
     },
     $deny(permissionType) {
-        let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? Tyr.local.user : arguments[1];
+        let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? tyranid_1.default.local.user : arguments[1];
 
         return this.$setPermissionAccess(permissionType, false, subjectDocument);
     },
     $allowForThis(permissionAction) {
-        let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? Tyr.local.user : arguments[1];
+        let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? tyranid_1.default.local.user : arguments[1];
 
         const doc = this;
         const permissionType = `${ permissionAction }-${ doc.$model.def.name }`;
         return this.$allow(permissionType, subjectDocument);
     },
     $denyForThis(permissionAction) {
-        let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? Tyr.local.user : arguments[1];
+        let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? tyranid_1.default.local.user : arguments[1];
 
         const doc = this;
         const permissionType = `${ permissionAction }-${ doc.$model.def.name }`;

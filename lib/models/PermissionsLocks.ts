@@ -1,5 +1,5 @@
 /// <reference path='../../typings/main.d.ts' />
-import * as Tyr from 'tyranid';
+import Tyr from 'tyranid';
 
 
 export const PermissionLockBaseCollection = new Tyr.Collection({

@@ -1,7 +1,7 @@
 "use strict";
 
-const Tyr = require('tyranid');
-const UserBaseCollection = new Tyr.Collection({
+const tyranid_1 = require('tyranid');
+const UserBaseCollection = new tyranid_1.default.Collection({
     id: 'u00',
     name: 'user',
     dbName: 'users',

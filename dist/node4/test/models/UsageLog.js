@@ -1,7 +1,7 @@
 "use strict";
 
-const Tyr = require('tyranid');
-exports.UsageLogBaseCollection = new Tyr.Collection({
+const tyranid_1 = require('tyranid');
+exports.UsageLogBaseCollection = new tyranid_1.default.Collection({
     id: 'ul0',
     name: 'usagelog',
     dbName: 'usagelogs',

@@ -1,4 +1,4 @@
-import * as Tyr from 'tyranid';
+import Tyr from 'tyranid';
 
 
 const UserBaseCollection = new Tyr.Collection({

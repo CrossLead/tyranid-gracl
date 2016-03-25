@@ -28,7 +28,7 @@ var __awaiter = undefined && undefined.__awaiter || function (thisArg, _argument
         step((generator = generator.apply(thisArg, _arguments)).next());
     });
 };
-const Tyr = require('tyranid');
+const tyranid_1 = require('tyranid');
 const _ = require('lodash');
 const gracl = require('gracl');
 exports.getCollectionLinksSorted = function () {
@@ -72,7 +72,7 @@ function createInQueries(map, queriedCollection, key) {
         if (col === queriedCollection.def.name) {
             prop = queriedCollection.def.primaryKey.field;
         } else {
-            const link = findLinkInCollection(queriedCollection, Tyr.byName[col]);
+            const link = findLinkInCollection(queriedCollection, tyranid_1.default.byName[col]);
             if (!link) {
                 throw new Error(`No outgoing link from ${ queriedCollection.def.name } to ${ col }, cannot create restricted ${ key } clause!`);
             }
@@ -85,7 +85,7 @@ function createInQueries(map, queriedCollection, key) {
 exports.createInQueries = createInQueries;
 ;
 function stepThroughCollectionPath(ids, previousCollection, nextCollection) {
-    let insecure = arguments.length <= 3 || arguments[3] === undefined ? true : arguments[3];
+    let secure = arguments.length <= 3 || arguments[3] === undefined ? false : arguments[3];
 
     return __awaiter(this, void 0, void 0, function* () {
         const nextCollectionLinkField = findLinkInCollection(nextCollection, previousCollection);
@@ -93,7 +93,7 @@ function stepThroughCollectionPath(ids, previousCollection, nextCollection) {
             throw new Error(`cannot step through collection path, as no link to collection ${ nextCollection.def.name } ` + `from collection ${ previousCollection.def.name }`);
         }
         const nextCollectionId = nextCollection.def.primaryKey.field;
-        const nextCollectionDocs = yield nextCollection.find({ [nextCollectionLinkField.spath]: { $in: ids } }, { _id: 1, [nextCollectionId]: 1 }, { tyranid: { insecure: insecure } });
+        const nextCollectionDocs = yield nextCollection.find({ [nextCollectionLinkField.spath]: { $in: ids } }, { _id: 1, [nextCollectionId]: 1 }, { tyranid: { secure: secure } });
         return _.map(nextCollectionDocs, nextCollectionId);
     });
 }

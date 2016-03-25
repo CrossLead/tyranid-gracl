@@ -1,6 +1,6 @@
 /// <reference path='../../typings/main.d.ts' />
 /// <reference path='../test-typings.d.ts'/>
-import * as Tyr from 'tyranid';
+import Tyr from 'tyranid';
 import * as tpmongo from 'tpmongo';
 import * as _ from 'lodash';
 import * as tyranidGracl from '../../lib/index';
@@ -13,8 +13,9 @@ type GraclPlugin = tyranidGracl.GraclPlugin;
 
 const db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),
       root = __dirname.replace(/test\/spec/, ''),
-      secure = new tyranidGracl.GraclPlugin(),
-      insecure = { tyranid: { insecure: true } };
+      secure = new tyranidGracl.GraclPlugin({
+        verbose: false
+      });
 
 
 const checkStringEq = (got: string[], want: string[], message = '') => {
@@ -57,7 +58,6 @@ describe('tyranid-gracl', () => {
 
   beforeEach(async () => {
     await createTestData();
-    Tyr.local.user = undefined;
   });
 
 
@@ -85,7 +85,7 @@ describe('tyranid-gracl', () => {
 
     it('should correctly create formatted queries using createInQueries', async () => {
       const getIdsForCol = async (col: string) => {
-        return <string[]> _.map(await Tyr.byName[col].find({}, null, insecure), '_id');
+        return <string[]> _.map(await Tyr.byName[col].find({}), '_id');
       };
 
       const blogIds = await getIdsForCol('blog'),
@@ -119,7 +119,7 @@ describe('tyranid-gracl', () => {
 
     it('should return correct ids after calling stepThroughCollectionPath', async () => {
       const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
-            chipotleBlogs = await Tyr.byName['blog'].find({ organizationId: chipotle.$id }, null, insecure),
+            chipotleBlogs = await Tyr.byName['blog'].find({ organizationId: chipotle.$id }),
             blogIds = <string[]> _.map(chipotleBlogs, '_id'),
             chipotlePosts = await Tyr.byName['post'].find({ blogId: { $in: blogIds } }),
             postIds = <string[]> _.map(chipotlePosts, '_id');
@@ -176,9 +176,7 @@ describe('tyranid-gracl', () => {
     it('should successfully add permissions', async () => {
       const updatedChopped = await giveBenAccessToChoppedPosts();
 
-      const existingPermissions = await Tyr.byName['graclPermission'].find(
-        {}, null, insecure
-      );
+      const existingPermissions = await Tyr.byName['graclPermission'].find({});
 
       expect(existingPermissions).to.have.lengthOf(1);
       expect(existingPermissions[0]['resourceId'].toString(), 'resourceId')
@@ -238,7 +236,7 @@ describe('tyranid-gracl', () => {
     it('should create a lock when updating permission and set to false when complete', async () => {
       await giveBenAccessToChoppedPosts();
 
-      const locks = await tyranidGracl.PermissionLocks.find({}, null, insecure),
+      const locks = await tyranidGracl.PermissionLocks.find({}),
             chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
       expect(locks).to.have.lengthOf(1);
@@ -401,8 +399,7 @@ describe('tyranid-gracl', () => {
 
       const choppedBlogs = await Blog.find(
         { organizationId: chopped.$id },
-        { _id: 1 },
-        insecure
+        { _id: 1 }
       );
 
       const query = await secure.query(Post, 'view', ben);
@@ -421,8 +418,8 @@ describe('tyranid-gracl', () => {
       const chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' }),
             cava = await Tyr.byName['organization'].findOne({ name: 'Cava' }),
             chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
-            cavaBlogs = await Tyr.byName['blog'].find({ organizationId: cava.$id }, null, insecure),
-            chipotleBlogs = await Tyr.byName['blog'].find({ organizationId: chipotle.$id }, null, insecure),
+            cavaBlogs = await Tyr.byName['blog'].find({ organizationId: cava.$id }),
+            chipotleBlogs = await Tyr.byName['blog'].find({ organizationId: chipotle.$id }),
             post = await Tyr.byName['post'].findOne({ text: 'Why burritos are amazing.' });
 
       const permissionOperations = await Promise.all([
@@ -469,21 +466,18 @@ describe('tyranid-gracl', () => {
             Org = Tyr.byName['organization'],
             ben = await User.findOne({ name: 'ben' });
 
-      Tyr.local.user = ben;
-
-      const postsBenCanSee = await Post.find({});
+      const postsBenCanSee = await Post.find({}, null, { tyranid: { secure: true, user: ben } });
 
       const chopped = await Org.findOne({ name: 'Chopped' });
 
       const choppedBlogs = await Blog.find(
         { organizationId: chopped.$id },
-        { _id: 1 },
-        insecure
+        { _id: 1 }
       );
 
       const choppedPosts = await Post.find({
         blogId: { $in: _.map(choppedBlogs, '_id') }
-      }, null, insecure);
+      });
 
       checkStringEq(
         <string[]> _.map(postsBenCanSee, '_id'),
@@ -497,9 +491,9 @@ describe('tyranid-gracl', () => {
       const chopped      = await giveBenAccessToChoppedPosts(),
             ben          = await Tyr.byName['user'].findOne({ name: 'ben' }),
             post         = await Tyr.byName['post'].findOne({ text: 'Salads are great, the post.' }),
-            choppedBlogs = await Tyr.byName['blog'].find({ organizationId: chopped.$id }, null, insecure),
+            choppedBlogs = await Tyr.byName['blog'].find({ organizationId: chopped.$id }),
             choppedPosts = await Tyr.byName['post'].find(
-              { blogId: { $in: choppedBlogs.map(b => b.$id) } }, null, insecure
+              { blogId: { $in: choppedBlogs.map(b => b.$id) } }
             );
 
       // all chopped posts
@@ -509,11 +503,7 @@ describe('tyranid-gracl', () => {
       // explicitly deny view access to this post
       await post['$deny']('view-post', ben);
 
-      const query = await secure.query(Tyr.byName['post'], 'view', ben);
-
-      Tyr.local.user = ben;
-
-      const postsBenCanSee = await Tyr.byName['post'].find({});
+      const postsBenCanSee = await Tyr.byName['post'].find({}, null, { tyranid: { secure: true, user: ben } });
 
       expect(postsBenCanSee).to.have.lengthOf(1);
       expect(_.map(postsBenCanSee, '$id')).to.not.contain(post.$id);

@@ -26,7 +26,7 @@ var __awaiter = undefined && undefined.__awaiter || function (thisArg, _argument
         step((generator = generator.apply(thisArg, _arguments)).next());
     });
 };
-const Tyr = require('tyranid');
+const tyranid_1 = require('tyranid');
 const Blog_1 = require('../models/Blog');
 const User_1 = require('../models/User');
 const Team_1 = require('../models/Team');
@@ -35,7 +35,7 @@ const Inventory_1 = require('../models/Inventory');
 const Organization_1 = require('../models/Organization');
 function createTestData() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield Promise.all(Tyr.collections.map(c => c.remove({})));
+        yield Promise.all(tyranid_1.default.collections.map(c => c.remove({})));
 
         var _ref = yield Promise.all([Organization_1.Organization.insert({ name: 'Chipotle' }), Organization_1.Organization.insert({ name: 'Chopped' }), Organization_1.Organization.insert({ name: 'Cava' })]);
 

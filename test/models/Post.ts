@@ -1,4 +1,4 @@
-import * as Tyr from 'tyranid';
+import Tyr from 'tyranid';
 
 export const PostBaseCollection = new Tyr.Collection({
   id: 'p00',

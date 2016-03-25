@@ -1,7 +1,7 @@
 "use strict";
 
-const Tyr = require('tyranid');
-exports.ChartBaseCollection = new Tyr.Collection({
+const tyranid_1 = require('tyranid');
+exports.ChartBaseCollection = new tyranid_1.default.Collection({
     id: 'c00',
     name: 'chart',
     dbName: 'charts',

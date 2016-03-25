@@ -1,5 +1,5 @@
 /// <reference path="../../../../typings/main.d.ts" />
-import * as Tyr from 'tyranid';
+import Tyr from 'tyranid';
 import * as gracl from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 export declare const PermissionsBaseCollection: Tyr.CollectionInstance;
