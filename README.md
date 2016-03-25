@@ -177,20 +177,14 @@ export async function checkCanViewUid(req, res) {
 
 /**
  *  Example express controller using filtered queries
-    NOTE: requires 'cls' to be enabled for tyranid! and that a user is
-          mixed into Tyr.local.user on each request!
  */
 export async function findBlogs(req, res) {
-  // no extra api needed! already filtered!
-  const blogs = await Tyr.byName.blog.find({});
-
-  /**
-    NOTE: if you *don't* want find() results to be filtered,
-          you can disable the filtering like so...
-
-    const blogs = await Tyr.byName.blog.find({}, null, { tyranid: { insecure: true } });
-   */
-
+  const blogs = await Tyr.byName.blog.find({}, null, {
+    tyranid: {
+      secure: true,
+      user: req.user
+    }
+  });
   return res.json(blogs);
 }
 
