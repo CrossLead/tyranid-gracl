@@ -149,6 +149,21 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
             return access;
         });
     }
+    static explainPermission(resourceDocument, permissionType) {
+        let subjectDocument = arguments.length <= 2 || arguments[2] === undefined ? tyranid_1.default.local.user : arguments[2];
+        let abstract = arguments.length <= 3 || arguments[3] === undefined ? false : arguments[3];
+
+        return __awaiter(this, void 0, Promise, function* () {
+            if (!abstract) PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
+
+            var _ref3 = yield PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
+
+            const subject = _ref3.subject;
+            const resource = _ref3.resource;
+
+            return yield resource.determineAccess(subject, permissionType);
+        });
+    }
     static lockPermissionsForResource(resourceDocument) {
         return __awaiter(this, void 0, Promise, function* () {
             if (!(resourceDocument && resourceDocument.$uid)) {
@@ -273,11 +288,11 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
                 }
                 permissionsByCollection.get(collectionName).push(perm.$id);
             });
-            for (const _ref3 of permissionsByCollection) {
-                var _ref4 = _slicedToArray(_ref3, 2);
+            for (const _ref4 of permissionsByCollection) {
+                var _ref5 = _slicedToArray(_ref4, 2);
 
-                const collectionName = _ref4[0];
-                const idList = _ref4[1];
+                const collectionName = _ref5[0];
+                const idList = _ref5[1];
 
                 yield tyranid_1.default.byName[collectionName].update({
                     permissionIds: {

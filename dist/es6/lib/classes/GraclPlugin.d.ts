@@ -9,6 +9,7 @@ export declare class GraclPlugin {
     static isAllowed: typeof PermissionsModel.isAllowed;
     static setPermissionAccess: typeof PermissionsModel.setPermissionAccess;
     static deletePermissions: typeof PermissionsModel.deletePermissions;
+    static explainPermission: typeof PermissionsModel.explainPermission;
     static documentMethods: {
         $setPermissionAccess(permissionType: string, access: boolean, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
         $isAllowed(permissionType: string, subjectDocument?: Tyr.Document): Promise<boolean>;
@@ -27,6 +28,7 @@ export declare class GraclPlugin {
     isAllowed: typeof PermissionsModel.isAllowed;
     setPermissionAccess: typeof PermissionsModel.setPermissionAccess;
     deletePermissions: typeof PermissionsModel.deletePermissions;
+    explainPermission: typeof PermissionsModel.explainPermission;
     verbose: boolean;
     permissionHierarchy: permissionHierarchy;
     permissionTypes: permissionTypeList;

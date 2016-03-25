@@ -362,6 +362,20 @@ describe('tyranid-gracl', () => {
     });
 
 
+    it('should correctly explain permissions', async () => {
+      await giveBenAccessToChoppedPosts();
+
+      const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+            chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
+
+      const access = await secure.explainPermission(chopped, 'view-post', ben);
+
+      expect(access.reason).to.match(/Permission set on <Resource:organization/);
+      expect(access.access).to.equal(true);
+      expect(access.type).to.equal('view-post');
+    });
+
+
   });
 
 

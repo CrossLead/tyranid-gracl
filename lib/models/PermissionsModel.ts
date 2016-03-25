@@ -201,6 +201,20 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   }
 
 
+  static async explainPermission(
+      resourceDocument: Tyr.Document,
+      permissionType: string,
+      subjectDocument = Tyr.local.user,
+      abstract = false
+    ): Promise<{ type: string, access: boolean, reason: string }> {
+    if (!abstract) PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
+
+    const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
+
+    return await resource.determineAccess(subject, permissionType);
+  }
+
+
 
   /**
    *  Given a resource document, attempt to create a lock. If one exists (and is set to true) throw error

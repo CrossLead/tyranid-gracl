@@ -40,6 +40,7 @@ class GraclPlugin {
         this.isAllowed = GraclPlugin.isAllowed;
         this.setPermissionAccess = GraclPlugin.setPermissionAccess;
         this.deletePermissions = GraclPlugin.deletePermissions;
+        this.explainPermission = GraclPlugin.explainPermission;
         this.verbose = false;
         this.permissionTypes = [{ name: 'edit' }, { name: 'view', parent: 'edit' }, { name: 'delete' }];
         if (Array.isArray(opts.permissionType) && opts.permissionType.length) {
@@ -493,6 +494,7 @@ class GraclPlugin {
 GraclPlugin.isAllowed = PermissionsModel_1.PermissionsModel.isAllowed.bind(PermissionsModel_1.PermissionsModel);
 GraclPlugin.setPermissionAccess = PermissionsModel_1.PermissionsModel.setPermissionAccess.bind(PermissionsModel_1.PermissionsModel);
 GraclPlugin.deletePermissions = PermissionsModel_1.PermissionsModel.deletePermissions.bind(PermissionsModel_1.PermissionsModel);
+GraclPlugin.explainPermission = PermissionsModel_1.PermissionsModel.explainPermission.bind(PermissionsModel_1.PermissionsModel);
 GraclPlugin.documentMethods = {
     $setPermissionAccess(permissionType, access) {
         let subjectDocument = arguments.length <= 2 || arguments[2] === undefined ? tyranid_1.default.local.user : arguments[2];

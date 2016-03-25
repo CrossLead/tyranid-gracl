@@ -21,7 +21,7 @@ export class GraclPlugin {
 
 
   /**
-   *  Reference permissions model methods here
+   *  alias permissions model methods here
    */
   static isAllowed = (
     <typeof PermissionsModel.isAllowed> PermissionsModel.isAllowed.bind(PermissionsModel)
@@ -33,6 +33,10 @@ export class GraclPlugin {
 
   static deletePermissions = (
     <typeof PermissionsModel.deletePermissions> PermissionsModel.deletePermissions.bind(PermissionsModel)
+  );
+
+  static explainPermission = (
+    <typeof PermissionsModel.explainPermission> PermissionsModel.explainPermission.bind(PermissionsModel)
   );
 
 
@@ -214,6 +218,7 @@ export class GraclPlugin {
   isAllowed           = GraclPlugin.isAllowed;
   setPermissionAccess = GraclPlugin.setPermissionAccess;
   deletePermissions   = GraclPlugin.deletePermissions;
+  explainPermission   = GraclPlugin.explainPermission;
 
 
   verbose = false;

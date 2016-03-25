@@ -233,6 +233,15 @@ describe('tyranid-gracl', () => {
             chai_1.expect(updatedPost['permissionIds']).to.have.length(0);
             chai_1.expect(updatedChipotle['permissionIds']).to.have.length(0);
         }));
+        it('should correctly explain permissions', () => __awaiter(undefined, void 0, void 0, function* () {
+            yield giveBenAccessToChoppedPosts();
+            const ben = yield tyranid_1.default.byName['user'].findOne({ name: 'ben' }),
+                  chopped = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chopped' });
+            const access = yield secure.explainPermission(chopped, 'view-post', ben);
+            chai_1.expect(access.reason).to.match(/Permission set on <Resource:organization/);
+            chai_1.expect(access.access).to.equal(true);
+            chai_1.expect(access.type).to.equal('view-post');
+        }));
     });
     describe('plugin.query()', () => {
         it('should return false with no user', () => __awaiter(undefined, void 0, void 0, function* () {
