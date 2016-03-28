@@ -184,6 +184,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
                 new: false,
                 upsert: true
             });
+            console.log(lock);
             if (lock['value'] && lock['value']['locked'] === true) {
                 throw new Error(`Cannot update permissions for resource ${ resourceDocument.$uid } as another update is in progress!`);
             }
@@ -249,18 +250,18 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
                     newPermissions.push(perm);
                 }
             }).value();
-            const existingUpdatePromises = existingPermissions.map(perm => {
+            const existingUpdates = yield Promise.all(existingPermissions.map(perm => {
                 return PermissionsModel.findAndModify({
                     query: { [permIdField]: perm[permIdField] },
                     update: { $set: perm },
                     new: true
                 });
-            });
-            const newPermissionPromises = newPermissions.map(perm => {
+            }));
+            const newPermissionInserts = yield Promise.all(newPermissions.map(perm => {
                 return PermissionsModel.fromClient(perm).$save();
-            });
-            updated.push.apply(updated, _toConsumableArray((yield Promise.all(existingUpdatePromises))));
-            updated.push.apply(updated, _toConsumableArray((yield Promise.all(newPermissionPromises))));
+            }));
+            updated.push.apply(updated, _toConsumableArray(existingUpdates));
+            updated.push.apply(updated, _toConsumableArray(newPermissionInserts));
             resourceDocument[plugin.permissionIdProperty] = _.map(updated, permIdField);
             yield PermissionsModel.remove({
                 [permIdField]: { $nin: resourceDocument[plugin.permissionIdProperty] },

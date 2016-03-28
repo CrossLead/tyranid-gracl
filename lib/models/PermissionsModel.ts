@@ -350,20 +350,20 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       .value();
 
 
-    const existingUpdatePromises = existingPermissions.map(perm => {
+    const existingUpdates = await Promise.all(existingPermissions.map(perm => {
       return PermissionsModel.findAndModify({
         query: { [permIdField]: perm[permIdField] },
         update: { $set: perm },
         new: true
       });
-    });
+    }));
 
-    const newPermissionPromises = newPermissions.map(perm => {
+    const newPermissionInserts = await Promise.all(newPermissions.map(perm => {
       return PermissionsModel.fromClient(perm).$save();
-    });
+    }));
 
-    updated.push(...(await Promise.all(existingUpdatePromises)));
-    updated.push(...(await Promise.all(newPermissionPromises)));
+    updated.push(...existingUpdates);
+    updated.push(...newPermissionInserts);
 
     resourceDocument[plugin.permissionIdProperty] = _.map(updated, permIdField);
 
