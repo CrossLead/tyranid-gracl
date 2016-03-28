@@ -45,8 +45,8 @@ class GraclPlugin {
         if (opts.permissionProperty && !/s$/.test(opts.permissionProperty)) {
             throw new Error(`permissionProperty must end with 's' as it is an array of ids.`);
         }
-        if (Array.isArray(opts.permissionType) && opts.permissionType.length) {
-            this.permissionTypes = opts.permissionType;
+        if (Array.isArray(opts.permissionTypes) && opts.permissionTypes.length) {
+            this.permissionTypes = opts.permissionTypes;
         }
         this.verbose = opts.verbose || false;
         this.permissionProperty = opts.permissionProperty || 'graclResourcePermissions';

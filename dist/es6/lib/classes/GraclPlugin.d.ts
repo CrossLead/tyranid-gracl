@@ -7,7 +7,7 @@ export declare type permissionTypeList = Hash<string>[];
 export declare type permissionHierarchy = Hash<any>;
 export declare type pluginOptions = {
     verbose?: boolean;
-    permissionType?: permissionTypeList;
+    permissionTypes?: permissionTypeList;
     permissionProperty?: string;
 };
 export declare class GraclPlugin {

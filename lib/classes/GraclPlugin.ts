@@ -17,7 +17,7 @@ export type permissionTypeList = Hash<string>[];
 export type permissionHierarchy = Hash<any>;
 export type pluginOptions = {
   verbose?: boolean;
-  permissionType?: permissionTypeList;
+  permissionTypes?: permissionTypeList;
   permissionProperty?: string;
 };
 
@@ -230,8 +230,8 @@ export class GraclPlugin {
       throw new Error(`permissionProperty must end with 's' as it is an array of ids.`);
     }
 
-    if (Array.isArray(opts.permissionType) && opts.permissionType.length) {
-      this.permissionTypes = opts.permissionType;
+    if (Array.isArray(opts.permissionTypes) && opts.permissionTypes.length) {
+      this.permissionTypes = opts.permissionTypes;
     }
 
     this.verbose = opts.verbose || false;
