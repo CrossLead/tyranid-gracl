@@ -64,23 +64,22 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
         const action = _permissionType$split2[0];
         const collectionName = _permissionType$split2[1];
 
-        if (!collectionName) {
-            throw new Error(`Invalid permissionType ${ permissionType }! ` + `No collection name in permission type, permissions must be formatted as <action>-<collection>`);
-        }
         const plugin = PermissionsModel.getGraclPlugin();
         if (!plugin.getPermissionObject(permissionType)) {
             throw new Error(`Invalid permissionType ${ permissionType }! ` + `permission action given ("${ action }") is not valid. Must be one of (${ _.keys(plugin.permissionHierarchy).join(', ') })`);
         }
-        const permissionCollection = tyranid_1.default.byName[collectionName];
-        if (!permissionCollection) {
-            throw new Error(`No collection ${ collectionName }!`);
-        }
-        PermissionsModel.validateAsResource(permissionCollection);
-        PermissionsModel.validateAsResource(queriedCollection);
-        const queriedResourceHierarchy = plugin.graclHierarchy.getResource(queriedCollection.def.name).getHierarchyClassNames();
-        const permissionResourceHierarchy = plugin.graclHierarchy.getResource(collectionName).getHierarchyClassNames();
-        if (!(_.contains(permissionResourceHierarchy, queriedCollection.def.name) || _.contains(queriedResourceHierarchy, collectionName))) {
-            throw new Error(`Cannot set permission "${ permissionType }" on collection ` + `"${ collectionName }" as resource, as collection "${ queriedCollection.def.name }" ` + `does not exist in the resource hierarchy of "${ collectionName }"`);
+        if (collectionName) {
+            const permissionCollection = tyranid_1.default.byName[collectionName];
+            if (!permissionCollection) {
+                throw new Error(`No collection ${ collectionName }, permission ` + `of type <action>-<collection> must contain valid collection!`);
+            }
+            PermissionsModel.validateAsResource(permissionCollection);
+            PermissionsModel.validateAsResource(queriedCollection);
+            const queriedResourceHierarchy = plugin.graclHierarchy.getResource(queriedCollection.def.name).getHierarchyClassNames();
+            const permissionResourceHierarchy = plugin.graclHierarchy.getResource(collectionName).getHierarchyClassNames();
+            if (!(_.contains(permissionResourceHierarchy, queriedCollection.def.name) || _.contains(queriedResourceHierarchy, collectionName))) {
+                throw new Error(`Cannot set permission "${ permissionType }" on collection ` + `"${ collectionName }" as resource, as collection "${ queriedCollection.def.name }" ` + `does not exist in the resource hierarchy of "${ collectionName }"`);
+            }
         }
     }
     static validateAsResource(collection) {

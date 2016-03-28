@@ -274,7 +274,7 @@ export class GraclPlugin {
           obj = this.permissionHierarchy[action];
 
     if (obj && obj['parent']) {
-      return `${obj['parent']['name']}-${collection}`;
+      return `${obj['parent']['name']}${collection ? '-' + collection : ''}`;
     }
     return void 0;
   }

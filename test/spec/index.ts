@@ -231,9 +231,9 @@ describe('tyranid-gracl', () => {
       expect(ben, 'ben should exist').to.exist;
       expect(chipotleCorporateBlog, 'chipotleCorporateBlog should exist').to.exist;
       await expectAsyncToThrow(
-        () => chipotleCorporateBlog['$isAllowed']('view', ben),
-        /No collection name in permission type/g,
-        'checking \'view\' without collection should throw'
+        () => chipotleCorporateBlog['$isAllowed']('viewBlahBlah', ben),
+        /Invalid permissionType/g,
+        'checking \'viewBlahBlah\' should throw'
       );
     });
 

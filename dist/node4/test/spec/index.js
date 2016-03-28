@@ -172,7 +172,7 @@ describe('tyranid-gracl', () => {
                   chipotleCorporateBlog = yield tyranid_1.default.byName['blog'].findOne({ name: 'Mexican Empire' });
             chai_1.expect(ben, 'ben should exist').to.exist;
             chai_1.expect(chipotleCorporateBlog, 'chipotleCorporateBlog should exist').to.exist;
-            yield expectAsyncToThrow_1.expectAsyncToThrow(() => chipotleCorporateBlog['$isAllowed']('view', ben), /No collection name in permission type/g, 'checking \'view\' without collection should throw');
+            yield expectAsyncToThrow_1.expectAsyncToThrow(() => chipotleCorporateBlog['$isAllowed']('viewBlahBlah', ben), /Invalid permissionType/g, 'checking \'viewBlahBlah\' should throw');
         }));
         it('should create a lock when updating permission and set to false when complete', () => __awaiter(undefined, void 0, void 0, function* () {
             yield giveBenAccessToChoppedPosts();
