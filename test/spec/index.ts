@@ -165,6 +165,8 @@ describe('tyranid-gracl', () => {
       expect(ben, 'should have method: $isAllowedForThis').to.have.property('$isAllowedForThis');
       expect(ben, 'should have method: $allowForThis').to.have.property('$allowForThis');
       expect(ben, 'should have method: $denyForThis').to.have.property('$denyForThis');
+      expect(ben, 'should have method: $explainPermission').to.have.property('$explainPermission');
+
     });
 
     it('should create subject and resource classes for collections without links in or out', () => {
@@ -371,7 +373,7 @@ describe('tyranid-gracl', () => {
       const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
             chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
-      const access = await secure.explainPermission(chopped, 'view-post', ben);
+      const access = await chopped['$explainPermission']('view-post', ben);
 
       expect(access.reason).to.match(/Permission set on <Resource:organization/);
       expect(access.access).to.equal(true);

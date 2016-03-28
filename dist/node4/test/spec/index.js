@@ -135,6 +135,7 @@ describe('tyranid-gracl', () => {
             chai_1.expect(ben, 'should have method: $isAllowedForThis').to.have.property('$isAllowedForThis');
             chai_1.expect(ben, 'should have method: $allowForThis').to.have.property('$allowForThis');
             chai_1.expect(ben, 'should have method: $denyForThis').to.have.property('$denyForThis');
+            chai_1.expect(ben, 'should have method: $explainPermission').to.have.property('$explainPermission');
         }));
         it('should create subject and resource classes for collections without links in or out', () => {
             chai_1.expect(secure.graclHierarchy.resources.has('usagelog')).to.equal(true);
@@ -239,7 +240,7 @@ describe('tyranid-gracl', () => {
             yield giveBenAccessToChoppedPosts();
             const ben = yield tyranid_1.default.byName['user'].findOne({ name: 'ben' }),
                   chopped = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chopped' });
-            const access = yield secure.explainPermission(chopped, 'view-post', ben);
+            const access = yield chopped['$explainPermission']('view-post', ben);
             chai_1.expect(access.reason).to.match(/Permission set on <Resource:organization/);
             chai_1.expect(access.access).to.equal(true);
             chai_1.expect(access.type).to.equal('view-post');

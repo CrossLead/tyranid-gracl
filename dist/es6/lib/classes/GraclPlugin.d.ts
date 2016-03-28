@@ -23,6 +23,11 @@ export declare class GraclPlugin {
         $deny(permissionType: string, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
         $allowForThis(permissionAction: string, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
         $denyForThis(permissionAction: string, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
+        $explainPermission(permissionType: string, subjectDocument?: Tyr.Document): Promise<{
+            type: string;
+            access: boolean;
+            reason: string;
+        }>;
     };
     static buildLinkGraph(): Hash<Hash<string>>;
     static constructPermissionHierarchy(permissionsTypes: permissionTypeList): permissionHierarchy;

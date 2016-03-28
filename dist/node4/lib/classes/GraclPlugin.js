@@ -544,6 +544,12 @@ GraclPlugin.documentMethods = {
         const doc = this;
         const permissionType = `${ permissionAction }-${ doc.$model.def.name }`;
         return this.$deny(permissionType, subjectDocument);
+    },
+    $explainPermission(permissionType) {
+        let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? tyranid_1.default.local.user : arguments[1];
+
+        const doc = this;
+        return GraclPlugin.explainPermission(doc, permissionType, subjectDocument);
     }
 };
 exports.GraclPlugin = GraclPlugin;

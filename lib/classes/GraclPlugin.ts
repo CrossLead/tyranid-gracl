@@ -92,6 +92,11 @@ export class GraclPlugin {
       const doc = <Tyr.Document> this;
       const permissionType = `${permissionAction}-${doc.$model.def.name}`;
       return this.$deny(permissionType, subjectDocument);
+    },
+
+    $explainPermission(permissionType: string, subjectDocument = Tyr.local.user) {
+      const doc = <Tyr.Document> this;
+      return GraclPlugin.explainPermission(doc, permissionType, subjectDocument);
     }
 
   };
