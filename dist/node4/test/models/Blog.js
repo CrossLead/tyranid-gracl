@@ -38,7 +38,7 @@ exports.BlogBaseCollection = new tyranid_1.default.Collection({
             relate: 'ownedBy',
             graclType: 'resource'
         },
-        permissionIds: { is: 'array', link: 'graclPermission' }
+        graclResourcePermissionIds: { is: 'array', link: 'graclPermission' }
     }
 });
 class Blog extends exports.BlogBaseCollection {

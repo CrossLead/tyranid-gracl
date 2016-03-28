@@ -13,7 +13,7 @@ const TeamBaseCollection = new tyranid_1.default.Collection({
             relate: 'ownedBy',
             graclType: ['subject', 'resource']
         },
-        permissionIds: { is: 'array', link: 'graclPermission' }
+        graclResourcePermissionIds: { is: 'array', link: 'graclPermission' }
     }
 });
 class Team extends TeamBaseCollection {}

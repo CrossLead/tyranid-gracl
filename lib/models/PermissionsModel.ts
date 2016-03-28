@@ -33,11 +33,6 @@ export const PermissionsBaseCollection = new Tyr.Collection({
 export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseCollection) {
 
 
-
-  static validPermissionActions = new Set(['view', 'edit', 'update', 'delete']);
-
-
-
   static getGraclPlugin(): GraclPlugin {
     const plugin = <GraclPlugin> Tyr.secure;
     if (!plugin) {
@@ -49,8 +44,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
 
   static validatePermissionType(permissionType: string, queriedCollection: Tyr.CollectionInstance) {
-    const [ action, collectionName ] = permissionType.split('-'),
-          { validPermissionActions } = PermissionsModel;
+    const [ action, collectionName ] = permissionType.split('-');
 
     if (!collectionName) {
       throw new Error(
@@ -133,9 +127,9 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
           ResourceClass          = plugin.graclHierarchy.getResource(resourceCollectionName),
           SubjectClass           = plugin.graclHierarchy.getSubject(subjectCollectionName);
 
-    if (!resourceDocument['permissions']) {
+    if (!resourceDocument[plugin.permissionProperty]) {
       await Tyr.byName[resourceCollectionName]
-        .populate('permissionIds', resourceDocument);
+        .populate(plugin.permissionIdProperty, resourceDocument);
     }
 
     if (!ResourceClass) {
@@ -288,7 +282,9 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
     PermissionsModel.validateAsResource(resourceDocument.$model);
 
-    const permissions         = <gracl.Permission[]> _.get(resourceDocument, 'permissions', []),
+    const plugin = PermissionsModel.getGraclPlugin();
+
+    const permissions         = <gracl.Permission[]> _.get(resourceDocument, plugin.permissionProperty, []),
           existingPermissions = <gracl.Permission[]> [],
           newPermissions      = <gracl.Permission[]> [],
           updated             = <Tyr.Document[]> [],
@@ -366,11 +362,11 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     updated.push(...(await Promise.all(existingUpdatePromises)));
     updated.push(...(await Promise.all(newPermissionPromises)));
 
-    resourceDocument['permissionIds'] = _.map(updated, permIdField);
+    resourceDocument[plugin.permissionIdProperty] = _.map(updated, permIdField);
 
     // remove permissions for this resource that are not in the given ids
     await PermissionsModel.remove({
-      [permIdField]: { $nin: resourceDocument['permissionIds'] },
+      [permIdField]: { $nin: resourceDocument[plugin.permissionIdProperty] },
       resourceId: resourceDocument.$uid
     });
 
@@ -378,7 +374,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
     const populated = <Tyr.Document> (
       await Tyr.byName[resourceCollectionName]
-        .populate('permissionIds', updatedResourceDocument)
+        .populate(plugin.permissionIdProperty, updatedResourceDocument)
     );
 
     await PermissionsModel.unlockPermissionsForResource(resourceDocument);
@@ -408,6 +404,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     });
 
     const permissionsByCollection = new Map<string, string[]>();
+    const plugin = PermissionsModel.getGraclPlugin();
 
     _.each(permissions, perm => {
       const altUid = perm['subjectId'] === uid
@@ -427,13 +424,13 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     for (const [collectionName, idList] of permissionsByCollection) {
       await Tyr.byName[collectionName].update(
         {
-          permissionIds: {
+          [plugin.permissionIdProperty]: {
             $in: idList
           }
         },
         {
           $pull: {
-            permissionIds: {
+            [plugin.permissionIdProperty]: {
               $in: idList
             }
           }
@@ -442,8 +439,9 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       );
     }
 
-    delete doc['permissions'];
-    doc['permissionIds'] = [];
+    delete doc[plugin.permissionProperty];
+    doc[plugin.permissionIdProperty] = [];
+
     await doc.$save();
 
     await PermissionsModel.unlockPermissionsForResource(doc);

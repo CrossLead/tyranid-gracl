@@ -13,7 +13,7 @@ export const BlogBaseCollection = new Tyr.Collection({
       relate: 'ownedBy',
       graclType: 'resource'
     },
-    permissionIds: { is: 'array', link: 'graclPermission' }
+    graclResourcePermissionIds: { is: 'array', link: 'graclPermission' }
   }
 });
 

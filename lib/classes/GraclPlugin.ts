@@ -15,6 +15,11 @@ import {
 
 export type permissionTypeList = Hash<string>[];
 export type permissionHierarchy = Hash<any>;
+export type pluginOptions = {
+  verbose?: boolean;
+  permissionType?: permissionTypeList;
+  permissionProperty?: string;
+};
 
 
 export class GraclPlugin {
@@ -90,24 +95,6 @@ export class GraclPlugin {
     }
 
   };
-
-
-
-  static makeRepository(collection: Tyr.CollectionInstance): gracl.Repository {
-    return {
-      async getEntity(id: string, node: gracl.Node): Promise<Tyr.Document> {
-        return <Tyr.Document> (
-          await collection.populate(
-            'permissionIds',
-            await collection.byId(id)
-          )
-        );
-      },
-      async saveEntity(id: string, doc: Tyr.Document, node: gracl.Node): Promise<Tyr.Document> {
-        return PermissionsModel.updatePermissions(doc);
-      }
-    };
-  }
 
 
 
@@ -221,9 +208,12 @@ export class GraclPlugin {
   explainPermission   = GraclPlugin.explainPermission;
 
 
+  // plugin options
   verbose = false;
-
   permissionHierarchy: permissionHierarchy;
+  permissionProperty: string;
+  permissionIdProperty: string;
+
 
   permissionTypes: permissionTypeList = [
     { name: 'edit' },
@@ -233,12 +223,39 @@ export class GraclPlugin {
 
 
 
-  constructor(opts: { verbose?: boolean, permissionType?: permissionTypeList } = {verbose: false, permissionType: []}) {
+  constructor(opts?: pluginOptions) {
+    opts = opts || {};
+
+    if (opts.permissionProperty && !/s$/.test(opts.permissionProperty)) {
+      throw new Error(`permissionProperty must end with 's' as it is an array of ids.`);
+    }
+
     if (Array.isArray(opts.permissionType) && opts.permissionType.length) {
       this.permissionTypes = opts.permissionType;
     }
-    this.verbose = opts.verbose;
+
+    this.verbose = opts.verbose || false;
+    this.permissionProperty = opts.permissionProperty || 'graclResourcePermissions';
+    this.permissionIdProperty = this.permissionProperty.replace(/s$/, 'Ids');
   };
+
+
+  makeRepository(collection: Tyr.CollectionInstance): gracl.Repository {
+    const permissionIds = this.permissionIdProperty;
+    return {
+      async getEntity(id: string, node: gracl.Node): Promise<Tyr.Document> {
+        return <Tyr.Document> (
+          await collection.populate(
+            permissionIds,
+            await collection.byId(id)
+          )
+        );
+      },
+      async saveEntity(id: string, doc: Tyr.Document, node: gracl.Node): Promise<Tyr.Document> {
+        return PermissionsModel.updatePermissions(doc);
+      }
+    };
+  }
 
 
   getPermissionObject(permissionString: string) {
@@ -369,11 +386,12 @@ export class GraclPlugin {
         // if no graclType property on this collection, skip the collection
         if (!graclType) return;
 
-        if (!(permissionsLink && permissionsLink.name === 'permissionIds')) {
+        if (!(permissionsLink && permissionsLink.name === this.permissionIdProperty)) {
           throw new Error(
-            `Tyranid collection \"${col.def.name}\" has \"graclType\" annotation but no \"permissionIds\" field. ` +
+            `Tyranid collection \"${col.def.name}\" has \"graclType\" annotation but no ` +
+            `\"${this.permissionIdProperty}\" field. ` +
             `tyranid-gracl requires a field on secured collections of type: \n` +
-            `\"permissionIds: { is: 'array', link: 'graclPermission' }\"`
+            `\"${this.permissionIdProperty}: { is: 'array', link: 'graclPermission' }\"`
           );
         }
 
@@ -449,7 +467,8 @@ export class GraclPlugin {
             name,
             id: '$uid',
             parent: parentName,
-            repository: GraclPlugin.makeRepository(node.collection),
+            permissionProperty: this.permissionProperty,
+            repository: this.makeRepository(node.collection),
             async getParents(): Promise<gracl.Node[]> {
               const thisNode = <gracl.Node> this;
 
@@ -476,7 +495,8 @@ export class GraclPlugin {
             nodes.set(name, {
               name,
               id: '$uid',
-              repository: GraclPlugin.makeRepository(parent)
+              permissionProperty: this.permissionProperty,
+              repository: this.makeRepository(parent)
             });
           }
         }

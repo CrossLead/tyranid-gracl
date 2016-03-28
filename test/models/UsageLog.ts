@@ -7,7 +7,7 @@ export const UsageLogBaseCollection = new Tyr.Collection({
   fields: {
     _id: { is: 'mongoid' },
     text: { is: 'string' },
-    permissionIds: { is: 'array', link: 'graclPermission', graclType: [ 'subject', 'resource' ] }
+    graclResourcePermissionIds: { is: 'array', link: 'graclPermission', graclType: [ 'subject', 'resource' ] }
   }
 });
 

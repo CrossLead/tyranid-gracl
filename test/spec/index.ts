@@ -9,12 +9,15 @@ import { expectedLinkPaths } from '../helpers/expectedLinkPaths';
 import { createTestData } from '../helpers/createTestData';
 import { expectAsyncToThrow } from '../helpers/expectAsyncToThrow';
 
+
 type GraclPlugin = tyranidGracl.GraclPlugin;
 
-const db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),
+const permissionKey = 'graclResourcePermissions',
+      db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),
       root = __dirname.replace(/test\/spec/, ''),
       secure = new tyranidGracl.GraclPlugin({
-        verbose: false
+        verbose: false,
+        permissionProperty: permissionKey
       });
 
 
@@ -180,11 +183,11 @@ describe('tyranid-gracl', () => {
 
       expect(existingPermissions).to.have.lengthOf(1);
       expect(existingPermissions[0]['resourceId'].toString(), 'resourceId')
-        .to.equal(updatedChopped['permissions'][0]['resourceId'].toString());
+        .to.equal(updatedChopped[permissionKey][0]['resourceId'].toString());
       expect(existingPermissions[0]['subjectId'].toString(), 'subjectId')
-        .to.equal(updatedChopped['permissions'][0]['subjectId'].toString());
+        .to.equal(updatedChopped[permissionKey][0]['subjectId'].toString());
       expect(existingPermissions[0]['access']['view-post'], 'access')
-        .to.equal(updatedChopped['permissions'][0]['access']['view-post']);
+        .to.equal(updatedChopped[permissionKey][0]['access']['view-post']);
     });
 
 
@@ -263,14 +266,14 @@ describe('tyranid-gracl', () => {
       const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
             chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
-      expect(chopped['permissionIds']).to.have.lengthOf(1);
+      expect(chopped[secure.permissionIdProperty]).to.have.lengthOf(1);
 
       expect(ben, 'ben should exist').to.exist;
       expect(chopped, 'chopped should exist').to.exist;
 
       const updatedChopped = await secure.setPermissionAccess(chopped, 'view-user', true, ben);
 
-      expect(updatedChopped['permissions']).to.have.lengthOf(1);
+      expect(updatedChopped[permissionKey]).to.have.lengthOf(1);
 
       const allPermissions = await tyranidGracl.PermissionsModel.find({});
 
@@ -287,7 +290,7 @@ describe('tyranid-gracl', () => {
             post = await Tyr.byName['post'].findOne({ text: 'Why burritos are amazing.' }),
             chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
 
-      expect(!ted['permissionIds']).to.equal(true);
+      expect(!ted[secure.permissionIdProperty]).to.equal(true);
 
       const permissionsForTed = await Tyr.byName['graclPermission'].find({
         $or: [
@@ -318,7 +321,7 @@ describe('tyranid-gracl', () => {
 
       const updatedTed = await Tyr.byName['user'].findOne({ name: 'ted' });
 
-      expect(ted['permissionIds']).to.have.lengthOf(1);
+      expect(ted[secure.permissionIdProperty]).to.have.lengthOf(1);
 
       const updatedPermissionsForTed = await Tyr.byName['graclPermission'].find({
         $or: [
@@ -355,10 +358,10 @@ describe('tyranid-gracl', () => {
             updatedPost = await Tyr.byName['post'].findOne({ text: 'Why burritos are amazing.' }),
             updatedChipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
 
-      expect(updatedChopped['permissionIds']).to.have.length(0);
-      expect(updatedCava['permissionIds']).to.have.length(0);
-      expect(updatedPost['permissionIds']).to.have.length(0);
-      expect(updatedChipotle['permissionIds']).to.have.length(0);
+      expect(updatedChopped[secure.permissionIdProperty]).to.have.length(0);
+      expect(updatedCava[secure.permissionIdProperty]).to.have.length(0);
+      expect(updatedPost[secure.permissionIdProperty]).to.have.length(0);
+      expect(updatedChipotle[secure.permissionIdProperty]).to.have.length(0);
     });
 
 

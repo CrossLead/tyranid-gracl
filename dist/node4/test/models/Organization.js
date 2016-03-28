@@ -8,7 +8,7 @@ const OrganizationBaseCollection = new tyranid_1.default.Collection({
     fields: {
         _id: { is: 'mongoid' },
         name: { is: 'string' },
-        permissionIds: { is: 'array', link: 'graclPermission' }
+        graclResourcePermissionIds: { is: 'array', link: 'graclPermission' }
     }
 });
 class Organization extends OrganizationBaseCollection {}

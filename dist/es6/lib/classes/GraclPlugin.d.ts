@@ -5,6 +5,11 @@ import { PermissionsModel } from '../models/PermissionsModel';
 import { Hash } from '../util';
 export declare type permissionTypeList = Hash<string>[];
 export declare type permissionHierarchy = Hash<any>;
+export declare type pluginOptions = {
+    verbose?: boolean;
+    permissionType?: permissionTypeList;
+    permissionProperty?: string;
+};
 export declare class GraclPlugin {
     static isAllowed: typeof PermissionsModel.isAllowed;
     static setPermissionAccess: typeof PermissionsModel.setPermissionAccess;
@@ -19,7 +24,6 @@ export declare class GraclPlugin {
         $allowForThis(permissionAction: string, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
         $denyForThis(permissionAction: string, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
     };
-    static makeRepository(collection: Tyr.CollectionInstance): gracl.Repository;
     static buildLinkGraph(): Hash<Hash<string>>;
     static constructPermissionHierarchy(permissionsTypes: permissionTypeList): permissionHierarchy;
     graclHierarchy: gracl.Graph;
@@ -31,11 +35,11 @@ export declare class GraclPlugin {
     explainPermission: typeof PermissionsModel.explainPermission;
     verbose: boolean;
     permissionHierarchy: permissionHierarchy;
+    permissionProperty: string;
+    permissionIdProperty: string;
     permissionTypes: permissionTypeList;
-    constructor(opts?: {
-        verbose?: boolean;
-        permissionType?: permissionTypeList;
-    });
+    constructor(opts?: pluginOptions);
+    makeRepository(collection: Tyr.CollectionInstance): gracl.Repository;
     getPermissionObject(permissionString: string): any;
     nextPermission(permissionString: string): string;
     log(message: string): this;

@@ -8,7 +8,7 @@ exports.UsageLogBaseCollection = new tyranid_1.default.Collection({
     fields: {
         _id: { is: 'mongoid' },
         text: { is: 'string' },
-        permissionIds: { is: 'array', link: 'graclPermission', graclType: ['subject', 'resource'] }
+        graclResourcePermissionIds: { is: 'array', link: 'graclPermission', graclType: ['subject', 'resource'] }
     }
 });
 class UsageLog extends exports.UsageLogBaseCollection {}

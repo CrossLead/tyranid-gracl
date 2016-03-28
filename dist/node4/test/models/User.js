@@ -17,7 +17,7 @@ const UserBaseCollection = new tyranid_1.default.Collection({
             }
         },
         organizationId: { link: 'organization' },
-        permissionIds: { is: 'array', link: 'graclPermission' }
+        graclResourcePermissionIds: { is: 'array', link: 'graclPermission' }
     }
 });
 class User extends UserBaseCollection {}

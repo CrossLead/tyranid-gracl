@@ -14,7 +14,7 @@ exports.PostBaseCollection = new tyranid_1.default.Collection({
             relate: 'ownedBy',
             graclType: 'resource'
         },
-        permissionIds: { is: 'array', link: 'graclPermission' }
+        graclResourcePermissionIds: { is: 'array', link: 'graclPermission' }
     }
 });
 class Post extends exports.PostBaseCollection {}

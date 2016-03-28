@@ -34,10 +34,12 @@ const chai_1 = require('chai');
 const expectedLinkPaths_1 = require('../helpers/expectedLinkPaths');
 const createTestData_1 = require('../helpers/createTestData');
 const expectAsyncToThrow_1 = require('../helpers/expectAsyncToThrow');
-const db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),
+const permissionKey = 'graclResourcePermissions',
+      db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),
       root = __dirname.replace(/test\/spec/, ''),
       secure = new tyranidGracl.GraclPlugin({
-    verbose: false
+    verbose: false,
+    permissionProperty: permissionKey
 });
 const checkStringEq = function checkStringEq(got, want) {
     let message = arguments.length <= 2 || arguments[2] === undefined ? '' : arguments[2];
@@ -144,9 +146,9 @@ describe('tyranid-gracl', () => {
             const updatedChopped = yield giveBenAccessToChoppedPosts();
             const existingPermissions = yield tyranid_1.default.byName['graclPermission'].find({});
             chai_1.expect(existingPermissions).to.have.lengthOf(1);
-            chai_1.expect(existingPermissions[0]['resourceId'].toString(), 'resourceId').to.equal(updatedChopped['permissions'][0]['resourceId'].toString());
-            chai_1.expect(existingPermissions[0]['subjectId'].toString(), 'subjectId').to.equal(updatedChopped['permissions'][0]['subjectId'].toString());
-            chai_1.expect(existingPermissions[0]['access']['view-post'], 'access').to.equal(updatedChopped['permissions'][0]['access']['view-post']);
+            chai_1.expect(existingPermissions[0]['resourceId'].toString(), 'resourceId').to.equal(updatedChopped[permissionKey][0]['resourceId'].toString());
+            chai_1.expect(existingPermissions[0]['subjectId'].toString(), 'subjectId').to.equal(updatedChopped[permissionKey][0]['subjectId'].toString());
+            chai_1.expect(existingPermissions[0]['access']['view-post'], 'access').to.equal(updatedChopped[permissionKey][0]['access']['view-post']);
         }));
         it('should respect subject / resource hierarchy', () => __awaiter(undefined, void 0, void 0, function* () {
             yield giveBenAccessToChoppedPosts();
@@ -189,11 +191,11 @@ describe('tyranid-gracl', () => {
             yield giveBenAccessToChoppedPosts();
             const ben = yield tyranid_1.default.byName['user'].findOne({ name: 'ben' }),
                   chopped = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chopped' });
-            chai_1.expect(chopped['permissionIds']).to.have.lengthOf(1);
+            chai_1.expect(chopped[secure.permissionIdProperty]).to.have.lengthOf(1);
             chai_1.expect(ben, 'ben should exist').to.exist;
             chai_1.expect(chopped, 'chopped should exist').to.exist;
             const updatedChopped = yield secure.setPermissionAccess(chopped, 'view-user', true, ben);
-            chai_1.expect(updatedChopped['permissions']).to.have.lengthOf(1);
+            chai_1.expect(updatedChopped[permissionKey]).to.have.lengthOf(1);
             const allPermissions = yield tyranidGracl.PermissionsModel.find({});
             chai_1.expect(allPermissions).to.have.lengthOf(1);
         }));
@@ -204,7 +206,7 @@ describe('tyranid-gracl', () => {
                   cava = yield tyranid_1.default.byName['organization'].findOne({ name: 'Cava' }),
                   post = yield tyranid_1.default.byName['post'].findOne({ text: 'Why burritos are amazing.' }),
                   chipotle = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chipotle' });
-            chai_1.expect(!ted['permissionIds']).to.equal(true);
+            chai_1.expect(!ted[secure.permissionIdProperty]).to.equal(true);
             const permissionsForTed = yield tyranid_1.default.byName['graclPermission'].find({
                 $or: [{ subjectId: ted.$uid }, { resourceId: ted.$uid }]
             });
@@ -213,7 +215,7 @@ describe('tyranid-gracl', () => {
             chai_1.expect(_.all(prePermissionChecks)).to.equal(false);
             const permissionOperations = yield Promise.all([chopped['$allow']('view-user', ted), cava['$allow']('view-post', ted), post['$allow']('edit-post', ted), chipotle['$deny']('view-post', ted), ted['$allow']('view-user', ben)]);
             const updatedTed = yield tyranid_1.default.byName['user'].findOne({ name: 'ted' });
-            chai_1.expect(ted['permissionIds']).to.have.lengthOf(1);
+            chai_1.expect(ted[secure.permissionIdProperty]).to.have.lengthOf(1);
             const updatedPermissionsForTed = yield tyranid_1.default.byName['graclPermission'].find({
                 $or: [{ subjectId: ted.$uid }, { resourceId: ted.$uid }]
             });
@@ -228,10 +230,10 @@ describe('tyranid-gracl', () => {
                   updatedCava = yield tyranid_1.default.byName['organization'].findOne({ name: 'Cava' }),
                   updatedPost = yield tyranid_1.default.byName['post'].findOne({ text: 'Why burritos are amazing.' }),
                   updatedChipotle = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chipotle' });
-            chai_1.expect(updatedChopped['permissionIds']).to.have.length(0);
-            chai_1.expect(updatedCava['permissionIds']).to.have.length(0);
-            chai_1.expect(updatedPost['permissionIds']).to.have.length(0);
-            chai_1.expect(updatedChipotle['permissionIds']).to.have.length(0);
+            chai_1.expect(updatedChopped[secure.permissionIdProperty]).to.have.length(0);
+            chai_1.expect(updatedCava[secure.permissionIdProperty]).to.have.length(0);
+            chai_1.expect(updatedPost[secure.permissionIdProperty]).to.have.length(0);
+            chai_1.expect(updatedChipotle[secure.permissionIdProperty]).to.have.length(0);
         }));
         it('should correctly explain permissions', () => __awaiter(undefined, void 0, void 0, function* () {
             yield giveBenAccessToChoppedPosts();
