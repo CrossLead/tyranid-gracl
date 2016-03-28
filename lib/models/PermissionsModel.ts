@@ -64,7 +64,12 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       );
     }
 
-    PermissionsModel.validateAsResource(Tyr.byName[collectionName]);
+    const permissionCollection = Tyr.byName[collectionName];
+    if (!permissionCollection) {
+      throw new Error(`No collection ${collectionName}!`);
+    }
+
+    PermissionsModel.validateAsResource(permissionCollection);
     PermissionsModel.validateAsResource(queriedCollection);
 
     const queriedResourceHierarchy = plugin

@@ -71,7 +71,11 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
         if (!plugin.getPermissionObject(permissionType)) {
             throw new Error(`Invalid permissionType ${ permissionType }! ` + `permission action given ("${ action }") is not valid. Must be one of (${ _.keys(plugin.permissionHierarchy).join(', ') })`);
         }
-        PermissionsModel.validateAsResource(tyranid_1.default.byName[collectionName]);
+        const permissionCollection = tyranid_1.default.byName[collectionName];
+        if (!permissionCollection) {
+            throw new Error(`No collection ${ collectionName }!`);
+        }
+        PermissionsModel.validateAsResource(permissionCollection);
         PermissionsModel.validateAsResource(queriedCollection);
         const queriedResourceHierarchy = plugin.graclHierarchy.getResource(queriedCollection.def.name).getHierarchyClassNames();
         const permissionResourceHierarchy = plugin.graclHierarchy.getResource(collectionName).getHierarchyClassNames();
