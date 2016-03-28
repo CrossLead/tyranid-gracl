@@ -39,7 +39,6 @@ class GraclPlugin {
         this.setPermissionAccess = GraclPlugin.setPermissionAccess;
         this.deletePermissions = GraclPlugin.deletePermissions;
         this.explainPermission = GraclPlugin.explainPermission;
-        this.verbose = false;
         this.permissionTypes = [{ name: 'edit' }, { name: 'view', parent: 'edit' }, { name: 'delete' }];
         opts = opts || {};
         if (opts.permissionProperty && !/s$/.test(opts.permissionProperty)) {

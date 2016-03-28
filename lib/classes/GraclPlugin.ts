@@ -209,7 +209,7 @@ export class GraclPlugin {
 
 
   // plugin options
-  verbose = false;
+  verbose: boolean;
   permissionHierarchy: permissionHierarchy;
   permissionProperty: string;
   permissionIdProperty: string;
