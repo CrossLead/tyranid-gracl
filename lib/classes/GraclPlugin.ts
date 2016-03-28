@@ -407,7 +407,7 @@ export class GraclPlugin {
           if (!linkCollectionPermissionsLink) {
             throw new Error(
               `Collection ${col.def.name} has a resource link to collection ${field.link.def.name} ` +
-              `but ${field.link.def.name} has no permissionIds field!`
+              `but ${field.link.def.name} has no ${this.permissionIdProperty} field!`
             );
           }
         }
