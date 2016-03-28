@@ -184,7 +184,6 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
                 new: false,
                 upsert: true
             });
-            console.log(lock);
             if (lock['value'] && lock['value']['locked'] === true) {
                 throw new Error(`Cannot update permissions for resource ${ resourceDocument.$uid } as another update is in progress!`);
             }
