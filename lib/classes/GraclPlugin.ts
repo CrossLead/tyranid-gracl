@@ -327,8 +327,18 @@ export class GraclPlugin {
       return perm;
     }), 'name', 'collection_parents');
 
-    if (_.uniq(sorted, false, 'name').length !== sorted.length) {
-      throw new Error(`Duplicate permission types provided: ${JSON.stringify(permissionsTypes)}`);
+    const duplicates = new Set(),
+          exist = new Set();
+
+    for (const perm of sorted) {
+      if (exist.has(perm['name'])) {
+        duplicates.add(perm['name']);
+      }
+      exist.add(perm['name']);
+    }
+
+    if (duplicates.size) {
+      throw new Error(`Duplicate permission types provided: ${[...duplicates].join(', ')}`);
     }
 
     const hierarchy: permissionHierarchy = {};
