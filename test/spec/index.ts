@@ -25,7 +25,14 @@ const permissionKey = 'graclResourcePermissions',
           { name: 'abstract_view_chart', abstract: true, parents: [
             'view-user',
             'view-post'
-          ]}
+          ]},
+          { name: 'view_alignment_triangle', abstract: true, parents: [
+            'edit_alignment_triangle',
+            'view_alignment_triangle_component'
+          ]},
+
+          { name: 'edit_alignment_triangle', abstract: true },
+          { name: 'view_alignment_triangle_component', abstract: true }
         ]
       });
 

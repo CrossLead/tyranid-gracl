@@ -177,8 +177,8 @@ class GraclPlugin {
                     }
                     if (hierarchyParent) return hierarchyParent;
                     const parsed = this.parsePermissionString(p);
-                    if (!parsed.collection) {
-                        throw new Error(`Parent permissions of abstract permission must ` + `themseleves be abstract or reference a specific collection`);
+                    if (abstract && !parsed.collection) {
+                        throw new Error(`Parent permissions of abstract permission must ` + `themseleves be abstract or reference a specific collection. ` + `Abstract permission ${ name } has parent permission ${ p } which is not specific to a collection`);
                     }
                     if (!this.graclHierarchy.resources.has(parsed.collection)) {
                         throw new Error(`Collection ${ parsed.collection } in permission ` + `"${ p }" does not exist in the resource hierarchy!`);

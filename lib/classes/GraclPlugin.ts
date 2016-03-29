@@ -366,10 +366,11 @@ export class GraclPlugin {
 
           const parsed = this.parsePermissionString(p);
 
-          if (!parsed.collection) {
+          if (abstract && !parsed.collection) {
             throw new Error(
               `Parent permissions of abstract permission must ` +
-              `themseleves be abstract or reference a specific collection`
+              `themseleves be abstract or reference a specific collection. ` +
+              `Abstract permission ${name} has parent permission ${p} which is not specific to a collection`
             );
           }
 
