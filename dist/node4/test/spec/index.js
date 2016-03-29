@@ -40,7 +40,7 @@ const permissionKey = 'graclResourcePermissions',
       secure = new tyranidGracl.GraclPlugin({
     verbose: false,
     permissionProperty: permissionKey,
-    permissionTypes: [{ name: 'edit' }, { name: 'view', parent: 'edit' }, { name: 'delete' }, { name: 'abstract_view_chart', parent: 'view-chart' }]
+    permissionTypes: [{ name: 'edit' }, { name: 'view', parent: 'edit' }, { name: 'delete' }, { name: 'abstract_view_chart', abstract: true, parents: ['view-user', 'view-post'] }]
 });
 const checkStringEq = function checkStringEq(got, want) {
     let message = arguments.length <= 2 || arguments[2] === undefined ? '' : arguments[2];
@@ -182,6 +182,13 @@ describe('tyranid-gracl', () => {
             chai_1.expect(locks).to.have.lengthOf(1);
             chai_1.expect(locks[0]['resourceId']).to.equal(chopped.$uid);
             chai_1.expect(locks[0]['locked']).to.equal(false);
+        }));
+        it('should successfully find permission when multiple permissions parents', () => __awaiter(undefined, void 0, void 0, function* () {
+            yield giveBenAccessToChoppedPosts();
+            const ben = yield tyranid_1.default.byName['user'].findOne({ name: 'ben' }),
+                  chopped = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chopped' });
+            const access = yield chopped['$isAllowed']('abstract_view_chart', ben);
+            chai_1.expect(access).to.equal(true);
         }));
         it('should throw error when trying to lock same resource twice', () => __awaiter(undefined, void 0, void 0, function* () {
             const chipotle = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chipotle' });

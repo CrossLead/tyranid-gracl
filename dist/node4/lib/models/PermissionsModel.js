@@ -57,28 +57,22 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
         return plugin;
     }
     static validatePermissionType(permissionType, queriedCollection) {
-        var _permissionType$split = permissionType.split('-');
-
-        var _permissionType$split2 = _slicedToArray(_permissionType$split, 2);
-
-        const action = _permissionType$split2[0];
-        const collectionName = _permissionType$split2[1];
-
-        const plugin = PermissionsModel.getGraclPlugin();
+        const plugin = PermissionsModel.getGraclPlugin(),
+              components = plugin.parsePermissionString(permissionType);
         if (!plugin.getPermissionObject(permissionType)) {
-            throw new Error(`Invalid permissionType ${ permissionType }! ` + `permission action given ("${ action }") is not valid. Must be one of (${ _.keys(plugin.permissionHierarchy).join(', ') })`);
+            throw new Error(`Invalid permissionType ${ permissionType }! ` + `permission action given ("${ components.action }") is not valid. Must be one of (${ _.keys(plugin.permissionHierarchy).join(', ') })`);
         }
-        if (collectionName) {
-            const permissionCollection = tyranid_1.default.byName[collectionName];
+        if (components.collection) {
+            const permissionCollection = tyranid_1.default.byName[components.collection];
             if (!permissionCollection) {
-                throw new Error(`No collection ${ collectionName }, permission ` + `of type <action>-<collection> must contain valid collection!`);
+                throw new Error(`No collection ${ components.collection }, permission ` + `of type <action>-<collection> must contain valid collection!`);
             }
             PermissionsModel.validateAsResource(permissionCollection);
             PermissionsModel.validateAsResource(queriedCollection);
             const queriedResourceHierarchy = plugin.graclHierarchy.getResource(queriedCollection.def.name).getHierarchyClassNames();
-            const permissionResourceHierarchy = plugin.graclHierarchy.getResource(collectionName).getHierarchyClassNames();
-            if (!(_.contains(permissionResourceHierarchy, queriedCollection.def.name) || _.contains(queriedResourceHierarchy, collectionName))) {
-                throw new Error(`Cannot set permission "${ permissionType }" on collection ` + `"${ collectionName }" as resource, as collection "${ queriedCollection.def.name }" ` + `does not exist in the resource hierarchy of "${ collectionName }"`);
+            const permissionResourceHierarchy = plugin.graclHierarchy.getResource(components.collection).getHierarchyClassNames();
+            if (!(_.contains(permissionResourceHierarchy, queriedCollection.def.name) || _.contains(queriedResourceHierarchy, components.collection))) {
+                throw new Error(`Cannot set permission "${ permissionType }" on collection ` + `"${ components.collection }" as resource, as collection "${ queriedCollection.def.name }" ` + `does not exist in the resource hierarchy of "${ components.collection }"`);
             }
         }
     }
@@ -144,10 +138,13 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
             var _ref2 = yield PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
 
             const subject = _ref2.subject;
-            const resource = _ref2.resource;const plugin = PermissionsModel.getGraclPlugin();const nextPermission = plugin.nextPermission(permissionType);
+            const resource = _ref2.resource;const plugin = PermissionsModel.getGraclPlugin();const components = plugin.parsePermissionString(permissionType);const nextPermissions = plugin.nextPermissions(permissionType);
             const access = yield resource.isAllowed(subject, permissionType);
-            if (!access && nextPermission) {
-                return PermissionsModel.isAllowed(resourceDocument, nextPermission, subjectDocument, abstract);
+            if (!access && nextPermissions) {
+                for (const nextPermission of nextPermissions) {
+                    const parentAccess = yield PermissionsModel.isAllowed(resourceDocument, nextPermission, subjectDocument, abstract);
+                    if (parentAccess) return true;
+                }
             }
             return access;
         });
@@ -281,9 +278,9 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
             yield PermissionsModel.lockPermissionsForResource(doc);
             const permissions = yield PermissionsModel.find({
                 $or: [{ subjectId: uid }, { resourceId: uid }]
-            });
-            const permissionsByCollection = new Map();
-            const plugin = PermissionsModel.getGraclPlugin();
+            }),
+                  permissionsByCollection = new Map(),
+                  plugin = PermissionsModel.getGraclPlugin();
             _.each(permissions, perm => {
                 const altUid = perm['subjectId'] === uid ? perm['resourceId'] : perm['subjectId'];
                 const parsed = tyranid_1.default.parseUid(altUid),

@@ -44,24 +44,25 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
 
   static validatePermissionType(permissionType: string, queriedCollection: Tyr.CollectionInstance) {
-    const [ action, collectionName ] = permissionType.split('-');
 
-    const plugin = PermissionsModel.getGraclPlugin();
+    const plugin = PermissionsModel.getGraclPlugin(),
+          components = plugin.parsePermissionString(permissionType);
+
 
     if (!plugin.getPermissionObject(permissionType)) {
       throw new Error(
         `Invalid permissionType ${permissionType}! ` +
-        `permission action given ("${action}") is not valid. Must be one of (${
+        `permission action given ("${components.action}") is not valid. Must be one of (${
           _.keys(plugin.permissionHierarchy).join(', ')
         })`
       );
     }
 
     // if given collection name, validate it
-    if (collectionName) {
-      const permissionCollection = Tyr.byName[collectionName];
+    if (components.collection) {
+      const permissionCollection = Tyr.byName[components.collection];
       if (!permissionCollection) {
-        throw new Error(`No collection ${collectionName}, permission ` +
+        throw new Error(`No collection ${components.collection}, permission ` +
           `of type <action>-<collection> must contain valid collection!`);
       }
 
@@ -75,17 +76,17 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
       const permissionResourceHierarchy = plugin
         .graclHierarchy
-        .getResource(collectionName)
+        .getResource(components.collection)
         .getHierarchyClassNames();
 
       if (!(
             _.contains(permissionResourceHierarchy, queriedCollection.def.name) ||
-            _.contains(queriedResourceHierarchy, collectionName)
+            _.contains(queriedResourceHierarchy, components.collection)
           )) {
         throw new Error(
           `Cannot set permission "${permissionType}" on collection ` +
-          `"${collectionName}" as resource, as collection "${queriedCollection.def.name}" ` +
-          `does not exist in the resource hierarchy of "${collectionName}"`
+          `"${components.collection}" as resource, as collection "${queriedCollection.def.name}" ` +
+          `does not exist in the resource hierarchy of "${components.collection}"`
         );
       }
     }
@@ -186,12 +187,19 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
     const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument),
           plugin = PermissionsModel.getGraclPlugin(),
-          nextPermission = plugin.nextPermission(permissionType);
+          components = plugin.parsePermissionString(permissionType),
+          nextPermissions = plugin.nextPermissions(permissionType);
 
     const access = await resource.isAllowed(subject, permissionType);
 
-    if (!access && nextPermission) {
-      return PermissionsModel.isAllowed(resourceDocument, nextPermission, subjectDocument, abstract);
+    if (!access && nextPermissions) {
+      for (const nextPermission of nextPermissions) {
+
+        const parentAccess = await PermissionsModel
+          .isAllowed(resourceDocument, nextPermission, subjectDocument, abstract);
+
+        if (parentAccess) return true;
+      }
     }
 
     return access;
@@ -400,14 +408,13 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     await PermissionsModel.lockPermissionsForResource(doc);
 
     const permissions = await PermissionsModel.find({
-      $or: [
-        { subjectId: uid },
-        { resourceId: uid }
-      ]
-    });
-
-    const permissionsByCollection = new Map<string, string[]>();
-    const plugin = PermissionsModel.getGraclPlugin();
+            $or: [
+              { subjectId: uid },
+              { resourceId: uid }
+            ]
+          }),
+          permissionsByCollection = new Map<string, string[]>(),
+          plugin = PermissionsModel.getGraclPlugin();
 
     _.each(permissions, perm => {
       const altUid = perm['subjectId'] === uid

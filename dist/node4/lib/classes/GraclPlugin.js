@@ -39,7 +39,7 @@ class GraclPlugin {
         this.setPermissionAccess = GraclPlugin.setPermissionAccess;
         this.deletePermissions = GraclPlugin.deletePermissions;
         this.explainPermission = GraclPlugin.explainPermission;
-        this.permissionTypes = [{ name: 'edit' }, { name: 'view', parent: 'edit' }, { name: 'delete' }];
+        this.permissionTypes = [{ name: 'edit' }, { name: 'view', parents: ['edit'] }, { name: 'delete' }];
         opts = opts || {};
         if (opts.permissionProperty && !/s$/.test(opts.permissionProperty)) {
             throw new Error(`permissionProperty must end with 's' as it is an array of ids.`);
@@ -95,28 +95,93 @@ class GraclPlugin {
         });
         return next;
     }
-    static constructPermissionHierarchy(permissionsTypes) {
+
+    parsePermissionString(perm) {
+        if (!perm) throw new Error(`Tried to split empty permission!`);
+
+        var _perm$split = perm.split('-');
+
+        var _perm$split2 = _slicedToArray(_perm$split, 2);
+
+        const action = _perm$split2[0];
+        const collection = _perm$split2[1];
+
+        return {
+            action: action,
+            collection: collection
+        };
+    }
+    formatPermissionType(components) {
+        const hierarchyNode = this.permissionHierarchy[components.action];
+        if (!hierarchyNode.abstract && components.collection) {
+            return `${ components.action }-${ components.collection }`;
+        }
+        return components.action;
+    }
+    constructPermissionHierarchy(permissionsTypes) {
+        if (!this.graclHierarchy) {
+            throw new Error(`Must build subject/resource hierarchy before creating permission hierarchy`);
+        }
         const sorted = gracl.topologicalSort(_.map(permissionsTypes, perm => {
-            if (/-/.test(perm['parent'])) {
-                perm['collection_parent'] = perm['parent'];
-                perm['parent'] = perm['parent'].split('-')[0];
+            const singleParent = perm['parent'];
+            if (singleParent) perm['parents'] = [singleParent];
+            const parents = perm['parents'];
+            if (parents) {
+                if (!Array.isArray(parents)) {
+                    throw new Error(`parents of permission type must be given as an array!`);
+                }
+                const colParents = [];
+                for (const parent of parents) {
+                    if (/-/.test(parent)) {
+                        if (!perm['abstract']) {
+                            throw new Error(`Cannot set collection-specific permission to be the parent of a non-abstract permission!`);
+                        }
+                        const parsed = this.parsePermissionString(parent);
+                        if (!this.graclHierarchy.resources.has(parsed.collection)) {
+                            throw new Error(`Collection ${ parsed.collection } in permission ` + `"${ parent }" does not exist in the resource hierarchy!`);
+                        }
+                        colParents.push(parsed.action);
+                    } else {
+                        colParents.push(parent);
+                    }
+                }
+                perm['collection_parents'] = _.unique(colParents);
             }
             return perm;
-        }));
+        }), 'name', 'collection_parents');
         if (_.uniq(sorted, false, 'name').length !== sorted.length) {
-            throw new Error(`Duplicate permission types provided: ${ permissionsTypes }`);
+            throw new Error(`Duplicate permission types provided: ${ JSON.stringify(permissionsTypes) }`);
         }
         const hierarchy = {};
         for (const node of sorted) {
-            const name = node['name'];
+            const name = node['name'],
+                  parents = node['parents'],
+                  abstract = node['abstract'];
             hierarchy[name] = {
                 name: name,
-                parent: hierarchy[node['collection_parent'] || node['parent']]
+                abstract: abstract,
+                parents: _.map(parents, p => {
+                    const hierarchyParent = hierarchy[p];
+                    if (abstract && hierarchyParent && !hierarchyParent.abstract) {
+                        throw new Error(`If a permission is abstract, it either needs an abstract parent ` + `or a parent that references a specific collection.`);
+                    }
+                    if (hierarchyParent) return hierarchyParent;
+                    const parsed = this.parsePermissionString(p);
+                    if (!parsed.collection) {
+                        throw new Error(`Parent permissions of abstract permission must ` + `themseleves be abstract or reference a specific collection`);
+                    }
+                    if (!this.graclHierarchy.resources.has(parsed.collection)) {
+                        throw new Error(`Collection ${ parsed.collection } in permission ` + `"${ p }" does not exist in the resource hierarchy!`);
+                    }
+                    return {
+                        name: p,
+                        parents: [hierarchy[parsed.action]]
+                    };
+                })
             };
         }
         return hierarchy;
     }
-
     makeRepository(collection) {
         const permissionIds = this.permissionIdProperty;
         return {
@@ -133,26 +198,22 @@ class GraclPlugin {
         };
     }
     getPermissionObject(permissionString) {
-        var _permissionString$spl = permissionString.split('-');
-
-        var _permissionString$spl2 = _slicedToArray(_permissionString$spl, 2);
-
-        const action = _permissionString$spl2[0];
-        const collection = _permissionString$spl2[1];
-
-        return this.permissionHierarchy[action];
+        return this.permissionHierarchy[this.parsePermissionString(permissionString).action];
     }
-    nextPermission(permissionString) {
-        var _permissionString$spl3 = permissionString.split('-');
-
-        var _permissionString$spl4 = _slicedToArray(_permissionString$spl3, 2);
-
-        const action = _permissionString$spl4[0];
-        const collection = _permissionString$spl4[1];const obj = this.permissionHierarchy[action];
-        if (obj && obj['parent']) {
-            return `${ obj['parent']['name'] }${ collection ? '-' + collection : '' }`;
+    nextPermissions(permissionString) {
+        const components = this.parsePermissionString(permissionString),
+              obj = this.permissionHierarchy[components.action];
+        let permissions = [];
+        if (obj && obj['parents']) {
+            permissions = obj['parents'].map(p => {
+                const parentPermComponents = this.parsePermissionString(p['name']);
+                return this.formatPermissionType({
+                    action: parentPermComponents.action,
+                    collection: parentPermComponents.collection || components.collection
+                });
+            });
         }
-        return void 0;
+        return permissions;
     }
     log(message) {
         if (this.verbose) {
@@ -193,7 +254,6 @@ class GraclPlugin {
     boot(stage) {
         if (stage === 'post-link') {
             this.log(`starting boot.`);
-            this.permissionHierarchy = GraclPlugin.constructPermissionHierarchy(this.permissionTypes);
             Object.assign(tyranid_1.default.documentPrototype, GraclPlugin.documentMethods);
             const collections = tyranid_1.default.collections,
                   nodeSet = new Set();
@@ -322,6 +382,7 @@ class GraclPlugin {
             if (this.verbose) {
                 this.logHierarchy();
             }
+            this.permissionHierarchy = this.constructPermissionHierarchy(this.permissionTypes);
         }
     }
     logHierarchy() {
@@ -337,7 +398,10 @@ class GraclPlugin {
                 this.log(`skipping query modification for ${ queriedCollectionName } as it is flagged as unsecured`);
                 return {};
             }
-            const permissionType = `${ permissionAction }-${ queriedCollectionName }`;
+            const permissionType = this.formatPermissionType({
+                action: permissionAction,
+                collection: queriedCollectionName
+            });
             if (!permissionAction) {
                 throw new Error(`No permissionAction given to GraclPlugin.query()`);
             }
@@ -352,15 +416,23 @@ class GraclPlugin {
                 this.log(`Querying against collection (${ queriedCollectionName }) with no resource class -- no restriction enforced`);
                 return {};
             }
-            const permissionActions = [permissionAction];
-            let next = permissionType;
-            while (next = this.nextPermission(next)) {
-                permissionActions.push(next.split('-')[0]);
+            const permissionActions = [permissionAction],
+                  getNext = n => {
+                return _.chain(n).map(p => this.nextPermissions(p)).flatten().value();
+            };
+            let next = [permissionType];
+            while ((next = getNext(next)).length) {
+                for (const perm of next) {
+                    permissionActions.push(this.parsePermissionString(perm).action);
+                }
             }
             const getAccess = permission => {
                 let perm;
                 for (const action of permissionActions) {
-                    const type = `${ action }-${ queriedCollectionName }`;
+                    const type = this.formatPermissionType({
+                        action: action,
+                        collection: queriedCollectionName
+                    });
                     if (permission.access[type] === true) {
                         return true;
                     } else if (permission.access[type] === false) {
@@ -523,8 +595,12 @@ GraclPlugin.documentMethods = {
     $isAllowedForThis(permissionAction) {
         let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? tyranid_1.default.local.user : arguments[1];
 
-        const doc = this;
-        const permissionType = `${ permissionAction }-${ doc.$model.def.name }`;
+        const doc = this,
+              plugin = PermissionsModel_1.PermissionsModel.getGraclPlugin(),
+              permissionType = plugin.formatPermissionType({
+            action: permissionAction,
+            collection: doc.$model.def.name
+        });
         return this.$isAllowed(permissionType, subjectDocument);
     },
     $allow(permissionType) {
@@ -540,15 +616,23 @@ GraclPlugin.documentMethods = {
     $allowForThis(permissionAction) {
         let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? tyranid_1.default.local.user : arguments[1];
 
-        const doc = this;
-        const permissionType = `${ permissionAction }-${ doc.$model.def.name }`;
+        const doc = this,
+              plugin = PermissionsModel_1.PermissionsModel.getGraclPlugin(),
+              permissionType = plugin.formatPermissionType({
+            action: permissionAction,
+            collection: doc.$model.def.name
+        });
         return this.$allow(permissionType, subjectDocument);
     },
     $denyForThis(permissionAction) {
         let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? tyranid_1.default.local.user : arguments[1];
 
-        const doc = this;
-        const permissionType = `${ permissionAction }-${ doc.$model.def.name }`;
+        const doc = this,
+              plugin = PermissionsModel_1.PermissionsModel.getGraclPlugin(),
+              permissionType = plugin.formatPermissionType({
+            action: permissionAction,
+            collection: doc.$model.def.name
+        });
         return this.$deny(permissionType, subjectDocument);
     },
     $explainPermission(permissionType) {

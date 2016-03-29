@@ -22,7 +22,10 @@ const permissionKey = 'graclResourcePermissions',
           { name: 'edit' },
           { name: 'view', parent: 'edit' },
           { name: 'delete' },
-          { name: 'abstract_view_chart', parent: 'view-chart'}
+          { name: 'abstract_view_chart', abstract: true, parents: [
+            'view-user',
+            'view-post'
+          ]}
         ]
       });
 
@@ -243,7 +246,6 @@ describe('tyranid-gracl', () => {
       );
     });
 
-
     it('should create a lock when updating permission and set to false when complete', async () => {
       await giveBenAccessToChoppedPosts();
 
@@ -253,6 +255,17 @@ describe('tyranid-gracl', () => {
       expect(locks).to.have.lengthOf(1);
       expect(locks[0]['resourceId']).to.equal(chopped.$uid);
       expect(locks[0]['locked']).to.equal(false);
+    });
+
+
+    it('should successfully find permission when multiple permissions parents', async () => {
+      await giveBenAccessToChoppedPosts();
+
+      const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+            chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
+
+      const access = await chopped['$isAllowed']('abstract_view_chart', ben);
+      expect(access).to.equal(true);
     });
 
 
