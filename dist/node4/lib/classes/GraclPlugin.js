@@ -96,7 +96,13 @@ class GraclPlugin {
         return next;
     }
     static constructPermissionHierarchy(permissionsTypes) {
-        const sorted = gracl.topologicalSort(permissionsTypes);
+        const sorted = gracl.topologicalSort(_.map(permissionsTypes, perm => {
+            if (/-/.test(perm['parent'])) {
+                perm['collection_parent'] = perm['parent'];
+                perm['parent'] = perm['parent'].split('-')[0];
+            }
+            return perm;
+        }));
         if (_.uniq(sorted, false, 'name').length !== sorted.length) {
             throw new Error(`Duplicate permission types provided: ${ permissionsTypes }`);
         }
@@ -105,7 +111,7 @@ class GraclPlugin {
             const name = node['name'];
             hierarchy[name] = {
                 name: name,
-                parent: hierarchy[node['parent']]
+                parent: hierarchy[node['collection_parent'] || node['parent']]
             };
         }
         return hierarchy;

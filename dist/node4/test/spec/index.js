@@ -39,7 +39,8 @@ const permissionKey = 'graclResourcePermissions',
       root = __dirname.replace(/test\/spec/, ''),
       secure = new tyranidGracl.GraclPlugin({
     verbose: false,
-    permissionProperty: permissionKey
+    permissionProperty: permissionKey,
+    permissionTypes: [{ name: 'edit' }, { name: 'view', parent: 'edit' }, { name: 'delete' }, { name: 'abstract_view_chart', parent: 'view-chart' }]
 });
 const checkStringEq = function checkStringEq(got, want) {
     let message = arguments.length <= 2 || arguments[2] === undefined ? '' : arguments[2];

@@ -17,7 +17,13 @@ const permissionKey = 'graclResourcePermissions',
       root = __dirname.replace(/test\/spec/, ''),
       secure = new tyranidGracl.GraclPlugin({
         verbose: false,
-        permissionProperty: permissionKey
+        permissionProperty: permissionKey,
+        permissionTypes: [
+          { name: 'edit' },
+          { name: 'view', parent: 'edit' },
+          { name: 'delete' },
+          { name: 'abstract_view_chart', parent: 'view-chart'}
+        ]
       });
 
 
