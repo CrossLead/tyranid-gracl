@@ -34,12 +34,13 @@ const chai_1 = require('chai');
 const expectedLinkPaths_1 = require('../helpers/expectedLinkPaths');
 const createTestData_1 = require('../helpers/createTestData');
 const expectAsyncToThrow_1 = require('../helpers/expectAsyncToThrow');
-const permissionKey = 'graclResourcePermissions',
+const VERBOSE_LOGGING = false;
+const permissionKey = 'graclResourcePermissionIds',
       db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),
       root = __dirname.replace(/test\/spec/, ''),
       secure = new tyranidGracl.GraclPlugin({
-    verbose: false,
-    permissionProperty: permissionKey,
+    verbose: VERBOSE_LOGGING,
+    permissionIdProperty: permissionKey,
     permissionTypes: [{ name: 'edit', abstract: false }, { name: 'view', parent: 'edit', abstract: false }, { name: 'delete', abstract: false }, { name: 'abstract_view_chart', abstract: true, parents: ['view-user', 'view-post'] }, { name: 'view_alignment_triangle', abstract: true, parents: ['edit_alignment_triangle', 'view_alignment_triangle_component'] }, { name: 'edit_alignment_triangle', abstract: true }, { name: 'view_alignment_triangle_component', abstract: true }]
 });
 const checkStringEq = function checkStringEq(got, want) {
@@ -148,9 +149,9 @@ describe('tyranid-gracl', () => {
             const updatedChopped = yield giveBenAccessToChoppedPosts();
             const existingPermissions = yield tyranid_1.default.byName['graclPermission'].find({});
             chai_1.expect(existingPermissions).to.have.lengthOf(1);
-            chai_1.expect(existingPermissions[0]['resourceId'].toString(), 'resourceId').to.equal(updatedChopped[permissionKey][0]['resourceId'].toString());
-            chai_1.expect(existingPermissions[0]['subjectId'].toString(), 'subjectId').to.equal(updatedChopped[permissionKey][0]['subjectId'].toString());
-            chai_1.expect(existingPermissions[0]['access']['view-post'], 'access').to.equal(updatedChopped[permissionKey][0]['access']['view-post']);
+            chai_1.expect(existingPermissions[0]['resourceId'].toString(), 'resourceId').to.equal(updatedChopped[secure.populatedPermissionsProperty][0]['resourceId'].toString());
+            chai_1.expect(existingPermissions[0]['subjectId'].toString(), 'subjectId').to.equal(updatedChopped[secure.populatedPermissionsProperty][0]['subjectId'].toString());
+            chai_1.expect(existingPermissions[0]['access']['view-post'], 'access').to.equal(updatedChopped[secure.populatedPermissionsProperty][0]['access']['view-post']);
         }));
         it('should respect subject / resource hierarchy', () => __awaiter(undefined, void 0, void 0, function* () {
             yield giveBenAccessToChoppedPosts();
@@ -200,13 +201,13 @@ describe('tyranid-gracl', () => {
             yield giveBenAccessToChoppedPosts();
             const ben = yield tyranid_1.default.byName['user'].findOne({ name: 'ben' }),
                   chopped = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chopped' });
-            chai_1.expect(chopped[secure.permissionIdProperty]).to.have.lengthOf(1);
+            chai_1.expect(chopped[secure.permissionIdProperty], 'chopped should start with one permission').to.have.lengthOf(1);
             chai_1.expect(ben, 'ben should exist').to.exist;
             chai_1.expect(chopped, 'chopped should exist').to.exist;
-            const updatedChopped = yield secure.setPermissionAccess(chopped, 'view-user', true, ben);
-            chai_1.expect(updatedChopped[permissionKey]).to.have.lengthOf(1);
+            const updatedChopped = yield chopped['$allow']('view-user', ben);
+            chai_1.expect(updatedChopped[permissionKey], 'chopped should end with one permission').to.have.lengthOf(1);
             const allPermissions = yield tyranidGracl.PermissionsModel.find({});
-            chai_1.expect(allPermissions).to.have.lengthOf(1);
+            chai_1.expect(allPermissions, 'there should be one permission in the database').to.have.lengthOf(1);
         }));
         it('should successfully remove all permissions after secure.deletePermissions()', () => __awaiter(undefined, void 0, void 0, function* () {
             const ted = yield tyranid_1.default.byName['user'].findOne({ name: 'ted' }),

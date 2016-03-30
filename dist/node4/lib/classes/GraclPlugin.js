@@ -43,15 +43,15 @@ class GraclPlugin {
         this.explainPermission = GraclPlugin.explainPermission;
         this.permissionTypes = [{ name: 'edit' }, { name: 'view', parents: ['edit'] }, { name: 'delete' }];
         opts = opts || {};
-        if (opts.permissionProperty && !/s$/.test(opts.permissionProperty)) {
-            throw new Error(`permissionProperty must end with 's' as it is an array of ids.`);
-        }
         if (Array.isArray(opts.permissionTypes) && opts.permissionTypes.length) {
             this.permissionTypes = opts.permissionTypes;
         }
+        if (opts.permissionIdProperty && !/Ids$/.test(opts.permissionIdProperty)) {
+            throw new Error(`permissionIdProperty should end with "Ids", given: ${ opts.permissionIdProperty }`);
+        }
         this.verbose = opts.verbose || false;
-        this.permissionProperty = opts.permissionProperty || 'graclResourcePermissions';
-        this.permissionIdProperty = this.permissionProperty.replace(/s$/, 'Ids');
+        this.permissionIdProperty = opts.permissionIdProperty || 'graclResourcePermissionIds';
+        this.populatedPermissionsProperty = this.permissionIdProperty + '$';
     }
     static buildLinkGraph() {
         const g = {};
@@ -196,16 +196,24 @@ class GraclPlugin {
         return hierarchy;
     }
     makeRepository(collection) {
-        const permissionIds = this.permissionIdProperty;
+        const permissionIdProperty = this.permissionIdProperty;
         return {
             getEntity(id, node) {
                 return __awaiter(this, void 0, Promise, function* () {
-                    return yield collection.populate(permissionIds, (yield collection.byId(id)));
+                    let doc = yield collection.byId(id);
+                    if (doc[permissionIdProperty] && doc[permissionIdProperty][0]) {
+                        doc = yield doc.$populate(permissionIdProperty);
+                    }
+                    return doc;
                 });
             },
             saveEntity(id, doc, node) {
                 return __awaiter(this, void 0, Promise, function* () {
-                    return PermissionsModel_1.PermissionsModel.updatePermissions(doc);
+                    doc = yield PermissionsModel_1.PermissionsModel.updatePermissions(doc);
+                    if (doc[permissionIdProperty] && doc[permissionIdProperty][0]) {
+                        doc = yield doc.$populate(permissionIdProperty);
+                    }
+                    return doc;
                 });
             }
         };
@@ -280,6 +288,7 @@ class GraclPlugin {
                     parents: []
                 }
             };
+            const permissionIdProperty = this.permissionIdProperty;
             collections.forEach(col => {
                 const linkFields = util_1.getCollectionLinksSorted(col, { relate: 'ownedBy', direction: 'outgoing' }),
                       permissionsLink = util_1.findLinkInCollection(col, PermissionsModel_1.PermissionsModel),
@@ -355,7 +364,7 @@ class GraclPlugin {
                         name: name,
                         id: '$uid',
                         parent: parentName,
-                        permissionProperty: this.permissionProperty,
+                        permissionProperty: this.populatedPermissionsProperty,
                         repository: this.makeRepository(node.collection),
                         getParents() {
                             return __awaiter(this, void 0, Promise, function* () {
@@ -369,7 +378,9 @@ class GraclPlugin {
                                     [linkCollection.def.primaryKey.field]: { $in: ids }
                                 }),
                                       ParentClass = thisNode.getParentClass();
-                                return parentObjects.map(doc => new ParentClass(doc));
+                                if (!parentObjects.length) return [];
+                                const populated = yield linkCollection.populate(permissionIdProperty, parentObjects);
+                                return populated.map(doc => new ParentClass(doc));
                             });
                         }
                     });
@@ -380,7 +391,7 @@ class GraclPlugin {
                         nodes.set(name, {
                             name: name,
                             id: '$uid',
-                            permissionProperty: this.permissionProperty,
+                            permissionProperty: this.populatedPermissionsProperty,
                             repository: this.makeRepository(parent)
                         });
                     }

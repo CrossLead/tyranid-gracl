@@ -12,12 +12,15 @@ import { expectAsyncToThrow } from '../helpers/expectAsyncToThrow';
 
 type GraclPlugin = tyranidGracl.GraclPlugin;
 
-const permissionKey = 'graclResourcePermissions',
+const VERBOSE_LOGGING = false;
+
+
+const permissionKey = 'graclResourcePermissionIds',
       db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),
       root = __dirname.replace(/test\/spec/, ''),
       secure = new tyranidGracl.GraclPlugin({
-        verbose: false,
-        permissionProperty: permissionKey,
+        verbose: VERBOSE_LOGGING,
+        permissionIdProperty: permissionKey,
         permissionTypes: [
           { name: 'edit', abstract: false },
           { name: 'view', parent: 'edit', abstract: false },
@@ -201,11 +204,11 @@ describe('tyranid-gracl', () => {
 
       expect(existingPermissions).to.have.lengthOf(1);
       expect(existingPermissions[0]['resourceId'].toString(), 'resourceId')
-        .to.equal(updatedChopped[permissionKey][0]['resourceId'].toString());
+        .to.equal(updatedChopped[secure.populatedPermissionsProperty][0]['resourceId'].toString());
       expect(existingPermissions[0]['subjectId'].toString(), 'subjectId')
-        .to.equal(updatedChopped[permissionKey][0]['subjectId'].toString());
+        .to.equal(updatedChopped[secure.populatedPermissionsProperty][0]['subjectId'].toString());
       expect(existingPermissions[0]['access']['view-post'], 'access')
-        .to.equal(updatedChopped[permissionKey][0]['access']['view-post']);
+        .to.equal(updatedChopped[secure.populatedPermissionsProperty][0]['access']['view-post']);
     });
 
 
@@ -291,21 +294,21 @@ describe('tyranid-gracl', () => {
     it('should modify existing permissions instead of creating new ones', async () => {
       await giveBenAccessToChoppedPosts();
 
-      const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+      const ben     = await Tyr.byName['user'].findOne({ name: 'ben' }),
             chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
-      expect(chopped[secure.permissionIdProperty]).to.have.lengthOf(1);
+      expect(chopped[secure.permissionIdProperty], 'chopped should start with one permission').to.have.lengthOf(1);
 
       expect(ben, 'ben should exist').to.exist;
       expect(chopped, 'chopped should exist').to.exist;
 
-      const updatedChopped = await secure.setPermissionAccess(chopped, 'view-user', true, ben);
+      const updatedChopped = await chopped['$allow']('view-user', ben);
 
-      expect(updatedChopped[permissionKey]).to.have.lengthOf(1);
+      expect(updatedChopped[permissionKey], 'chopped should end with one permission').to.have.lengthOf(1);
 
       const allPermissions = await tyranidGracl.PermissionsModel.find({});
 
-      expect(allPermissions).to.have.lengthOf(1);
+      expect(allPermissions, 'there should be one permission in the database').to.have.lengthOf(1);
     });
 
 

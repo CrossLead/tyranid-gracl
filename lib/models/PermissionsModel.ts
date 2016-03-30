@@ -131,7 +131,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
           ResourceClass          = plugin.graclHierarchy.getResource(resourceCollectionName),
           SubjectClass           = plugin.graclHierarchy.getSubject(subjectCollectionName);
 
-    if (!resourceDocument[plugin.permissionProperty]) {
+    if (!resourceDocument[plugin.populatedPermissionsProperty]) {
       await Tyr.byName[resourceCollectionName]
         .populate(plugin.permissionIdProperty, resourceDocument);
     }
@@ -167,12 +167,13 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
               ): Promise<Tyr.Document> {
 
     if (!abstract) PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
+    const plugin = PermissionsModel.getGraclPlugin();
 
     const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
 
-    await resource.setPermissionAccess(subject, permissionType, access);
+    const set = await resource.setPermissionAccess(subject, permissionType, access);
 
-    return <Tyr.Document> resource.doc;
+    return <Tyr.Document> set.doc;
   }
 
 
@@ -185,12 +186,19 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     ): Promise<boolean> {
     if (!abstract) PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
 
-    const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument),
-          plugin = PermissionsModel.getGraclPlugin(),
-          components = plugin.parsePermissionString(permissionType),
-          nextPermissions = plugin.nextPermissions(permissionType);
+    const plugin = PermissionsModel.getGraclPlugin();
 
-    const access = await resource.isAllowed(subject, permissionType);
+    if (!resourceDocument[plugin.populatedPermissionsProperty]) {
+      resourceDocument = await resourceDocument.$populate(plugin.permissionIdProperty);
+    }
+
+    const {
+            subject,
+            resource
+          } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument),
+          components = plugin.parsePermissionString(permissionType),
+          nextPermissions = plugin.nextPermissions(permissionType),
+          access = await resource.isAllowed(subject, permissionType);
 
     if (!access && nextPermissions) {
       for (const nextPermission of nextPermissions) {
@@ -291,16 +299,21 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       throw new TypeError(`called PermissionsModel.updatePermissions() on undefined`);
     }
 
+    if (!resourceDocument.$uid) {
+      throw new TypeError(`resource document must be a Tyranid document with $uid`);
+    }
+
     PermissionsModel.validateAsResource(resourceDocument.$model);
 
     const plugin = PermissionsModel.getGraclPlugin();
 
-    const permissions         = <gracl.Permission[]> _.get(resourceDocument, plugin.permissionProperty, []),
+    const permissions         = <gracl.Permission[]> _.get(resourceDocument, plugin.populatedPermissionsProperty, []),
           existingPermissions = <gracl.Permission[]> [],
           newPermissions      = <gracl.Permission[]> [],
           updated             = <Tyr.Document[]> [],
           permIdField         = PermissionsModel.def.primaryKey.field;
 
+    delete resourceDocument[plugin.populatedPermissionsProperty];
 
     await PermissionsModel.lockPermissionsForResource(resourceDocument);
 
@@ -358,28 +371,36 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       .value();
 
 
-    const existingUpdates = await Promise.all(existingPermissions.map(perm => {
-      return PermissionsModel.findAndModify({
-        query: { [permIdField]: perm[permIdField] },
+    const existingUpdates = await Promise.all(existingPermissions.map(async (perm) => {
+      const update = await PermissionsModel.findAndModify({
+        query: {
+          [permIdField]: perm[permIdField]
+        },
         update: { $set: perm },
         new: true
       });
+      return update['value'];
     }));
 
     const newPermissionInserts = await Promise.all(newPermissions.map(perm => {
-      return PermissionsModel.fromClient(perm).$save();
+      return PermissionsModel.fromClient(perm).$insert();
     }));
 
     updated.push(...existingUpdates);
     updated.push(...newPermissionInserts);
 
-    resourceDocument[plugin.permissionIdProperty] = _.map(updated, permIdField);
+    const updatedIds = resourceDocument[plugin.permissionIdProperty] = _.chain(updated)
+      .compact()
+      .map(permIdField)
+      .value();
+
+    const removeQuery = {
+      [permIdField]: { $nin: updatedIds },
+      resourceId: resourceDocument.$uid
+    };
 
     // remove permissions for this resource that are not in the given ids
-    await PermissionsModel.remove({
-      [permIdField]: { $nin: resourceDocument[plugin.permissionIdProperty] },
-      resourceId: resourceDocument.$uid
-    });
+    await PermissionsModel.remove(removeQuery);
 
     const updatedResourceDocument = await resourceDocument.$save();
 
@@ -401,9 +422,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   static async deletePermissions(doc: Tyr.Document): Promise<Tyr.Document> {
     const uid = doc.$uid;
 
-    if (!uid) {
-      throw new Error('No $uid property on document!');
-    }
+    if (!uid) throw new Error('No $uid property on document!');
 
     await PermissionsModel.lockPermissionsForResource(doc);
 
@@ -449,7 +468,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       );
     }
 
-    delete doc[plugin.permissionProperty];
+    delete doc[plugin.populatedPermissionsProperty];
     doc[plugin.permissionIdProperty] = [];
 
     await doc.$save();

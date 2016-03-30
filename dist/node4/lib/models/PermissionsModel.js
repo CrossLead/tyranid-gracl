@@ -98,7 +98,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
                   subjectCollectionName = subjectDocument.$model.def.name,
                   ResourceClass = plugin.graclHierarchy.getResource(resourceCollectionName),
                   SubjectClass = plugin.graclHierarchy.getSubject(subjectCollectionName);
-            if (!resourceDocument[plugin.permissionProperty]) {
+            if (!resourceDocument[plugin.populatedPermissionsProperty]) {
                 yield tyranid_1.default.byName[resourceCollectionName].populate(plugin.permissionIdProperty, resourceDocument);
             }
             if (!ResourceClass) {
@@ -118,14 +118,15 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
 
         return __awaiter(this, void 0, Promise, function* () {
             if (!abstract) PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
+            const plugin = PermissionsModel.getGraclPlugin();
 
             var _ref = yield PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
 
             const subject = _ref.subject;
             const resource = _ref.resource;
 
-            yield resource.setPermissionAccess(subject, permissionType, access);
-            return resource.doc;
+            const set = yield resource.setPermissionAccess(subject, permissionType, access);
+            return set.doc;
         });
     }
     static isAllowed(resourceDocument, permissionType) {
@@ -134,12 +135,15 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
 
         return __awaiter(this, void 0, Promise, function* () {
             if (!abstract) PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
+            const plugin = PermissionsModel.getGraclPlugin();
+            if (!resourceDocument[plugin.populatedPermissionsProperty]) {
+                resourceDocument = yield resourceDocument.$populate(plugin.permissionIdProperty);
+            }
 
             var _ref2 = yield PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
 
             const subject = _ref2.subject;
-            const resource = _ref2.resource;const plugin = PermissionsModel.getGraclPlugin();const components = plugin.parsePermissionString(permissionType);const nextPermissions = plugin.nextPermissions(permissionType);
-            const access = yield resource.isAllowed(subject, permissionType);
+            const resource = _ref2.resource;const components = plugin.parsePermissionString(permissionType);const nextPermissions = plugin.nextPermissions(permissionType);const access = yield resource.isAllowed(subject, permissionType);
             if (!access && nextPermissions) {
                 for (const nextPermission of nextPermissions) {
                     const parentAccess = yield PermissionsModel.isAllowed(resourceDocument, nextPermission, subjectDocument, abstract);
@@ -213,13 +217,17 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
             if (!resourceDocument) {
                 throw new TypeError(`called PermissionsModel.updatePermissions() on undefined`);
             }
+            if (!resourceDocument.$uid) {
+                throw new TypeError(`resource document must be a Tyranid document with $uid`);
+            }
             PermissionsModel.validateAsResource(resourceDocument.$model);
             const plugin = PermissionsModel.getGraclPlugin();
-            const permissions = _.get(resourceDocument, plugin.permissionProperty, []),
+            const permissions = _.get(resourceDocument, plugin.populatedPermissionsProperty, []),
                   existingPermissions = [],
                   newPermissions = [],
                   updated = [],
                   permIdField = PermissionsModel.def.primaryKey.field;
+            delete resourceDocument[plugin.populatedPermissionsProperty];
             yield PermissionsModel.lockPermissionsForResource(resourceDocument);
             const resourceCollectionName = resourceDocument.$model.def.name;
             const subjectIds = _.chain(permissions).map('subjectId').compact().value();
@@ -246,23 +254,27 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
                     newPermissions.push(perm);
                 }
             }).value();
-            const existingUpdates = yield Promise.all(existingPermissions.map(perm => {
-                return PermissionsModel.findAndModify({
-                    query: { [permIdField]: perm[permIdField] },
+            const existingUpdates = yield Promise.all(existingPermissions.map(perm => __awaiter(this, void 0, void 0, function* () {
+                const update = yield PermissionsModel.findAndModify({
+                    query: {
+                        [permIdField]: perm[permIdField]
+                    },
                     update: { $set: perm },
                     new: true
                 });
-            }));
+                return update['value'];
+            })));
             const newPermissionInserts = yield Promise.all(newPermissions.map(perm => {
-                return PermissionsModel.fromClient(perm).$save();
+                return PermissionsModel.fromClient(perm).$insert();
             }));
             updated.push.apply(updated, _toConsumableArray(existingUpdates));
             updated.push.apply(updated, _toConsumableArray(newPermissionInserts));
-            resourceDocument[plugin.permissionIdProperty] = _.map(updated, permIdField);
-            yield PermissionsModel.remove({
-                [permIdField]: { $nin: resourceDocument[plugin.permissionIdProperty] },
+            const updatedIds = resourceDocument[plugin.permissionIdProperty] = _.chain(updated).compact().map(permIdField).value();
+            const removeQuery = {
+                [permIdField]: { $nin: updatedIds },
                 resourceId: resourceDocument.$uid
-            });
+            };
+            yield PermissionsModel.remove(removeQuery);
             const updatedResourceDocument = yield resourceDocument.$save();
             const populated = yield tyranid_1.default.byName[resourceCollectionName].populate(plugin.permissionIdProperty, updatedResourceDocument);
             yield PermissionsModel.unlockPermissionsForResource(resourceDocument);
@@ -272,9 +284,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
     static deletePermissions(doc) {
         return __awaiter(this, void 0, Promise, function* () {
             const uid = doc.$uid;
-            if (!uid) {
-                throw new Error('No $uid property on document!');
-            }
+            if (!uid) throw new Error('No $uid property on document!');
             yield PermissionsModel.lockPermissionsForResource(doc);
             const permissions = yield PermissionsModel.find({
                 $or: [{ subjectId: uid }, { resourceId: uid }]
@@ -308,7 +318,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
                     }
                 }, { multi: true });
             }
-            delete doc[plugin.permissionProperty];
+            delete doc[plugin.populatedPermissionsProperty];
             doc[plugin.permissionIdProperty] = [];
             yield doc.$save();
             yield PermissionsModel.unlockPermissionsForResource(doc);

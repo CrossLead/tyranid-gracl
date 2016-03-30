@@ -13,7 +13,7 @@ export declare type permissionHierarchy = Hash<any>;
 export declare type pluginOptions = {
     verbose?: boolean;
     permissionTypes?: permissionTypeList;
-    permissionProperty?: string;
+    permissionIdProperty?: string;
 };
 export declare class GraclPlugin {
     static isAllowed: typeof PermissionsModel.isAllowed;
@@ -44,7 +44,7 @@ export declare class GraclPlugin {
     explainPermission: typeof PermissionsModel.explainPermission;
     verbose: boolean;
     permissionHierarchy: permissionHierarchy;
-    permissionProperty: string;
+    populatedPermissionsProperty: string;
     permissionIdProperty: string;
     permissionTypes: permissionTypeList;
     constructor(opts?: pluginOptions);

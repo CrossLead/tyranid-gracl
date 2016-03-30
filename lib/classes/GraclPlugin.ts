@@ -24,7 +24,7 @@ export type permissionHierarchy = Hash<any>;
 export type pluginOptions = {
   verbose?: boolean;
   permissionTypes?: permissionTypeList;
-  permissionProperty?: string;
+  permissionIdProperty?: string;
 };
 
 
@@ -210,7 +210,7 @@ export class GraclPlugin {
   // plugin options
   verbose: boolean;
   permissionHierarchy: permissionHierarchy;
-  permissionProperty: string;
+  populatedPermissionsProperty: string;
   permissionIdProperty: string;
 
 
@@ -225,17 +225,17 @@ export class GraclPlugin {
   constructor(opts?: pluginOptions) {
     opts = opts || {};
 
-    if (opts.permissionProperty && !/s$/.test(opts.permissionProperty)) {
-      throw new Error(`permissionProperty must end with 's' as it is an array of ids.`);
-    }
-
     if (Array.isArray(opts.permissionTypes) && opts.permissionTypes.length) {
       this.permissionTypes = opts.permissionTypes;
     }
 
+    if (opts.permissionIdProperty && !/Ids$/.test(opts.permissionIdProperty)) {
+      throw new Error(`permissionIdProperty should end with "Ids", given: ${opts.permissionIdProperty}`);
+    }
+
     this.verbose = opts.verbose || false;
-    this.permissionProperty = opts.permissionProperty || 'graclResourcePermissions';
-    this.permissionIdProperty = this.permissionProperty.replace(/s$/, 'Ids');
+    this.permissionIdProperty = opts.permissionIdProperty || 'graclResourcePermissionIds';
+    this.populatedPermissionsProperty = this.permissionIdProperty + '$';
   };
 
 
@@ -403,21 +403,26 @@ export class GraclPlugin {
   }
 
 
-
   makeRepository(collection: Tyr.CollectionInstance): gracl.Repository {
-    const permissionIds = this.permissionIdProperty;
+    const permissionIdProperty = this.permissionIdProperty;
     return {
+
       async getEntity(id: string, node: gracl.Node): Promise<Tyr.Document> {
-        return <Tyr.Document> (
-          await collection.populate(
-            permissionIds,
-            await collection.byId(id)
-          )
-        );
+        let doc = await collection.byId(id);
+        if (doc[permissionIdProperty] && doc[permissionIdProperty][0]) {
+          doc = await doc.$populate(permissionIdProperty);
+        }
+        return doc;
       },
+
       async saveEntity(id: string, doc: Tyr.Document, node: gracl.Node): Promise<Tyr.Document> {
-        return PermissionsModel.updatePermissions(doc);
+        doc = await PermissionsModel.updatePermissions(doc);
+        if (doc[permissionIdProperty] && doc[permissionIdProperty][0]) {
+          doc = await doc.$populate(permissionIdProperty);
+        }
+        return doc;
       }
+
     };
   }
 
@@ -538,6 +543,8 @@ export class GraclPlugin {
         }
       };
 
+      const permissionIdProperty = this.permissionIdProperty;
+
       // loop through all collections, retrieve
       // ownedBy links
       collections.forEach(col => {
@@ -643,7 +650,7 @@ export class GraclPlugin {
             name,
             id: '$uid',
             parent: parentName,
-            permissionProperty: this.permissionProperty,
+            permissionProperty: this.populatedPermissionsProperty,
             repository: this.makeRepository(node.collection),
             async getParents(): Promise<gracl.Node[]> {
               const thisNode = <gracl.Node> this;
@@ -660,7 +667,13 @@ export class GraclPlugin {
                                      }),
                     ParentClass    = thisNode.getParentClass();
 
-              return parentObjects.map(doc => new ParentClass(doc));
+              if (!parentObjects.length) return [];
+
+              const populated = <Tyr.Document[]> (await linkCollection.populate(
+                permissionIdProperty, parentObjects
+              ));
+
+              return populated.map(doc => new ParentClass(doc));
             }
           });
         }
@@ -671,7 +684,7 @@ export class GraclPlugin {
             nodes.set(name, {
               name,
               id: '$uid',
-              permissionProperty: this.permissionProperty,
+              permissionProperty: this.populatedPermissionsProperty,
               repository: this.makeRepository(parent)
             });
           }
