@@ -662,7 +662,7 @@ export class GraclPlugin {
               }
 
               const linkCollection = node.link,
-                    parentObjects  = await linkCollection.find({
+                    parentObjects  = await linkCollection.findAll({
                                         [linkCollection.def.primaryKey.field]: { $in: ids }
                                      }),
                     ParentClass    = thisNode.getParentClass();
@@ -833,7 +833,7 @@ export class GraclPlugin {
             subjectId:    { $in: subjectHierarchyIds },
             resourceType: { $in: resourceHierarchyClasses }
           },
-          permissions = await PermissionsModel.find(permissionsQuery);
+          permissions = await PermissionsModel.findAll(permissionsQuery);
 
     // no permissions found, return no restriction
     if (!Array.isArray(permissions) || permissions.length === 0) {

@@ -374,7 +374,7 @@ class GraclPlugin {
                                     ids = [ids];
                                 }
                                 const linkCollection = node.link,
-                                      parentObjects = yield linkCollection.find({
+                                      parentObjects = yield linkCollection.findAll({
                                     [linkCollection.def.primaryKey.field]: { $in: ids }
                                 }),
                                       ParentClass = thisNode.getParentClass();
@@ -476,7 +476,7 @@ class GraclPlugin {
                 subjectId: { $in: subjectHierarchyIds },
                 resourceType: { $in: resourceHierarchyClasses }
             },
-                  permissions = yield PermissionsModel_1.PermissionsModel.find(permissionsQuery);
+                  permissions = yield PermissionsModel_1.PermissionsModel.findAll(permissionsQuery);
             if (!Array.isArray(permissions) || permissions.length === 0) {
                 this.log(`No permissions found, returning false`);
                 return false;

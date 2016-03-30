@@ -23,7 +23,7 @@
   "dependencies": {
     "gracl": "git://github.com/crosslead/gracl.git#09817c005062116ba9421fddc5487424ef8db653",
     "lodash": "^3.10.1",
-    "tyranid": "0.0.150"
+    "tyranid": "0.0.153"
   },
   "babel": {
     "presets": [
@@ -44,7 +44,7 @@
     "gulp": "^3.9.1",
     "jasmine-core": "^2.4.1",
     "mocha": "^2.4.5",
-    "tpmongo": "0.0.6",
+    "mongodb": "^2.1.14",
     "ts-node": "^0.5.5",
     "tslint": "^3.5.0",
     "typedoc": "^0.3.12",

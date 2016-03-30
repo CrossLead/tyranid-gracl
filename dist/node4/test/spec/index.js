@@ -27,7 +27,7 @@ var __awaiter = undefined && undefined.__awaiter || function (thisArg, _argument
     });
 };
 const tyranid_1 = require('tyranid');
-const tpmongo = require('tpmongo');
+const mongodb = require('mongodb');
 const _ = require('lodash');
 const tyranidGracl = require('../../lib/index');
 const chai_1 = require('chai');
@@ -36,7 +36,6 @@ const createTestData_1 = require('../helpers/createTestData');
 const expectAsyncToThrow_1 = require('../helpers/expectAsyncToThrow');
 const VERBOSE_LOGGING = false;
 const permissionKey = 'graclResourcePermissionIds',
-      db = tpmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test', []),
       root = __dirname.replace(/test\/spec/, ''),
       secure = new tyranidGracl.GraclPlugin({
     verbose: VERBOSE_LOGGING,
@@ -62,6 +61,7 @@ function giveBenAccessToChoppedPosts() {
 }
 describe('tyranid-gracl', () => {
     before(() => __awaiter(undefined, void 0, void 0, function* () {
+        const db = yield mongodb.MongoClient.connect('mongodb://127.0.0.1:27017/tyranid_gracl_test');
         tyranid_1.default.config({
             db: db,
             validate: [{ dir: root + '/test/models',
@@ -91,7 +91,7 @@ describe('tyranid-gracl', () => {
         });
         it('should correctly create formatted queries using createInQueries', () => __awaiter(undefined, void 0, void 0, function* () {
             const getIdsForCol = col => __awaiter(this, void 0, void 0, function* () {
-                return _.map((yield tyranid_1.default.byName[col].find({})), '_id');
+                return _.map((yield tyranid_1.default.byName[col].findAll({})), '_id');
             });
             const blogIds = yield getIdsForCol('blog'),
                   userIds = yield getIdsForCol('user'),
@@ -111,9 +111,9 @@ describe('tyranid-gracl', () => {
         }));
         it('should return correct ids after calling stepThroughCollectionPath', () => __awaiter(undefined, void 0, void 0, function* () {
             const chipotle = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chipotle' }),
-                  chipotleBlogs = yield tyranid_1.default.byName['blog'].find({ organizationId: chipotle.$id }),
+                  chipotleBlogs = yield tyranid_1.default.byName['blog'].findAll({ organizationId: chipotle.$id }),
                   blogIds = _.map(chipotleBlogs, '_id'),
-                  chipotlePosts = yield tyranid_1.default.byName['post'].find({ blogId: { $in: blogIds } }),
+                  chipotlePosts = yield tyranid_1.default.byName['post'].findAll({ blogId: { $in: blogIds } }),
                   postIds = _.map(chipotlePosts, '_id');
             const steppedPostIds = yield tyranidGracl.stepThroughCollectionPath(blogIds, tyranid_1.default.byName['blog'], tyranid_1.default.byName['post']);
             checkStringEq(steppedPostIds, postIds, 'ids after stepping should be all relevant ids');
@@ -147,7 +147,7 @@ describe('tyranid-gracl', () => {
     describe('Working with permissions', () => {
         it('should successfully add permissions', () => __awaiter(undefined, void 0, void 0, function* () {
             const updatedChopped = yield giveBenAccessToChoppedPosts();
-            const existingPermissions = yield tyranid_1.default.byName['graclPermission'].find({});
+            const existingPermissions = yield tyranid_1.default.byName['graclPermission'].findAll({});
             chai_1.expect(existingPermissions).to.have.lengthOf(1);
             chai_1.expect(existingPermissions[0]['resourceId'].toString(), 'resourceId').to.equal(updatedChopped[secure.populatedPermissionsProperty][0]['resourceId'].toString());
             chai_1.expect(existingPermissions[0]['subjectId'].toString(), 'subjectId').to.equal(updatedChopped[secure.populatedPermissionsProperty][0]['subjectId'].toString());
@@ -178,7 +178,7 @@ describe('tyranid-gracl', () => {
         }));
         it('should create a lock when updating permission and set to false when complete', () => __awaiter(undefined, void 0, void 0, function* () {
             yield giveBenAccessToChoppedPosts();
-            const locks = yield tyranidGracl.PermissionLocks.find({}),
+            const locks = yield tyranidGracl.PermissionLocks.findAll({}),
                   chopped = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chopped' });
             chai_1.expect(locks).to.have.lengthOf(1);
             chai_1.expect(locks[0]['resourceId']).to.equal(chopped.$uid);
@@ -206,7 +206,7 @@ describe('tyranid-gracl', () => {
             chai_1.expect(chopped, 'chopped should exist').to.exist;
             const updatedChopped = yield chopped['$allow']('view-user', ben);
             chai_1.expect(updatedChopped[permissionKey], 'chopped should end with one permission').to.have.lengthOf(1);
-            const allPermissions = yield tyranidGracl.PermissionsModel.find({});
+            const allPermissions = yield tyranidGracl.PermissionsModel.findAll({});
             chai_1.expect(allPermissions, 'there should be one permission in the database').to.have.lengthOf(1);
         }));
         it('should successfully remove all permissions after secure.deletePermissions()', () => __awaiter(undefined, void 0, void 0, function* () {
@@ -217,7 +217,7 @@ describe('tyranid-gracl', () => {
                   post = yield tyranid_1.default.byName['post'].findOne({ text: 'Why burritos are amazing.' }),
                   chipotle = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chipotle' });
             chai_1.expect(!ted[secure.permissionIdProperty]).to.equal(true);
-            const permissionsForTed = yield tyranid_1.default.byName['graclPermission'].find({
+            const permissionsForTed = yield tyranid_1.default.byName['graclPermission'].findAll({
                 $or: [{ subjectId: ted.$uid }, { resourceId: ted.$uid }]
             });
             chai_1.expect(permissionsForTed).to.have.lengthOf(0);
@@ -226,7 +226,7 @@ describe('tyranid-gracl', () => {
             const permissionOperations = yield Promise.all([chopped['$allow']('view-user', ted), cava['$allow']('view-post', ted), post['$allow']('edit-post', ted), chipotle['$deny']('view-post', ted), ted['$allow']('view-user', ben)]);
             const updatedTed = yield tyranid_1.default.byName['user'].findOne({ name: 'ted' });
             chai_1.expect(ted[secure.permissionIdProperty]).to.have.lengthOf(1);
-            const updatedPermissionsForTed = yield tyranid_1.default.byName['graclPermission'].find({
+            const updatedPermissionsForTed = yield tyranid_1.default.byName['graclPermission'].findAll({
                 $or: [{ subjectId: ted.$uid }, { resourceId: ted.$uid }]
             });
             chai_1.expect(updatedPermissionsForTed).to.have.lengthOf(permissionOperations.length);
@@ -274,7 +274,7 @@ describe('tyranid-gracl', () => {
                   Org = tyranid_1.default.byName['organization'],
                   ben = yield tyranid_1.default.byName['user'].findOne({ name: 'ben' }),
                   chopped = yield Org.findOne({ name: 'Chopped' });
-            const choppedBlogs = yield Blog.find({ organizationId: chopped.$id }, { _id: 1 });
+            const choppedBlogs = yield Blog.findAll({ organizationId: chopped.$id }, { _id: 1 });
             const query = yield secure.query(Post, 'view', ben);
             checkStringEq(_.get(query, '$or.0.blogId.$in'), _.map(choppedBlogs, '_id'), 'query should find correct blogs');
         }));
@@ -284,8 +284,8 @@ describe('tyranid-gracl', () => {
             const chopped = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chopped' }),
                   cava = yield tyranid_1.default.byName['organization'].findOne({ name: 'Cava' }),
                   chipotle = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chipotle' }),
-                  cavaBlogs = yield tyranid_1.default.byName['blog'].find({ organizationId: cava.$id }),
-                  chipotleBlogs = yield tyranid_1.default.byName['blog'].find({ organizationId: chipotle.$id }),
+                  cavaBlogs = yield tyranid_1.default.byName['blog'].findAll({ organizationId: cava.$id }),
+                  chipotleBlogs = yield tyranid_1.default.byName['blog'].findAll({ organizationId: chipotle.$id }),
                   post = yield tyranid_1.default.byName['post'].findOne({ text: 'Why burritos are amazing.' });
             const permissionOperations = yield Promise.all([cava['$allow']('view-post', ted), post['$allow']('view-post', ted), chipotle['$deny']('view-post', ted)]);
             const query = yield secure.query(tyranid_1.default.byName['post'], 'view', ted);
@@ -305,7 +305,7 @@ describe('tyranid-gracl', () => {
             checkStringEq(_.get(blogIdNegative, 'blogId.$nin'), chipotleBlogs.map(b => b.$id));
         }));
     });
-    describe('Collection.find()', () => {
+    describe('Collection.findAll()', () => {
         it('should be appropriately filtered based on permissions', () => __awaiter(undefined, void 0, void 0, function* () {
             yield giveBenAccessToChoppedPosts();
             const Post = tyranid_1.default.byName['post'],
@@ -313,10 +313,10 @@ describe('tyranid-gracl', () => {
                   Blog = tyranid_1.default.byName['blog'],
                   Org = tyranid_1.default.byName['organization'],
                   ben = yield User.findOne({ name: 'ben' });
-            const postsBenCanSee = yield Post.find({}, null, { tyranid: { secure: true, user: ben } });
+            const postsBenCanSee = yield Post.findAll({}, null, { tyranid: { secure: true, user: ben } });
             const chopped = yield Org.findOne({ name: 'Chopped' });
-            const choppedBlogs = yield Blog.find({ organizationId: chopped.$id }, { _id: 1 });
-            const choppedPosts = yield Post.find({
+            const choppedBlogs = yield Blog.findAll({ organizationId: chopped.$id }, { _id: 1 });
+            const choppedPosts = yield Post.findAll({
                 blogId: { $in: _.map(choppedBlogs, '_id') }
             });
             checkStringEq(_.map(postsBenCanSee, '_id'), _.map(choppedPosts, '_id'), 'ben should only see chopped posts');
@@ -325,12 +325,12 @@ describe('tyranid-gracl', () => {
             const chopped = yield giveBenAccessToChoppedPosts(),
                   ben = yield tyranid_1.default.byName['user'].findOne({ name: 'ben' }),
                   post = yield tyranid_1.default.byName['post'].findOne({ text: 'Salads are great, the post.' }),
-                  choppedBlogs = yield tyranid_1.default.byName['blog'].find({ organizationId: chopped.$id }),
-                  choppedPosts = yield tyranid_1.default.byName['post'].find({ blogId: { $in: choppedBlogs.map(b => b.$id) } });
+                  choppedBlogs = yield tyranid_1.default.byName['blog'].findAll({ organizationId: chopped.$id }),
+                  choppedPosts = yield tyranid_1.default.byName['post'].findAll({ blogId: { $in: choppedBlogs.map(b => b.$id) } });
             chai_1.expect(choppedPosts).to.have.lengthOf(2);
             chai_1.expect(_.map(choppedPosts, '$id')).to.contain(post.$id);
             yield post['$deny']('view-post', ben);
-            const postsBenCanSee = yield tyranid_1.default.byName['post'].find({}, null, { tyranid: { secure: true, user: ben } });
+            const postsBenCanSee = yield tyranid_1.default.byName['post'].findAll({}, null, { tyranid: { secure: true, user: ben } });
             chai_1.expect(postsBenCanSee).to.have.lengthOf(1);
             chai_1.expect(_.map(postsBenCanSee, '$id')).to.not.contain(post.$id);
         }));

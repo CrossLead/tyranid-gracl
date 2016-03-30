@@ -148,7 +148,7 @@ export async function stepThroughCollectionPath(
 
   // get the objects in the second to last collection of the path using
   // the ids of the last collection in the path
-  const nextCollectionDocs = await nextCollection.find(
+  const nextCollectionDocs = await nextCollection.findAll(
     { [nextCollectionLinkField.spath]: { $in: ids } },
     { _id: 1, [nextCollectionId]: 1 },
     { tyranid: { secure } }

@@ -1,4 +1,4 @@
-declare module 'tpmongo' {
-  const tpmongo: any;
-  export = tpmongo;
+declare module 'mongodb' {
+  const mongodb: any;
+  export = mongodb;
 }

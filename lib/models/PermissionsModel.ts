@@ -426,7 +426,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
     await PermissionsModel.lockPermissionsForResource(doc);
 
-    const permissions = await PermissionsModel.find({
+    const permissions = await PermissionsModel.findAll({
             $or: [
               { subjectId: uid },
               { resourceId: uid }

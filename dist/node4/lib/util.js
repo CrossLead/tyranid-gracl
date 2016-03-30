@@ -93,7 +93,7 @@ function stepThroughCollectionPath(ids, previousCollection, nextCollection) {
             throw new Error(`cannot step through collection path, as no link to collection ${ nextCollection.def.name } ` + `from collection ${ previousCollection.def.name }`);
         }
         const nextCollectionId = nextCollection.def.primaryKey.field;
-        const nextCollectionDocs = yield nextCollection.find({ [nextCollectionLinkField.spath]: { $in: ids } }, { _id: 1, [nextCollectionId]: 1 }, { tyranid: { secure: secure } });
+        const nextCollectionDocs = yield nextCollection.findAll({ [nextCollectionLinkField.spath]: { $in: ids } }, { _id: 1, [nextCollectionId]: 1 }, { tyranid: { secure: secure } });
         return _.map(nextCollectionDocs, nextCollectionId);
     });
 }

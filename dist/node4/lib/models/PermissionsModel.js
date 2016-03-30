@@ -286,7 +286,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
             const uid = doc.$uid;
             if (!uid) throw new Error('No $uid property on document!');
             yield PermissionsModel.lockPermissionsForResource(doc);
-            const permissions = yield PermissionsModel.find({
+            const permissions = yield PermissionsModel.findAll({
                 $or: [{ subjectId: uid }, { resourceId: uid }]
             }),
                   permissionsByCollection = new Map(),
