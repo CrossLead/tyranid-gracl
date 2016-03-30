@@ -125,6 +125,9 @@ class GraclPlugin {
             throw new Error(`Must build subject/resource hierarchy before creating permission hierarchy`);
         }
         const sorted = gracl.topologicalSort(_.map(permissionsTypes, perm => {
+            if (perm['abstract'] === undefined) {
+                throw new Error(`Must set { abstract: true | false } property for all permission types! ` + `permission ${ JSON.stringify(perm) } does not have \"abstract\" property`);
+            }
             const singleParent = perm['parent'];
             if (singleParent) perm['parents'] = [singleParent];
             const parents = perm['parents'];

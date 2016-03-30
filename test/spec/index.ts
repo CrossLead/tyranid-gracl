@@ -19,9 +19,9 @@ const permissionKey = 'graclResourcePermissions',
         verbose: false,
         permissionProperty: permissionKey,
         permissionTypes: [
-          { name: 'edit' },
-          { name: 'view', parent: 'edit' },
-          { name: 'delete' },
+          { name: 'edit', abstract: false },
+          { name: 'view', parent: 'edit', abstract: false },
+          { name: 'delete', abstract: false },
           { name: 'abstract_view_chart', abstract: true, parents: [
             'view-user',
             'view-post'

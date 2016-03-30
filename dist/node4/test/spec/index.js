@@ -40,7 +40,7 @@ const permissionKey = 'graclResourcePermissions',
       secure = new tyranidGracl.GraclPlugin({
     verbose: false,
     permissionProperty: permissionKey,
-    permissionTypes: [{ name: 'edit' }, { name: 'view', parent: 'edit' }, { name: 'delete' }, { name: 'abstract_view_chart', abstract: true, parents: ['view-user', 'view-post'] }, { name: 'view_alignment_triangle', abstract: true, parents: ['edit_alignment_triangle', 'view_alignment_triangle_component'] }, { name: 'edit_alignment_triangle', abstract: true }, { name: 'view_alignment_triangle_component', abstract: true }]
+    permissionTypes: [{ name: 'edit', abstract: false }, { name: 'view', parent: 'edit', abstract: false }, { name: 'delete', abstract: false }, { name: 'abstract_view_chart', abstract: true, parents: ['view-user', 'view-post'] }, { name: 'view_alignment_triangle', abstract: true, parents: ['edit_alignment_triangle', 'view_alignment_triangle_component'] }, { name: 'edit_alignment_triangle', abstract: true }, { name: 'view_alignment_triangle_component', abstract: true }]
 });
 const checkStringEq = function checkStringEq(got, want) {
     let message = arguments.length <= 2 || arguments[2] === undefined ? '' : arguments[2];
