@@ -40,7 +40,7 @@ const permissionKey = 'graclResourcePermissionIds',
       secure = new tyranidGracl.GraclPlugin({
     verbose: VERBOSE_LOGGING,
     permissionIdProperty: permissionKey,
-    permissionTypes: [{ name: 'edit', abstract: false }, { name: 'view', parent: 'edit', abstract: false }, { name: 'delete', abstract: false }, { name: 'abstract_view_chart', abstract: true, parents: ['view-user', 'view-post'] }, { name: 'view_alignment_triangle', abstract: true, parents: ['edit_alignment_triangle', 'view_alignment_triangle_component'] }, { name: 'edit_alignment_triangle', abstract: true }, { name: 'view_alignment_triangle_component', abstract: true }]
+    permissionTypes: [{ name: 'edit', abstract: false }, { name: 'view', parent: 'edit', abstract: false }, { name: 'delete', abstract: false }, { name: 'abstract_view_chart', abstract: true, parents: ['view-user', 'view-post'] }, { name: 'view_alignment_triangle_private', abstract: true }, { name: 'view-blog', collection: true, parents: ['view_alignment_triangle_private'] }]
 });
 const checkStringEq = function checkStringEq(got, want) {
     let message = arguments.length <= 2 || arguments[2] === undefined ? '' : arguments[2];
@@ -254,6 +254,20 @@ describe('tyranid-gracl', () => {
             chai_1.expect(access.access).to.equal(true);
             chai_1.expect(access.type).to.equal('view-post');
         }));
+        it('should correctly check abstract parent of collection-specific permission', () => __awaiter(undefined, void 0, void 0, function* () {
+            const ben = yield tyranid_1.default.byName['user'].findOne({ name: 'ben' }),
+                  chopped = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chopped' });
+            yield chopped['$allow']('view_alignment_triangle_private', ben);
+            const access = yield chopped['$isAllowed']('view-blog', ben);
+            chai_1.expect(access, 'should have access through abstract parent').to.equal(true);
+        }));
+        it('should correctly check normal crud hierarchy for crud permission with additional abstract permission', () => __awaiter(undefined, void 0, void 0, function* () {
+            const ben = yield tyranid_1.default.byName['user'].findOne({ name: 'ben' }),
+                  chopped = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chopped' });
+            yield chopped['$allow']('edit-blog', ben);
+            const access = yield chopped['$isAllowed']('view-blog', ben);
+            chai_1.expect(access, 'should have access through abstract parent').to.equal(true);
+        }));
     });
     describe('plugin.query()', () => {
         it('should return false with no user', () => __awaiter(undefined, void 0, void 0, function* () {
@@ -320,6 +334,16 @@ describe('tyranid-gracl', () => {
                 blogId: { $in: _.map(choppedBlogs, '_id') }
             });
             checkStringEq(_.map(postsBenCanSee, '_id'), _.map(choppedPosts, '_id'), 'ben should only see chopped posts');
+        }));
+        it('should filter based on abstract parent access of collection-specific permission', () => __awaiter(undefined, void 0, void 0, function* () {
+            const ben = yield tyranid_1.default.byName['user'].findOne({ name: 'ben' }),
+                  blogs = yield tyranid_1.default.byName['blog'].findAll({}),
+                  chopped = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chopped' });
+            yield chopped['$allow']('view_alignment_triangle_private', ben);
+            const blogsBenCanSee = yield tyranid_1.default.byName['blog'].findAll({}, null, { tyranid: { secure: true, user: ben } });
+            chai_1.expect(blogs).to.have.lengthOf(4);
+            chai_1.expect(blogsBenCanSee).to.have.lengthOf(1);
+            chai_1.expect(blogsBenCanSee[0]['organizationId'].toString()).to.equal(chopped.$id.toString());
         }));
         it('should default to lowest hierarchy permission', () => __awaiter(undefined, void 0, void 0, function* () {
             const chopped = yield giveBenAccessToChoppedPosts(),

@@ -138,7 +138,7 @@ class GraclPlugin {
                 const colParents = [];
                 for (const parent of parents) {
                     if (/-/.test(parent)) {
-                        if (!perm['abstract']) {
+                        if (!perm['abstract'] && !perm['collection']) {
                             throw new Error(`Cannot set collection-specific permission to be the parent of a non-abstract permission!`);
                         }
                         const parsed = this.parsePermissionString(parent);
@@ -169,10 +169,12 @@ class GraclPlugin {
         for (const node of sorted) {
             const name = node['name'],
                   parents = node['parents'],
-                  abstract = node['abstract'];
+                  abstract = node['abstract'],
+                  collection = node['collection'];
             hierarchy[name] = {
                 name: name,
                 abstract: abstract,
+                collection: collection,
                 parents: _.map(parents, p => {
                     const hierarchyParent = hierarchy[p];
                     if (abstract && hierarchyParent && !hierarchyParent.abstract) {

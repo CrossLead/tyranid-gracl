@@ -28,13 +28,11 @@ const permissionKey = 'graclResourcePermissionIds',
             'view-user',
             'view-post'
           ]},
-          { name: 'view_alignment_triangle', abstract: true, parents: [
-            'edit_alignment_triangle',
-            'view_alignment_triangle_component'
-          ]},
+          { name: 'view_alignment_triangle_private', abstract: true },
 
-          { name: 'edit_alignment_triangle', abstract: true },
-          { name: 'view_alignment_triangle_component', abstract: true }
+          { name: 'view-blog', collection: true, parents: [
+            'view_alignment_triangle_private'
+          ]},
         ]
       });
 
@@ -410,6 +408,25 @@ describe('tyranid-gracl', () => {
     });
 
 
+    it('should correctly check abstract parent of collection-specific permission', async () => {
+      const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+            chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
+
+      await chopped['$allow']('view_alignment_triangle_private', ben);
+      const access = await chopped['$isAllowed']('view-blog', ben);
+      expect(access, 'should have access through abstract parent').to.equal(true);
+    });
+
+    it('should correctly check normal crud hierarchy for crud permission with additional abstract permission', async () => {
+      const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+            chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
+
+      await chopped['$allow']('edit-blog', ben);
+      const access = await chopped['$isAllowed']('view-blog', ben);
+      expect(access, 'should have access through abstract parent').to.equal(true);
+    });
+
+
   });
 
 
@@ -533,6 +550,21 @@ describe('tyranid-gracl', () => {
         'ben should only see chopped posts'
       );
 
+    });
+
+    it('should filter based on abstract parent access of collection-specific permission', async () => {
+      const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+            blogs = await Tyr.byName['blog'].findAll({ }),
+            chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
+
+      await chopped['$allow']('view_alignment_triangle_private', ben);
+
+      const blogsBenCanSee = await Tyr.byName['blog']
+        .findAll({}, null, { tyranid: { secure: true, user: ben } });
+
+      expect(blogs).to.have.lengthOf(4);
+      expect(blogsBenCanSee).to.have.lengthOf(1);
+      expect(blogsBenCanSee[0]['organizationId'].toString()).to.equal(chopped.$id.toString());
     });
 
     it('should default to lowest hierarchy permission', async () => {

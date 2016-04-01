@@ -16,9 +16,11 @@ import {
 export type permissionTypeList = {
   [key: string]: any,
   abstract?: boolean,
+  collection?: boolean,
   name: string,
   parents?: string[]
 }[];
+
 
 export type permissionHierarchy = Hash<any>;
 export type pluginOptions = {
@@ -307,7 +309,7 @@ export class GraclPlugin {
         for (const parent of parents) {
           // if we have an <action>-<collection> permission...
           if (/-/.test(parent)) {
-            if (!perm['abstract']) {
+            if (!perm['abstract'] && !perm['collection']) {
               throw new Error(
                 `Cannot set collection-specific permission to be the parent of a non-abstract permission!`
               );
@@ -354,11 +356,13 @@ export class GraclPlugin {
     for (const node of sorted) {
       const name = node['name'],
             parents = <string[]> node['parents'],
-            abstract = node['abstract'];
+            abstract = node['abstract'],
+            collection = node['collection'];
 
       hierarchy[name] = {
         name,
         abstract: abstract,
+        collection: collection,
         // need to add parents, that may be non-abstract nodes that don't directly exist in hierarchy
         parents: _.map(parents, (p: string) => {
           const hierarchyParent = hierarchy[p];

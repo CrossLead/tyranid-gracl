@@ -6,6 +6,7 @@ import { Hash } from '../util';
 export declare type permissionTypeList = {
     [key: string]: any;
     abstract?: boolean;
+    collection?: boolean;
     name: string;
     parents?: string[];
 }[];
