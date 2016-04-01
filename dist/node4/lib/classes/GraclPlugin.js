@@ -125,8 +125,8 @@ class GraclPlugin {
             throw new Error(`Must build subject/resource hierarchy before creating permission hierarchy`);
         }
         const sorted = gracl.topologicalSort(_.map(permissionsTypes, perm => {
-            if (perm['abstract'] === undefined) {
-                throw new Error(`Must set { abstract: true | false } property for all permission types! ` + `permission ${ JSON.stringify(perm) } does not have \"abstract\" property`);
+            if (perm['abstract'] === undefined && !perm['collection']) {
+                throw new Error(`Must set { abstract: true | false } property for all permission types ` + `unless it is a collection-specific permission ` + `permission ${ JSON.stringify(perm) } does not have "abstract" or "collection" property`);
             }
             const singleParent = perm['parent'];
             if (singleParent) perm['parents'] = [singleParent];
@@ -223,18 +223,15 @@ class GraclPlugin {
     }
     nextPermissions(permissionString) {
         const components = this.parsePermissionString(permissionString),
-              obj = this.permissionHierarchy[components.action];
-        let permissions = [];
-        if (obj && obj['parents']) {
-            permissions = obj['parents'].map(p => {
-                const parentPermComponents = this.parsePermissionString(p['name']);
-                return this.formatPermissionType({
-                    action: parentPermComponents.action,
-                    collection: parentPermComponents.collection || components.collection
-                });
+              actionParents = _.get(this.permissionHierarchy, `${ components.action }.parents`, []),
+              permissionStringParents = _.get(this.permissionHierarchy, `${ permissionString }.parents`, []);
+        return _.chain(actionParents).concat(permissionStringParents).map('name').unique().map(name => {
+            const parentPermComponents = this.parsePermissionString(name);
+            return this.formatPermissionType({
+                action: parentPermComponents.action,
+                collection: parentPermComponents.collection || components.collection
             });
-        }
-        return permissions;
+        }).unique().value();
     }
     log(message) {
         if (this.verbose) {

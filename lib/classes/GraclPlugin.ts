@@ -281,10 +281,11 @@ export class GraclPlugin {
      */
     const sorted = gracl.topologicalSort(_.map(permissionsTypes, perm => {
 
-      if (perm['abstract'] === undefined) {
+      if (perm['abstract'] === undefined && !perm['collection']) {
         throw new Error(
-          `Must set { abstract: true | false } property for all permission types! ` +
-          `permission ${JSON.stringify(perm)} does not have \"abstract\" property`
+          `Must set { abstract: true | false } property for all permission types ` +
+          `unless it is a collection-specific permission ` +
+          `permission ${JSON.stringify(perm)} does not have "abstract" or "collection" property`
         );
       }
 
@@ -434,16 +435,27 @@ export class GraclPlugin {
 
   nextPermissions(permissionString: string): string[] {
     const components = this.parsePermissionString(permissionString),
-          obj = this.permissionHierarchy[components.action];
+          // get general permissions from action
+          actionParents = <Hash<string>[]> _.get(
+            this.permissionHierarchy,
+            `${components.action}.parents`,
+            []
+          ),
+          // if a specific action-collection permission is set in the hierarchy
+          permissionStringParents = <Hash<string>[]> _.get(
+            this.permissionHierarchy,
+            `${permissionString}.parents`,
+            []
+          );
 
-    let permissions: string[] = [];
-
-    if (obj && obj['parents']) {
-      // for each parent permission type...
-      permissions = (<Hash<string>[]> obj['parents']).map(p => {
+    return _.chain(actionParents)
+      .concat(permissionStringParents)
+      .map('name')
+      .unique()
+      .map((name: string) => {
         // we need to split the name, as it may include a specific collection
         // for inheritance
-        const parentPermComponents = this.parsePermissionString(p['name']);
+        const parentPermComponents = this.parsePermissionString(name);
 
         return this.formatPermissionType({
           action: parentPermComponents.action,
@@ -451,10 +463,9 @@ export class GraclPlugin {
           // use that, otherwise use the same collection as the last permission
           collection: parentPermComponents.collection || components.collection
         });
-      });
-    }
-
-    return permissions;
+      })
+      .unique()
+      .value();
   }
 
 
