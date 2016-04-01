@@ -343,6 +343,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     const uniquenessCheck = new Set();
 
     _.chain(permissions)
+      .compact()
       .filter(perm => {
         return (perm.subjectId && existingSubjectIdsFromPermissions.has(perm.subjectId));
       })

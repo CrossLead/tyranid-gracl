@@ -237,7 +237,7 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
                 return out;
             }, new Set());
             const uniquenessCheck = new Set();
-            _.chain(permissions).filter(perm => {
+            _.chain(permissions).compact().filter(perm => {
                 return perm.subjectId && existingSubjectIdsFromPermissions.has(perm.subjectId);
             }).each(perm => {
                 if (!perm.resourceId) {
