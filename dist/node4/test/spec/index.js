@@ -138,6 +138,7 @@ describe('tyranid-gracl', () => {
             chai_1.expect(ben, 'should have method: $allowForThis').to.have.property('$allowForThis');
             chai_1.expect(ben, 'should have method: $denyForThis').to.have.property('$denyForThis');
             chai_1.expect(ben, 'should have method: $explainPermission').to.have.property('$explainPermission');
+            chai_1.expect(ben, 'should have method: $permissions').to.have.property('$permissions');
         }));
         it('should create subject and resource classes for collections without links in or out', () => {
             chai_1.expect(secure.graclHierarchy.resources.has('usagelog')).to.equal(true);
@@ -231,6 +232,8 @@ describe('tyranid-gracl', () => {
             });
             chai_1.expect(updatedPermissionsForTed).to.have.lengthOf(permissionOperations.length);
             const permissionChecks = yield Promise.all([chopped['$isAllowed']('view-user', ted), cava['$isAllowed']('view-post', ted), post['$isAllowed']('edit-post', ted), ted['$isAllowed']('view-user', ben)]);
+            const tedSubjectPermissions = yield ted['$permissions']();
+            chai_1.expect(tedSubjectPermissions).to.have.lengthOf(4);
             chai_1.expect(_.all(permissionChecks)).to.equal(true);
             chai_1.expect((yield chipotle['$isAllowed']('view-post', ted))).to.equal(false);
             yield secure.deletePermissions(ted);

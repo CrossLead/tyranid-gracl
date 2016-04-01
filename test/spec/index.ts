@@ -183,7 +183,7 @@ describe('tyranid-gracl', () => {
       expect(ben, 'should have method: $allowForThis').to.have.property('$allowForThis');
       expect(ben, 'should have method: $denyForThis').to.have.property('$denyForThis');
       expect(ben, 'should have method: $explainPermission').to.have.property('$explainPermission');
-
+      expect(ben, 'should have method: $permissions').to.have.property('$permissions');
     });
 
     it('should create subject and resource classes for collections without links in or out', () => {
@@ -367,6 +367,9 @@ describe('tyranid-gracl', () => {
         post['$isAllowed']('edit-post', ted),
         ted['$isAllowed']('view-user', ben)
       ]);
+
+      const tedSubjectPermissions = await ted['$permissions']();
+      expect(tedSubjectPermissions).to.have.lengthOf(4);
 
       expect(_.all(permissionChecks)).to.equal(true);
       expect(await chipotle['$isAllowed']('view-post', ted)).to.equal(false);

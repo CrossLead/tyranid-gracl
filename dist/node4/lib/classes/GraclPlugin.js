@@ -603,6 +603,14 @@ GraclPlugin.setPermissionAccess = PermissionsModel_1.PermissionsModel.setPermiss
 GraclPlugin.deletePermissions = PermissionsModel_1.PermissionsModel.deletePermissions.bind(PermissionsModel_1.PermissionsModel);
 GraclPlugin.explainPermission = PermissionsModel_1.PermissionsModel.explainPermission.bind(PermissionsModel_1.PermissionsModel);
 GraclPlugin.documentMethods = {
+    $permissions(permissionType, graclType) {
+        const doc = this;
+        graclType = graclType || 'subject';
+        if (graclType !== 'resource' && graclType !== 'subject') {
+            throw new TypeError(`graclType must be either subject or resource!`);
+        }
+        return graclType === 'resource' ? PermissionsModel_1.PermissionsModel.getPermissionsOfTypeForResource(doc, permissionType) : PermissionsModel_1.PermissionsModel.getPermissionsOfTypeForSubject(doc, permissionType);
+    },
     $setPermissionAccess(permissionType, access) {
         let subjectDocument = arguments.length <= 2 || arguments[2] === undefined ? tyranid_1.default.local.user : arguments[2];
 

@@ -112,6 +112,29 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
             return { subject: subject, resource: resource };
         });
     }
+    static getPermissionsOfTypeForResource(resourceDocument, permissionType) {
+        PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
+        const query = {
+            resourceId: resourceDocument.$uid
+        };
+        if (permissionType) {
+            query[`access.${ permissionType }`] = {
+                $exists: true
+            };
+        }
+        return PermissionsModel.findAll(query);
+    }
+    static getPermissionsOfTypeForSubject(subjectDocument, permissionType) {
+        const query = {
+            subjectId: subjectDocument.$uid
+        };
+        if (permissionType) {
+            query[`access.${ permissionType }`] = {
+                $exists: true
+            };
+        }
+        return PermissionsModel.findAll(query);
+    }
     static setPermissionAccess(resourceDocument, permissionType, access) {
         let subjectDocument = arguments.length <= 3 || arguments[3] === undefined ? tyranid_1.default.local.user : arguments[3];
         let abstract = arguments.length <= 4 || arguments[4] === undefined ? false : arguments[4];

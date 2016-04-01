@@ -158,6 +158,46 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
 
 
+  static getPermissionsOfTypeForResource(
+            resourceDocument: Tyr.Document,
+            permissionType?: string
+          ) {
+    PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
+
+    const query: { [key: string]: any } = {
+      resourceId: resourceDocument.$uid
+    };
+
+    if (permissionType) {
+      query[`access.${permissionType}`] = {
+        $exists: true
+      };
+    }
+
+    return PermissionsModel.findAll(query);
+  }
+
+
+
+  static getPermissionsOfTypeForSubject(
+            subjectDocument: Tyr.Document,
+            permissionType?: string
+          ) {
+    const query: { [key: string]: any } = {
+      subjectId: subjectDocument.$uid
+    };
+
+    if (permissionType) {
+      query[`access.${permissionType}`] = {
+        $exists: true
+      };
+    }
+
+    return PermissionsModel.findAll(query);
+  }
+
+
+
   static async setPermissionAccess(
                 resourceDocument: Tyr.Document,
                 permissionType: string,

@@ -22,6 +22,7 @@ export declare class GraclPlugin {
     static deletePermissions: typeof PermissionsModel.deletePermissions;
     static explainPermission: typeof PermissionsModel.explainPermission;
     static documentMethods: {
+        $permissions(permissionType?: string, graclType?: "resource" | "subject"): Promise<Tyr.Document[]>;
         $setPermissionAccess(permissionType: string, access: boolean, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
         $isAllowed(permissionType: string, subjectDocument?: Tyr.Document): Promise<boolean>;
         $isAllowedForThis(permissionAction: string, subjectDocument?: Tyr.Document): Promise<boolean>;

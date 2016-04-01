@@ -58,6 +58,17 @@ export class GraclPlugin {
    */
   static documentMethods = {
 
+    $permissions(permissionType?: string, graclType?: 'resource' | 'subject') {
+      const doc = <Tyr.Document> this;
+      graclType = graclType || 'subject';
+      if (graclType !== 'resource' && graclType !== 'subject') {
+        throw new TypeError(`graclType must be either subject or resource!`);
+      }
+      return graclType === 'resource'
+        ? PermissionsModel.getPermissionsOfTypeForResource(doc, permissionType)
+        : PermissionsModel.getPermissionsOfTypeForSubject(doc, permissionType);
+    },
+
     $setPermissionAccess(
         permissionType: string,
         access: boolean,
