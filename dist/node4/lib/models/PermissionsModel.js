@@ -87,53 +87,72 @@ class PermissionsModel extends exports.PermissionsBaseCollection {
     }
     static getGraclClasses(resourceDocument, subjectDocument) {
         return __awaiter(this, void 0, Promise, function* () {
-            if (!(resourceDocument && resourceDocument.$uid)) {
-                throw new Error('No resource document provided!');
-            }
-            if (!(subjectDocument && subjectDocument.$uid)) {
-                throw new Error('No subject document provided (or Tyr.local.user is unavailable)!');
-            }
             const plugin = PermissionsModel.getGraclPlugin(),
-                  resourceCollectionName = resourceDocument.$model.def.name,
-                  subjectCollectionName = subjectDocument.$model.def.name,
-                  ResourceClass = plugin.graclHierarchy.getResource(resourceCollectionName),
-                  SubjectClass = plugin.graclHierarchy.getSubject(subjectCollectionName);
+                  resourceCollectionName = resourceDocument.$model.def.name;
             if (!resourceDocument[plugin.populatedPermissionsProperty]) {
                 yield tyranid_1.default.byName[resourceCollectionName].populate(plugin.permissionIdProperty, resourceDocument);
             }
-            if (!ResourceClass) {
-                throw new Error(`Attempted to set/get permission using ${ resourceCollectionName } as resource, ` + `no relevant resource class found in tyranid-gracl plugin!`);
-            }
-            if (!SubjectClass) {
-                throw new Error(`Attempted to set/get permission using ${ subjectCollectionName } as subject, ` + `no relevant subject class found in tyranid-gracl plugin!`);
-            }
-            const subject = new SubjectClass(subjectDocument),
-                  resource = new ResourceClass(resourceDocument);
+            const subject = PermissionsModel.createSubject(subjectDocument),
+                  resource = PermissionsModel.createResource(resourceDocument);
             return { subject: subject, resource: resource };
         });
     }
-    static getPermissionsOfTypeForResource(resourceDocument, permissionType) {
-        PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
-        const query = {
-            resourceId: resourceDocument.$uid
-        };
-        if (permissionType) {
-            query[`access.${ permissionType }`] = {
-                $exists: true
-            };
+    static createSubject(subjectDocument) {
+        if (!(subjectDocument && subjectDocument.$uid)) {
+            throw new Error('No subject document provided (or Tyr.local.user is unavailable)!');
         }
-        return PermissionsModel.findAll(query);
+        const plugin = PermissionsModel.getGraclPlugin(),
+              subjectCollectionName = subjectDocument.$model.def.name,
+              SubjectClass = plugin.graclHierarchy.getSubject(subjectCollectionName);
+        if (!SubjectClass) {
+            throw new Error(`Attempted to set/get permission using ${ subjectCollectionName } as subject, ` + `no relevant subject class found in tyranid-gracl plugin!`);
+        }
+        return new SubjectClass(subjectDocument);
+    }
+    static createResource(resourceDocument) {
+        if (!(resourceDocument && resourceDocument.$uid)) {
+            throw new Error('No resource document provided (or Tyr.local.user is unavailable)!');
+        }
+        const plugin = PermissionsModel.getGraclPlugin(),
+              resourceCollectionName = resourceDocument.$model.def.name,
+              ResourceClass = plugin.graclHierarchy.getResource(resourceCollectionName);
+        if (!ResourceClass) {
+            throw new Error(`Attempted to set/get permission using ${ resourceCollectionName } as resource, ` + `no relevant resource class found in tyranid-gracl plugin!`);
+        }
+        return new ResourceClass(resourceDocument);
+    }
+    static getPermissionsOfTypeForResource(resourceDocument, permissionType) {
+        return __awaiter(this, void 0, void 0, function* () {
+            PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
+            const resource = PermissionsModel.createResource(resourceDocument);
+            const query = {
+                resourceId: {
+                    $in: yield resource.getHierarchyIds()
+                }
+            };
+            if (permissionType) {
+                query[`access.${ permissionType }`] = {
+                    $exists: true
+                };
+            }
+            return PermissionsModel.findAll(query);
+        });
     }
     static getPermissionsOfTypeForSubject(subjectDocument, permissionType) {
-        const query = {
-            subjectId: subjectDocument.$uid
-        };
-        if (permissionType) {
-            query[`access.${ permissionType }`] = {
-                $exists: true
+        return __awaiter(this, void 0, void 0, function* () {
+            const subject = PermissionsModel.createSubject(subjectDocument);
+            const query = {
+                subjectId: {
+                    $in: yield subject.getHierarchyIds()
+                }
             };
-        }
-        return PermissionsModel.findAll(query);
+            if (permissionType) {
+                query[`access.${ permissionType }`] = {
+                    $exists: true
+                };
+            }
+            return PermissionsModel.findAll(query);
+        });
     }
     static setPermissionAccess(resourceDocument, permissionType, access) {
         let subjectDocument = arguments.length <= 3 || arguments[3] === undefined ? tyranid_1.default.local.user : arguments[3];

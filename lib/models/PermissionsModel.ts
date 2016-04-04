@@ -117,31 +117,31 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
                 subjectDocument: Tyr.Document
               ): Promise<{ subject: gracl.Subject, resource: gracl.Resource }> {
 
-    if (!(resourceDocument && resourceDocument.$uid)) {
-      throw new Error('No resource document provided!');
-    }
-
-    if (!(subjectDocument && subjectDocument.$uid)) {
-      throw new Error('No subject document provided (or Tyr.local.user is unavailable)!');
-    }
 
     const plugin = PermissionsModel.getGraclPlugin(),
-          resourceCollectionName = resourceDocument.$model.def.name,
-          subjectCollectionName  = subjectDocument.$model.def.name,
-          ResourceClass          = plugin.graclHierarchy.getResource(resourceCollectionName),
-          SubjectClass           = plugin.graclHierarchy.getSubject(subjectCollectionName);
+          resourceCollectionName = resourceDocument.$model.def.name;
 
     if (!resourceDocument[plugin.populatedPermissionsProperty]) {
       await Tyr.byName[resourceCollectionName]
         .populate(plugin.permissionIdProperty, resourceDocument);
     }
 
-    if (!ResourceClass) {
-      throw new Error(
-        `Attempted to set/get permission using ${resourceCollectionName} as resource, ` +
-        `no relevant resource class found in tyranid-gracl plugin!`
-      );
+
+    const subject  = PermissionsModel.createSubject(subjectDocument),
+          resource = PermissionsModel.createResource(resourceDocument);
+
+    return { subject, resource };
+  }
+
+
+  static createSubject(subjectDocument: Tyr.Document): gracl.Subject {
+    if (!(subjectDocument && subjectDocument.$uid)) {
+      throw new Error('No subject document provided (or Tyr.local.user is unavailable)!');
     }
+
+    const plugin = PermissionsModel.getGraclPlugin(),
+          subjectCollectionName  = subjectDocument.$model.def.name,
+          SubjectClass           = plugin.graclHierarchy.getSubject(subjectCollectionName);
 
     if (!SubjectClass) {
       throw new Error(
@@ -150,22 +150,41 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       );
     }
 
-    const subject  = new SubjectClass(subjectDocument),
-          resource = new ResourceClass(resourceDocument);
-
-    return { subject, resource };
+    return new SubjectClass(subjectDocument);
   }
 
 
+  static createResource(resourceDocument: Tyr.Document): gracl.Resource {
+    if (!(resourceDocument && resourceDocument.$uid)) {
+      throw new Error('No resource document provided (or Tyr.local.user is unavailable)!');
+    }
 
-  static getPermissionsOfTypeForResource(
+    const plugin = PermissionsModel.getGraclPlugin(),
+          resourceCollectionName  = resourceDocument.$model.def.name,
+          ResourceClass           = plugin.graclHierarchy.getResource(resourceCollectionName);
+
+    if (!ResourceClass) {
+      throw new Error(
+        `Attempted to set/get permission using ${resourceCollectionName} as resource, ` +
+        `no relevant resource class found in tyranid-gracl plugin!`
+      );
+    }
+
+    return new ResourceClass(resourceDocument);
+  }
+
+
+  static async getPermissionsOfTypeForResource(
             resourceDocument: Tyr.Document,
             permissionType?: string
           ) {
     PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
+    const resource = PermissionsModel.createResource(resourceDocument);
 
     const query: { [key: string]: any } = {
-      resourceId: resourceDocument.$uid
+      resourceId: {
+        $in: await resource.getHierarchyIds()
+      }
     };
 
     if (permissionType) {
@@ -179,12 +198,17 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
 
 
-  static getPermissionsOfTypeForSubject(
+  static async getPermissionsOfTypeForSubject(
             subjectDocument: Tyr.Document,
             permissionType?: string
           ) {
+
+    const subject = PermissionsModel.createSubject(subjectDocument);
+
     const query: { [key: string]: any } = {
-      subjectId: subjectDocument.$uid
+      subjectId: {
+        $in: await subject.getHierarchyIds()
+      }
     };
 
     if (permissionType) {

@@ -11,6 +11,8 @@ export declare class PermissionsModel extends  {
         subject: gracl.Subject;
         resource: gracl.Resource;
     }>;
+    static createSubject(subjectDocument: Tyr.Document): gracl.Subject;
+    static createResource(resourceDocument: Tyr.Document): gracl.Resource;
     static getPermissionsOfTypeForResource(resourceDocument: Tyr.Document, permissionType?: string): Promise<Tyr.Document[]>;
     static getPermissionsOfTypeForSubject(subjectDocument: Tyr.Document, permissionType?: string): Promise<Tyr.Document[]>;
     static setPermissionAccess(resourceDocument: Tyr.Document, permissionType: string, access: boolean, subjectDocument?: Tyr.Document, abstract?: boolean): Promise<Tyr.Document>;
