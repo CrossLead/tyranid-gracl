@@ -17,10 +17,6 @@ export declare type pluginOptions = {
     permissionIdProperty?: string;
 };
 export declare class GraclPlugin {
-    static isAllowed: typeof PermissionsModel.isAllowed;
-    static setPermissionAccess: typeof PermissionsModel.setPermissionAccess;
-    static deletePermissions: typeof PermissionsModel.deletePermissions;
-    static explainPermission: typeof PermissionsModel.explainPermission;
     static documentMethods: {
         $permissions(permissionType?: string, graclType?: "resource" | "subject"): Promise<Tyr.Document[]>;
         $setPermissionAccess(permissionType: string, access: boolean, subjectDocument?: Tyr.Document): Promise<Tyr.Document>;
@@ -40,14 +36,11 @@ export declare class GraclPlugin {
     graclHierarchy: gracl.Graph;
     outgoingLinkPaths: Hash<Hash<string>>;
     unsecuredCollections: Set<string>;
-    isAllowed: typeof PermissionsModel.isAllowed;
-    setPermissionAccess: typeof PermissionsModel.setPermissionAccess;
-    deletePermissions: typeof PermissionsModel.deletePermissions;
-    explainPermission: typeof PermissionsModel.explainPermission;
     verbose: boolean;
     permissionHierarchy: permissionHierarchy;
     populatedPermissionsProperty: string;
     permissionIdProperty: string;
+    permissionsModel: typeof PermissionsModel;
     permissionTypes: permissionTypeList;
     constructor(opts?: pluginOptions);
     parsePermissionString(perm: string): {

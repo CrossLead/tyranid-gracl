@@ -32,27 +32,6 @@ export type pluginOptions = {
 
 export class GraclPlugin {
 
-
-  /**
-   *  alias permissions model methods here
-   */
-  static isAllowed = (
-    <typeof PermissionsModel.isAllowed> PermissionsModel.isAllowed.bind(PermissionsModel)
-  );
-
-  static setPermissionAccess = (
-    <typeof PermissionsModel.setPermissionAccess> PermissionsModel.setPermissionAccess.bind(PermissionsModel)
-  );
-
-  static deletePermissions = (
-    <typeof PermissionsModel.deletePermissions> PermissionsModel.deletePermissions.bind(PermissionsModel)
-  );
-
-  static explainPermission = (
-    <typeof PermissionsModel.explainPermission> PermissionsModel.explainPermission.bind(PermissionsModel)
-  );
-
-
   /**
    *  Methods to mixin to Tyr.documentPrototype for working with permissions
    */
@@ -130,7 +109,7 @@ export class GraclPlugin {
 
     $explainPermission(permissionType: string, subjectDocument = Tyr.local.user) {
       const doc = <Tyr.Document> this;
-      return GraclPlugin.explainPermission(doc, permissionType, subjectDocument);
+      return PermissionsModel.explainPermission(doc, permissionType, subjectDocument);
     }
 
   };
@@ -200,7 +179,6 @@ export class GraclPlugin {
   }
 
 
-
   /*
    * Instance properties
    */
@@ -212,19 +190,14 @@ export class GraclPlugin {
   ]);
 
 
-
-  // bind static methods to instance as well
-  isAllowed           = GraclPlugin.isAllowed;
-  setPermissionAccess = GraclPlugin.setPermissionAccess;
-  deletePermissions   = GraclPlugin.deletePermissions;
-  explainPermission   = GraclPlugin.explainPermission;
-
-
   // plugin options
   verbose: boolean;
   permissionHierarchy: permissionHierarchy;
   populatedPermissionsProperty: string;
   permissionIdProperty: string;
+
+
+  permissionsModel = PermissionsModel;
 
 
   permissionTypes: permissionTypeList = [

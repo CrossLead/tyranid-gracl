@@ -55,7 +55,7 @@ function giveBenAccessToChoppedPosts() {
               chopped = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chopped' });
         chai_1.expect(ben, 'ben should exist').to.exist;
         chai_1.expect(chopped, 'chopped should exist').to.exist;
-        const updatedChopped = secure.setPermissionAccess(chopped, `${ perm }-post`, true, ben);
+        const updatedChopped = secure.permissionsModel.setPermissionAccess(chopped, `${ perm }-post`, true, ben);
         return updatedChopped;
     });
 }
@@ -236,7 +236,7 @@ describe('tyranid-gracl', () => {
             chai_1.expect(tedSubjectPermissions).to.have.lengthOf(4);
             chai_1.expect(_.all(permissionChecks)).to.equal(true);
             chai_1.expect((yield chipotle['$isAllowed']('view-post', ted))).to.equal(false);
-            yield secure.deletePermissions(ted);
+            yield secure.permissionsModel.deletePermissions(ted);
             const postPermissionChecks = yield Promise.all([chopped['$isAllowed']('view-user', ted), cava['$isAllowed']('view-post', ted), post['$isAllowed']('edit-post', ted), ted['$isAllowed']('view-user', ben)]);
             chai_1.expect(_.all(postPermissionChecks)).to.equal(false);
             const updatedChopped = yield tyranid_1.default.byName['organization'].findOne({ name: 'Chopped' }),

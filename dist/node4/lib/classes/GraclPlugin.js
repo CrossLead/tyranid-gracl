@@ -37,10 +37,7 @@ const util_1 = require('../util');
 class GraclPlugin {
     constructor(opts) {
         this.unsecuredCollections = new Set([PermissionsModel_1.PermissionsModel.def.name, PermissionsLocks_1.PermissionLocks.def.name]);
-        this.isAllowed = GraclPlugin.isAllowed;
-        this.setPermissionAccess = GraclPlugin.setPermissionAccess;
-        this.deletePermissions = GraclPlugin.deletePermissions;
-        this.explainPermission = GraclPlugin.explainPermission;
+        this.permissionsModel = PermissionsModel_1.PermissionsModel;
         this.permissionTypes = [{ name: 'edit' }, { name: 'view', parents: ['edit'] }, { name: 'delete' }];
         opts = opts || {};
         if (Array.isArray(opts.permissionTypes) && opts.permissionTypes.length) {
@@ -598,10 +595,6 @@ class GraclPlugin {
         });
     }
 }
-GraclPlugin.isAllowed = PermissionsModel_1.PermissionsModel.isAllowed.bind(PermissionsModel_1.PermissionsModel);
-GraclPlugin.setPermissionAccess = PermissionsModel_1.PermissionsModel.setPermissionAccess.bind(PermissionsModel_1.PermissionsModel);
-GraclPlugin.deletePermissions = PermissionsModel_1.PermissionsModel.deletePermissions.bind(PermissionsModel_1.PermissionsModel);
-GraclPlugin.explainPermission = PermissionsModel_1.PermissionsModel.explainPermission.bind(PermissionsModel_1.PermissionsModel);
 GraclPlugin.documentMethods = {
     $permissions(permissionType, graclType) {
         const doc = this;
@@ -670,7 +663,7 @@ GraclPlugin.documentMethods = {
         let subjectDocument = arguments.length <= 1 || arguments[1] === undefined ? tyranid_1.default.local.user : arguments[1];
 
         const doc = this;
-        return GraclPlugin.explainPermission(doc, permissionType, subjectDocument);
+        return PermissionsModel_1.PermissionsModel.explainPermission(doc, permissionType, subjectDocument);
     }
 };
 exports.GraclPlugin = GraclPlugin;

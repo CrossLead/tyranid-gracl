@@ -50,7 +50,7 @@ async function giveBenAccessToChoppedPosts(perm = 'view') {
   expect(ben, 'ben should exist').to.exist;
   expect(chopped, 'chopped should exist').to.exist;
 
-  const updatedChopped = secure.setPermissionAccess(chopped, `${perm}-post`, true, ben);
+  const updatedChopped = secure.permissionsModel.setPermissionAccess(chopped, `${perm}-post`, true, ben);
 
   return updatedChopped;
 }
@@ -374,7 +374,7 @@ describe('tyranid-gracl', () => {
       expect(_.all(permissionChecks)).to.equal(true);
       expect(await chipotle['$isAllowed']('view-post', ted)).to.equal(false);
 
-      await secure.deletePermissions(ted);
+      await secure.permissionsModel.deletePermissions(ted);
 
       const postPermissionChecks = await Promise.all([
         chopped['$isAllowed']('view-user', ted),
