@@ -1,6 +1,6 @@
 {
   "name": "tyranid-gracl",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "tyranid.js plugin for gracl",
   "main": "./dist/node4/lib/index.js",
   "typings": "./dist/es6/lib/index.d.ts",
@@ -21,8 +21,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "gracl": "git://github.com/crosslead/gracl.git#1f178d0abfc4b36b4c4bfe02b988ce8d01e4c563",
-    "lodash": "^3.10.1",
+    "gracl": "0.0.1",
+    "lodash": "3.10.1",
     "tyranid": "0.0.154"
   },
   "babel": {
