@@ -175,15 +175,24 @@ describe('tyranid-gracl', () => {
 
     it('should add permissions methods to documents', async () => {
       const ben = await Tyr.byName['user'].findOne({ name: 'ben' });
-      expect(ben, 'should have method: $setPermissionAccess').to.have.property('$setPermissionAccess');
-      expect(ben, 'should have method: $isAllowed').to.have.property('$isAllowed');
-      expect(ben, 'should have method: $allow').to.have.property('$allow');
-      expect(ben, 'should have method: $deny').to.have.property('$deny');
-      expect(ben, 'should have method: $isAllowedForThis').to.have.property('$isAllowedForThis');
-      expect(ben, 'should have method: $allowForThis').to.have.property('$allowForThis');
-      expect(ben, 'should have method: $denyForThis').to.have.property('$denyForThis');
-      expect(ben, 'should have method: $explainPermission').to.have.property('$explainPermission');
-      expect(ben, 'should have method: $permissions').to.have.property('$permissions');
+
+      const methods = [
+        '$setPermissionAccess',
+        '$isAllowed',
+        '$allow',
+        '$deny',
+        '$isAllowedForThis',
+        '$allowForThis',
+        '$denyForThis',
+        '$explainPermission',
+        '$permissions',
+        '$allowedEntitiesForCollection',
+        '$entitiesWithPermission'
+      ];
+
+      for (const method of methods) {
+        expect(ben, `should have method: ${method}`).to.have.property(method);
+      }
     });
 
     it('should create subject and resource classes for collections without links in or out', () => {

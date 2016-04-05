@@ -37,6 +37,55 @@ export class GraclPlugin {
    */
   static documentMethods = {
 
+    // return collections that a document can view
+    $allowedEntitiesForCollection(collectionName: string): Promise<string[]>  {
+      const doc = <Tyr.Document> this,
+            plugin = PermissionsModel.getGraclPlugin();
+
+      // get all the resource entities with view-<collection> permission set to true
+      return <Promise<string[]>> doc['$entitiesWithPermission'](
+        plugin.formatPermissionType({
+          action: 'view',
+          collection: collectionName
+        })
+      );
+    },
+
+
+    async $entitiesWithPermission(permissionType: string, graclType?: 'resource' | 'subject'): Promise<string[]> {
+      const doc = <Tyr.Document> this,
+            checked = new Set(),
+            plugin = PermissionsModel.getGraclPlugin();
+
+      graclType = graclType || 'subject';
+
+      checked.add(permissionType);
+
+      const docs = await PermissionsModel.findAll({
+        subjectId: doc.$uid,
+        [`access.${permissionType}`]: true
+      });
+
+      const entities = _.map(docs, '$uid');
+
+      const nextPermissions = plugin.nextPermissions(permissionType);
+      while (nextPermissions.length) {
+        const perm = nextPermissions.pop();
+        if (!checked.has(perm)) {
+          checked.add(perm);
+          nextPermissions.push(...plugin.nextPermissions(perm));
+          const nextDocs = await PermissionsModel.findAll({
+            [`${graclType}Id`]: doc.$uid,
+            [`access.${perm}`]: true
+          });
+          entities.push(..._.map(nextDocs, '$uid'));
+        }
+      }
+
+      return <string[]> _.unique(entities);
+    },
+
+
     $permissions(permissionType?: string, graclType?: 'resource' | 'subject') {
       const doc = <Tyr.Document> this;
       graclType = graclType || 'subject';
