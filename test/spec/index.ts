@@ -3,7 +3,7 @@
 import Tyr from 'tyranid';
 import * as mongodb from 'mongodb';
 import * as _ from 'lodash';
-import * as tyranidGracl from '../../lib/index';
+import * as tyranidGracl from '../../lib/tyranid-gracl';
 import { expect } from 'chai';
 import { expectedLinkPaths } from '../helpers/expectedLinkPaths';
 import { createTestData } from '../helpers/createTestData';
