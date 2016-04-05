@@ -58,15 +58,16 @@ export class GraclPlugin {
             plugin = PermissionsModel.getGraclPlugin();
 
       graclType = graclType || 'subject';
+      const otherType = graclType === 'resource' ? 'subjectId' : 'resourceId';
 
       checked.add(permissionType);
 
       const docs = await PermissionsModel.findAll({
-        subjectId: doc.$uid,
+        [`${graclType}Id`]: doc.$uid,
         [`access.${permissionType}`]: true
       });
 
-      const entities = _.map(docs, '$uid');
+      const entities = _.map(docs, otherType);
 
       const nextPermissions = plugin.nextPermissions(permissionType);
       while (nextPermissions.length) {
@@ -78,7 +79,7 @@ export class GraclPlugin {
             [`${graclType}Id`]: doc.$uid,
             [`access.${perm}`]: true
           });
-          entities.push(..._.map(nextDocs, '$uid'));
+          entities.push(..._.map(nextDocs, otherType));
         }
       }
 

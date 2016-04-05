@@ -530,6 +530,28 @@ describe('tyranid-gracl', () => {
 
     });
 
+    it('Should return all relevant entities on doc.$entitiesWithPermission(perm)', async() => {
+      const ted = await Tyr.byName['user'].findOne({ name: 'ted' }),
+            ben = await Tyr.byName['user'].findOne({ name: 'ben' });
+
+      const chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' }),
+            cava = await Tyr.byName['organization'].findOne({ name: 'Cava' }),
+            chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
+            chipotleBlogs = await Tyr.byName['blog'].findAll({ organizationId: chipotle.$id }),
+            post = await Tyr.byName['post'].findOne({ text: 'Why burritos are amazing.' });
+
+      const permissionOperations = await Promise.all([
+        cava['$allow']('edit-post', ted),
+        post['$deny']('view-post', ted),
+        chipotleBlogs[0]['$allow']('view-post', ted)
+      ]);
+
+      const entities = await ted['$entitiesWithPermission']('view-post');
+
+      expect(entities).to.contain(cava['$uid']);
+      expect(entities).to.contain(chipotleBlogs[0]['$uid']);
+    });
+
   });
 
 
