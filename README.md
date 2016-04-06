@@ -181,13 +181,31 @@ export async function checkCanViewUid(req, res) {
  *  Example express controller using filtered queries
  */
 export async function findBlogs(req, res) {
-  const blogs = await Tyr.byName.blog.find({}, null, {
+  const blogs = await Tyr.byName.blog.findAll({}, null, {
     tyranid: {
       secure: true,
       user: req.user
     }
   });
   return res.json(blogs);
+}
+
+
+
+/**
+ *  Example creating a mongodb query that is restricted using permissions
+ */
+export async function getQueryForBlogsICanEdit(req, res) {
+  const originalQuery = {
+    name: {
+      $in: [
+        'myBlog',
+        'otherBlog'
+      ]
+    }
+  }
+  const secured = await Tyr.byName.blog.secureQuery(originalQuery, 'edit', req.user);
+  return secured;
 }
 
 
