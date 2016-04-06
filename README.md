@@ -141,10 +141,11 @@ export async function giveUserBlogViewAccessToOrg(req, res) {
 
   try {
 
-    const updatedOrg = await Tyr.byName
+    const org = await Tyr.byName
       .organization
-      .byId(organizationId)       // get the organization document by its id
-      .$allow('view-blog', user); // set view-blog access to true for user
+      .byId(organizationId);
+
+    const updatedOrg = await org.$allow('view-blog', user); // set view-blog access to true for user
 
   } catch (error) {
     if (/another update is in progress/.test(error.message)) {
@@ -168,7 +169,8 @@ export async function checkCanViewUid(req, res) {
         // uid of entity we want to check if <user> has view access to
         uid = req.query.uid;
 
-  const canView = await Tyr.byUid(uid).$isAllowedForThis('view', user);
+  const entity = await Tyr.byUid(uid);
+  const canView = await entity.$isAllowedForThis('view', user);
 
   return res.json(canView);
 }
@@ -197,7 +199,7 @@ export async function deletePermissionsRelatingToUid(req, res) {
   const uid = req.query.uid;
 
   try {
-    await Tyr.secure.deletePermissions(await Tyr.byUid(uid));
+    await Tyr.secure.permissionsModel.deletePermissions(await Tyr.byUid(uid));
   } catch (error) {
     if (/another update is in progress/.test(error.message)) {
       // the permissions model found a simultaneous update request, and denied this update
