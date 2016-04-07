@@ -72,6 +72,8 @@ describe('tyranid-gracl', () => {
       cls: false
     });
 
+    await secure.createIndexes();
+
     await createTestData();
   });
 
@@ -585,6 +587,28 @@ describe('tyranid-gracl', () => {
       expect(blogsBenCanSee).to.have.lengthOf(1);
       expect(blogsBenCanSee[0]['organizationId'].toString()).to.equal(chopped.$id.toString());
     });
+
+
+    it('should filter based on abstract parent access of collection-specific permission', async () => {
+      const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+            blogs = await Tyr.byName['blog'].findAll({ }),
+            chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
+
+      await chopped['$allow']('edit-organization', ben);
+
+      const {
+        $or: [
+          {
+            organizationId: {
+              $in: [ organizationId ]
+            }
+          }
+        ]
+      } = await Tyr.byName['blog'].secureQuery({}, 'view-organization', ben);
+
+      expect(organizationId.toString()).to.equal(chopped.$id.toString());
+    });
+
 
     it('should default to lowest hierarchy permission', async () => {
       const chopped      = await giveBenAccessToChoppedPosts(),

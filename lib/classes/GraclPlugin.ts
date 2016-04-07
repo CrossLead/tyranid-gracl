@@ -136,6 +136,17 @@ export class GraclPlugin {
 
 
 
+  createIndexes() {
+    return PermissionsModel.db.createIndex(
+      {
+        subjectId: 1,
+        resourceId: 1
+      },
+      { unique: true }
+    );
+  }
+
+
   parsePermissionString(perm: string) {
     if (!perm) throw new Error(`Tried to split empty permission!`);
 
@@ -627,8 +638,9 @@ export class GraclPlugin {
    *  Method for creating a specific query based on a schema object
    */
   async query(queriedCollection: Tyr.CollectionInstance,
-              permissionAction: string,
+              permissionType: string,
               subjectDocument = Tyr.local.user): Promise<boolean | {}> {
+
 
     const queriedCollectionName = queriedCollection.def.name;
 
@@ -637,18 +649,20 @@ export class GraclPlugin {
       return {};
     }
 
-    const permissionType = this.formatPermissionType({
-      action: permissionAction,
-      collection: queriedCollectionName
-    });
-
-    if (!permissionAction) {
-      throw new Error(`No permissionAction given to GraclPlugin.query()`);
+    if (!permissionType) {
+      throw new Error(`No permissionType given to GraclPlugin.query()`);
     }
 
     if (!this.graclHierarchy) {
       throw new Error(`Must call GraclPlugin.boot() before using GraclPlugin.query()`);
     }
+
+    const components = this.parsePermissionString(permissionType);
+
+    permissionType = this.formatPermissionType({
+      action: components.action,
+      collection: components.collection || queriedCollectionName
+    });
 
     // if no subjectDocument, no restriction...
     if (!subjectDocument) {
@@ -664,7 +678,7 @@ export class GraclPlugin {
     }
 
     // get all permission actions in order...
-    const permissionActions = [ permissionAction ],
+    const permissionTypes = [ permissionType ],
           getNext = (n: string[]) => {
             return _.chain(n).map(p => this.nextPermissions(p)).flatten().value();
           };
@@ -672,7 +686,7 @@ export class GraclPlugin {
     let next = [ permissionType ];
     while ((next = <string[]> getNext(next)).length) {
       for (const perm of next) {
-        permissionActions.push(this.parsePermissionString(perm).action);
+        permissionTypes.push(perm);
       }
     }
 
@@ -681,12 +695,7 @@ export class GraclPlugin {
      */
     const getAccess = (permission: gracl.Permission) => {
       let perm: boolean;
-      for (const action of permissionActions) {
-
-        const type = this.formatPermissionType({
-          action: action,
-          collection: queriedCollectionName
-        });
+      for (const type of permissionTypes) {
 
         if (permission.access[type] === true) {
           // short circuit on true
