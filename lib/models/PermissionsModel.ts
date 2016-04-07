@@ -3,7 +3,6 @@ import * as _ from 'lodash';
 import Tyr from 'tyranid';
 import * as gracl from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { PermissionLocks } from './PermissionsLocks';
 
 
 export const PermissionsBaseCollection = new Tyr.Collection({
@@ -121,11 +120,9 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     const plugin = PermissionsModel.getGraclPlugin(),
           resourceCollectionName = resourceDocument.$model.def.name;
 
-    if (!resourceDocument[plugin.populatedPermissionsProperty]) {
-      await Tyr.byName[resourceCollectionName]
-        .populate(plugin.permissionIdProperty, resourceDocument);
+    if (!resourceDocument[plugin.permissionsProperty]) {
+      resourceDocument = await PermissionsModel.populatePermissions(resourceDocument);
     }
-
 
     const subject  = PermissionsModel.createSubject(subjectDocument),
           resource = PermissionsModel.createResource(resourceDocument);
@@ -222,38 +219,17 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
 
 
-  static async setPermissionAccess(
-                resourceDocument: Tyr.Document,
-                permissionType: string,
-                access: boolean,
-                subjectDocument = Tyr.local.user,
-                abstract = false
-              ): Promise<Tyr.Document> {
-
-    if (!abstract) PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
-    const plugin = PermissionsModel.getGraclPlugin();
-
-    const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
-
-    const set = await resource.setPermissionAccess(subject, permissionType, access);
-
-    return <Tyr.Document> set.doc;
-  }
-
-
-
   static async isAllowed(
       resourceDocument: Tyr.Document,
       permissionType: string,
-      subjectDocument = Tyr.local.user,
-      abstract = false
+      subjectDocument = Tyr.local.user
     ): Promise<boolean> {
-    if (!abstract) PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
+    PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
 
     const plugin = PermissionsModel.getGraclPlugin();
 
-    if (!resourceDocument[plugin.populatedPermissionsProperty]) {
-      resourceDocument = await resourceDocument.$populate(plugin.permissionIdProperty);
+    if (!resourceDocument[plugin.permissionsProperty]) {
+      resourceDocument = await PermissionsModel.populatePermissions(resourceDocument);
     }
 
     const {
@@ -268,7 +244,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       for (const nextPermission of nextPermissions) {
 
         const parentAccess = await PermissionsModel
-          .isAllowed(resourceDocument, nextPermission, subjectDocument, abstract);
+          .isAllowed(resourceDocument, nextPermission, subjectDocument);
 
         if (parentAccess) return true;
       }
@@ -281,10 +257,9 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   static async explainPermission(
       resourceDocument: Tyr.Document,
       permissionType: string,
-      subjectDocument = Tyr.local.user,
-      abstract = false
+      subjectDocument = Tyr.local.user
     ): Promise<{ type: string, access: boolean, reason: string }> {
-    if (!abstract) PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
+    PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
 
     const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
 
@@ -293,190 +268,50 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
 
 
-  /**
-   *  Given a resource document, attempt to create a lock. If one exists (and is set to true) throw error
-   */
-  static async lockPermissionsForResource(resourceDocument: Tyr.Document): Promise<void> {
-    if (!(resourceDocument && resourceDocument.$uid)) {
-      throw new Error('No resource document provided!');
-    }
-
-    const lock = await PermissionLocks.findAndModify({
-      query: {
-        resourceId: resourceDocument.$uid
-      },
-      update: {
-        $set: {
-          locked: true
-        }
-      },
-      new: false,
-      upsert: true
-    });
-
-    /**
-     *  Check if we are already updating permissions for this resource
-     */
-    if (lock['value'] && lock['value']['locked'] === true) {
-      throw new Error(
-        `Cannot update permissions for resource ${resourceDocument.$uid} as another update is in progress!`
-      );
-    }
-  }
-
-
-
-  /**
-   *  Given a resource document, attempt to unlock permissions. If no lock exists throw error
-   */
-  static async unlockPermissionsForResource(resourceDocument: Tyr.Document): Promise<void> {
-    if (!(resourceDocument && resourceDocument.$uid)) {
-      throw new Error('No resource document provided!');
-    }
-
-    const lock = await PermissionLocks.findAndModify({
-      query: {
-        resourceId: resourceDocument.$uid
-      },
-      update: {
-        $set: {
-          locked: false
-        }
-      },
-      new: false,
-      upsert: true
-    });
-
-    if (!lock['value']) {
-      throw new Error(`Attempted to unlock permissions that were not locked!`);
-    }
-  }
-
-
-
-  /**
-   *  Given a tyranid document <doc>, update its permissions based on doc.permissions
-   */
-  static async updatePermissions(resourceDocument: Tyr.Document): Promise<Tyr.Document> {
-
-    if (!resourceDocument) {
-      throw new TypeError(`called PermissionsModel.updatePermissions() on undefined`);
-    }
-
-    if (!resourceDocument.$uid) {
-      throw new TypeError(`resource document must be a Tyranid document with $uid`);
-    }
+  static async setPermissionAccess(
+          resourceDocument: Tyr.Document,
+          permissionType: string,
+          access: boolean,
+          subjectDocument = Tyr.local.user
+        ): Promise<Tyr.Document> {
+    if (!resourceDocument) throw new TypeError(`called PermissionsModel.setPermission() without resourceDocument`);
+    if (!resourceDocument.$uid) throw new TypeError(`resource document must be a Tyranid document with $uid`);
+    if (!subjectDocument) throw new TypeError(`called PermissionsModel.setPermission() without subjectDocument`);
+    if (!subjectDocument.$uid) throw new TypeError(`subject document must be a Tyranid document with $uid`);
 
     PermissionsModel.validateAsResource(resourceDocument.$model);
+    PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
 
-    const plugin = PermissionsModel.getGraclPlugin();
-
-    const permissions         = <gracl.Permission[]> _.get(resourceDocument, plugin.populatedPermissionsProperty, []),
-          existingPermissions = <gracl.Permission[]> [],
-          newPermissions      = <gracl.Permission[]> [],
-          updated             = <Tyr.Document[]> [],
-          permIdField         = PermissionsModel.def.primaryKey.field;
-
-    delete resourceDocument[plugin.populatedPermissionsProperty];
-
-    await PermissionsModel.lockPermissionsForResource(resourceDocument);
-
-    const resourceCollectionName = resourceDocument.$model.def.name;
-
-    const subjectIds = <string[]> _.chain(permissions)
-      .map('subjectId')
-      .compact()
-      .value();
-
-    /**
-     *  Determine which subjects actually exist in database,
-        helps curtail "zombie" permissions that may accumulate due to update/delete
-        race condition.
-     */
-    const existingSubjects: Tyr.Document[] = await Tyr.byUids(subjectIds);
-
-    const existingSubjectIdsFromPermissions = _.reduce(
-      existingSubjects,
-      (out, entity) => {
-        out.add(entity.$uid);
-        return out;
+    // set the permission
+    await PermissionsModel.findAndModify({
+      query: {
+        subjectId: subjectDocument.$uid,
+        resourceId: resourceDocument.$uid
       },
-      new Set<string>()
-    );
-
-    const uniquenessCheck = new Set();
-
-    _.chain(permissions)
-      .compact()
-      .filter(perm => {
-        return (perm.subjectId && existingSubjectIdsFromPermissions.has(perm.subjectId));
-      })
-      .each(perm => {
-        if (!perm.resourceId) {
-          throw new Error(`Tried to add permission for ${resourceDocument.$uid} without resourceId!`);
+      update: {
+        $set: {
+          subjectId: subjectDocument.$uid,
+          resourceId: resourceDocument.$uid,
+          subjectType: subjectDocument.$model.def.name,
+          resourceType: resourceDocument.$model.def.name,
+          [`access.${permissionType}`]: access
         }
+      },
+      upsert: true
+    });
 
-        const hash = `${perm.resourceId}-${perm.subjectId}`;
-
-        if (uniquenessCheck.has(hash)) {
-          throw new Error(
-            `Attempted to set duplicate permission for combination of ` +
-            `resource = ${perm.resourceId}, subject = ${perm.subjectId}`
-          );
-        }
-
-        uniquenessCheck.add(hash);
-
-        if (perm[permIdField]) {
-          existingPermissions.push(perm);
-        } else {
-          newPermissions.push(perm);
-        }
-      })
-      .value();
+    return PermissionsModel.populatePermissions(resourceDocument);
+  }
 
 
-    const existingUpdates = await Promise.all(existingPermissions.map(async (perm) => {
-      const update = await PermissionsModel.findAndModify({
-        query: {
-          [permIdField]: perm[permIdField]
-        },
-        update: { $set: perm },
-        new: true
-      });
-      return update['value'];
-    }));
 
-    const newPermissionInserts = await Promise.all(newPermissions.map(perm => {
-      return PermissionsModel.fromClient(perm).$insert();
-    }));
 
-    updated.push(...existingUpdates);
-    updated.push(...newPermissionInserts);
-
-    const updatedIds = resourceDocument[plugin.permissionIdProperty] = _.chain(updated)
-      .compact()
-      .map(permIdField)
-      .value();
-
-    const removeQuery = {
-      [permIdField]: { $nin: updatedIds },
+  static async populatePermissions(resourceDocument: Tyr.Document): Promise<Tyr.Document> {
+    const plugin = PermissionsModel.getGraclPlugin();
+    resourceDocument[plugin.permissionsProperty] = await PermissionsModel.findAll({
       resourceId: resourceDocument.$uid
-    };
-
-    // remove permissions for this resource that are not in the given ids
-    await PermissionsModel.remove(removeQuery);
-
-    const updatedResourceDocument = await resourceDocument.$save();
-
-    const populated = <Tyr.Document> (
-      await Tyr.byName[resourceCollectionName]
-        .populate(plugin.permissionIdProperty, updatedResourceDocument)
-    );
-
-    await PermissionsModel.unlockPermissionsForResource(resourceDocument);
-
-    return populated;
+    });
+    return resourceDocument;
   }
 
 
@@ -485,60 +320,19 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
    *  Given a uid, remove all permissions relating to that entity in the system
    */
   static async deletePermissions(doc: Tyr.Document): Promise<Tyr.Document> {
-    const uid = doc.$uid;
+    const uid = doc.$uid,
+          plugin = PermissionsModel.getGraclPlugin();
 
     if (!uid) throw new Error('No $uid property on document!');
 
-    await PermissionsModel.lockPermissionsForResource(doc);
-
-    const permissions = await PermissionsModel.findAll({
-            $or: [
-              { subjectId: uid },
-              { resourceId: uid }
-            ]
-          }),
-          permissionsByCollection = new Map<string, string[]>(),
-          plugin = PermissionsModel.getGraclPlugin();
-
-    _.each(permissions, perm => {
-      const altUid = perm['subjectId'] === uid
-        ? perm['resourceId']
-        : perm['subjectId'];
-
-      const parsed = Tyr.parseUid(altUid),
-            collectionName = parsed.collection.def.name;
-
-      if (!permissionsByCollection.has(collectionName)) {
-        permissionsByCollection.set(collectionName, []);
-      }
-
-      permissionsByCollection.get(collectionName).push(perm.$id);
+    await PermissionsModel.remove({
+      $or: [
+        { subjectId: uid },
+        { resourceId: uid }
+      ]
     });
 
-    for (const [collectionName, idList] of permissionsByCollection) {
-      await Tyr.byName[collectionName].update(
-        {
-          [plugin.permissionIdProperty]: {
-            $in: idList
-          }
-        },
-        {
-          $pull: {
-            [plugin.permissionIdProperty]: {
-              $in: idList
-            }
-          }
-        },
-        { multi: true }
-      );
-    }
-
-    delete doc[plugin.populatedPermissionsProperty];
-    doc[plugin.permissionIdProperty] = [];
-
-    await doc.$save();
-
-    await PermissionsModel.unlockPermissionsForResource(doc);
+    delete doc[plugin.permissionsProperty];
 
     return doc;
   }

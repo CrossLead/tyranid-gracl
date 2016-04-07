@@ -12,8 +12,7 @@ export const BlogBaseCollection = new Tyr.Collection({
       link: 'organization',
       relate: 'ownedBy',
       graclType: 'resource'
-    },
-    graclResourcePermissionIds: { is: 'array', link: 'graclPermission' }
+    }
   }
 });
 

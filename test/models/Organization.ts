@@ -6,8 +6,7 @@ const OrganizationBaseCollection = new Tyr.Collection({
   dbName: 'organizations',
   fields: {
     _id: { is: 'mongoid' },
-    name: { is: 'string' },
-    graclResourcePermissionIds: { is: 'array', link: 'graclPermission' }
+    name: { is: 'string' }
   }
 });
 

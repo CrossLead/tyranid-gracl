@@ -4,10 +4,10 @@ export const UsageLogBaseCollection = new Tyr.Collection({
   id: 'ul0',
   name: 'usagelog',
   dbName: 'usagelogs',
+  graclType: [ 'subject', 'resource' ],
   fields: {
     _id: { is: 'mongoid' },
-    text: { is: 'string' },
-    graclResourcePermissionIds: { is: 'array', link: 'graclPermission', graclType: [ 'subject', 'resource' ] }
+    text: { is: 'string' }
   }
 });
 

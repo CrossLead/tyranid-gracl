@@ -3,7 +3,7 @@ import Tyr from 'tyranid';
 import * as gracl from 'gracl';
 import * as _ from 'lodash';
 import { PermissionsModel } from '../models/PermissionsModel';
-import { PermissionLocks } from '../models/PermissionsLocks';
+import { documentMethods } from '../documentMethods';
 import {
   Hash,
   findLinkInCollection,
@@ -26,144 +26,11 @@ export type permissionHierarchy = Hash<any>;
 export type pluginOptions = {
   verbose?: boolean;
   permissionTypes?: permissionTypeList;
-  permissionIdProperty?: string;
+  permissionsProperty?: string;
 };
 
 
 export class GraclPlugin {
-
-  /**
-   *  Methods to mixin to Tyr.documentPrototype for working with permissions
-   */
-  static documentMethods = {
-
-    // return collections that a document can view
-    $allowedEntitiesForCollection(collectionName: string): Promise<string[]>  {
-      const doc = <Tyr.Document> this,
-            plugin = PermissionsModel.getGraclPlugin();
-
-      // get all the resource entities with view-<collection> permission set to true
-      return <Promise<string[]>> doc['$entitiesWithPermission'](
-        plugin.formatPermissionType({
-          action: 'view',
-          collection: collectionName
-        })
-      );
-    },
-
-
-    async $entitiesWithPermission(permissionType: string, graclType?: 'resource' | 'subject'): Promise<string[]> {
-      const doc = <Tyr.Document> this,
-            checked = new Set(),
-            plugin = PermissionsModel.getGraclPlugin();
-
-      graclType = graclType || 'subject';
-      const otherType = graclType === 'resource' ? 'subjectId' : 'resourceId';
-
-      checked.add(permissionType);
-
-      const docs = await PermissionsModel.findAll({
-        [`${graclType}Id`]: doc.$uid,
-        [`access.${permissionType}`]: true
-      });
-
-      const entities = _.map(docs, otherType);
-
-      const nextPermissions = plugin.nextPermissions(permissionType);
-      while (nextPermissions.length) {
-        const perm = nextPermissions.pop();
-        if (!checked.has(perm)) {
-          checked.add(perm);
-          nextPermissions.push(...plugin.nextPermissions(perm));
-          const nextDocs = await PermissionsModel.findAll({
-            [`${graclType}Id`]: doc.$uid,
-            [`access.${perm}`]: true
-          });
-          entities.push(..._.map(nextDocs, otherType));
-        }
-      }
-
-      return <string[]> _.unique(entities);
-    },
-
-
-    $permissions(permissionType?: string, graclType?: 'resource' | 'subject') {
-      const doc = <Tyr.Document> this;
-      graclType = graclType || 'subject';
-      if (graclType !== 'resource' && graclType !== 'subject') {
-        throw new TypeError(`graclType must be either subject or resource!`);
-      }
-      return graclType === 'resource'
-        ? PermissionsModel.getPermissionsOfTypeForResource(doc, permissionType)
-        : PermissionsModel.getPermissionsOfTypeForSubject(doc, permissionType);
-    },
-
-    $setPermissionAccess(
-        permissionType: string,
-        access: boolean,
-        subjectDocument = Tyr.local.user
-      ): Promise<Tyr.Document> {
-
-      const doc = <Tyr.Document> this;
-      return PermissionsModel.setPermissionAccess(doc, permissionType, access, subjectDocument);
-    },
-
-    $isAllowed(
-      permissionType: string,
-      subjectDocument = Tyr.local.user
-    ): Promise<boolean> {
-      const doc = <Tyr.Document> this;
-      return PermissionsModel.isAllowed(doc, permissionType, subjectDocument);
-    },
-
-    $isAllowedForThis(permissionAction: string, subjectDocument = Tyr.local.user): Promise<boolean> {
-      const doc = <Tyr.Document> this,
-            plugin = PermissionsModel.getGraclPlugin(),
-            permissionType = plugin.formatPermissionType({
-              action: permissionAction,
-              collection: doc.$model.def.name
-            });
-
-      return this.$isAllowed(permissionType, subjectDocument);
-    },
-
-    $allow(permissionType: string, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
-      return this.$setPermissionAccess(permissionType, true, subjectDocument);
-    },
-
-    $deny(permissionType: string, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
-      return this.$setPermissionAccess(permissionType, false, subjectDocument);
-    },
-
-    $allowForThis(permissionAction: string, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
-      const doc = <Tyr.Document> this,
-            plugin = PermissionsModel.getGraclPlugin(),
-            permissionType = plugin.formatPermissionType({
-              action: permissionAction,
-              collection: doc.$model.def.name
-            });
-
-      return this.$allow(permissionType, subjectDocument);
-    },
-
-    $denyForThis(permissionAction: string, subjectDocument = Tyr.local.user): Promise<Tyr.Document> {
-      const doc = <Tyr.Document> this,
-            plugin = PermissionsModel.getGraclPlugin(),
-            permissionType = plugin.formatPermissionType({
-              action: permissionAction,
-              collection: doc.$model.def.name
-            });
-
-      return this.$deny(permissionType, subjectDocument);
-    },
-
-    $explainPermission(permissionType: string, subjectDocument = Tyr.local.user) {
-      const doc = <Tyr.Document> this;
-      return PermissionsModel.explainPermission(doc, permissionType, subjectDocument);
-    }
-
-  };
-
 
 
   /**
@@ -235,16 +102,14 @@ export class GraclPlugin {
   graclHierarchy: gracl.Graph;
   outgoingLinkPaths: Hash<Hash<string>>;
   unsecuredCollections = new Set([
-    PermissionsModel.def.name,
-    PermissionLocks.def.name
+    PermissionsModel.def.name
   ]);
 
 
   // plugin options
   verbose: boolean;
   permissionHierarchy: permissionHierarchy;
-  populatedPermissionsProperty: string;
-  permissionIdProperty: string;
+  permissionsProperty: string;
 
 
   permissionsModel = PermissionsModel;
@@ -265,13 +130,8 @@ export class GraclPlugin {
       this.permissionTypes = opts.permissionTypes;
     }
 
-    if (opts.permissionIdProperty && !/Ids$/.test(opts.permissionIdProperty)) {
-      throw new Error(`permissionIdProperty should end with "Ids", given: ${opts.permissionIdProperty}`);
-    }
-
     this.verbose = opts.verbose || false;
-    this.permissionIdProperty = opts.permissionIdProperty || 'graclResourcePermissionIds';
-    this.populatedPermissionsProperty = this.permissionIdProperty + '$';
+    this.permissionsProperty = opts.permissionsProperty || '_graclResourcePermissions';
   };
 
 
@@ -442,22 +302,25 @@ export class GraclPlugin {
   }
 
 
-  makeRepository(collection: Tyr.CollectionInstance): gracl.Repository {
-    const permissionIdProperty = this.permissionIdProperty;
+  makeRepository(collection: Tyr.CollectionInstance, graclType: string): gracl.Repository {
+    const plugin = this;
+    if (graclType !== 'resources' && graclType !== 'subjects') {
+      throw new TypeError(`graclType must be subjects or resources, given ${graclType}`);
+    }
     return {
 
       async getEntity(id: string, node: gracl.Node): Promise<Tyr.Document> {
         let doc = await collection.byId(id);
-        if (doc[permissionIdProperty] && doc[permissionIdProperty][0]) {
-          doc = await doc.$populate(permissionIdProperty);
+        if (graclType === 'resouces' && !doc[plugin.permissionsProperty]) {
+          doc = await PermissionsModel.populatePermissions(doc);
         }
         return doc;
       },
 
       async saveEntity(id: string, doc: Tyr.Document, node: gracl.Node): Promise<Tyr.Document> {
-        doc = await PermissionsModel.updatePermissions(doc);
-        if (doc[permissionIdProperty] && doc[permissionIdProperty][0]) {
-          doc = await doc.$populate(permissionIdProperty);
+        await doc.$save();
+        if (graclType === 'resouces' && !doc[plugin.permissionsProperty]) {
+          doc = await PermissionsModel.populatePermissions(doc);
         }
         return doc;
       }
@@ -571,7 +434,7 @@ export class GraclPlugin {
     if (stage === 'post-link') {
       this.log(`starting boot.`);
 
-      Object.assign(Tyr.documentPrototype, GraclPlugin.documentMethods);
+      Object.assign(Tyr.documentPrototype, documentMethods);
 
       type TyrSchemaGraphObjects = {
         links: Tyr.Field[];
@@ -592,17 +455,17 @@ export class GraclPlugin {
         }
       };
 
-      const permissionIdProperty = this.permissionIdProperty;
+      const permissionsProperty = this.permissionsProperty;
 
       // loop through all collections, retrieve
       // ownedBy links
       collections.forEach(col => {
         const linkFields = getCollectionLinksSorted(col, { relate: 'ownedBy', direction: 'outgoing' }),
-              permissionsLink = findLinkInCollection(col, PermissionsModel),
+              graclTypeAnnotation = col.def['graclType'],
               collectionName = col.def.name;
 
         // if no links at all, skip
-        if (!(linkFields.length || permissionsLink)) return;
+        if (!(linkFields.length || graclTypeAnnotation)) return;
 
         // validate that we can only have one parent of each field.
         if (linkFields.length > 1) {
@@ -613,35 +476,14 @@ export class GraclPlugin {
         }
 
         const [ field ] = linkFields;
-        let { graclType } = field ? field.def : permissionsLink.def;
+        let { graclType } = field ? field.def : col.def;
 
         // if no graclType property on this collection, skip the collection
         if (!graclType) return;
 
-        if (!(permissionsLink && permissionsLink.name === this.permissionIdProperty)) {
-          throw new Error(
-            `Tyranid collection \"${col.def.name}\" has \"graclType\" annotation but no ` +
-            `\"${this.permissionIdProperty}\" field. ` +
-            `tyranid-gracl requires a field on secured collections of type: \n` +
-            `\"${this.permissionIdProperty}: { is: 'array', link: 'graclPermission' }\"`
-          );
-        }
-
         // validate gracl type
         if (!Array.isArray(graclType)) {
           graclType = [ graclType ];
-        }
-
-        // if there is a gracl link field, validate that the link collection has permissions set on it, if
-        // the gracl type for the link is a resource
-        if (field && _.contains(graclType, 'resource')) {
-          const linkCollectionPermissionsLink = findLinkInCollection(field.link, PermissionsModel);
-          if (!linkCollectionPermissionsLink) {
-            throw new Error(
-              `Collection ${col.def.name} has a resource link to collection ${field.link.def.name} ` +
-              `but ${field.link.def.name} has no ${this.permissionIdProperty} field!`
-            );
-          }
         }
 
         let currentType: string;
@@ -699,8 +541,8 @@ export class GraclPlugin {
             name,
             id: '$uid',
             parent: parentName,
-            permissionProperty: this.populatedPermissionsProperty,
-            repository: this.makeRepository(node.collection),
+            permissionProperty: this.permissionsProperty,
+            repository: this.makeRepository(node.collection, type),
             async getParents(): Promise<gracl.Node[]> {
               const thisNode = <gracl.Node> this;
 
@@ -714,13 +556,13 @@ export class GraclPlugin {
                     parentObjects  = await linkCollection.findAll({
                                         [linkCollection.def.primaryKey.field]: { $in: ids }
                                      }),
-                    ParentClass    = thisNode.getParentClass();
+                    ParentClass = thisNode.getParentClass();
 
               if (!parentObjects.length) return [];
 
-              const populated = <Tyr.Document[]> (await linkCollection.populate(
-                permissionIdProperty, parentObjects
-              ));
+              const populated = await Promise.all(
+                parentObjects.map(p => PermissionsModel.populatePermissions(p))
+              );
 
               return populated.map(doc => new ParentClass(doc));
             }
@@ -733,8 +575,8 @@ export class GraclPlugin {
             nodes.set(name, {
               name,
               id: '$uid',
-              permissionProperty: this.populatedPermissionsProperty,
-              repository: this.makeRepository(parent)
+              permissionProperty: this.permissionsProperty,
+              repository: this.makeRepository(parent, type)
             });
           }
         }
