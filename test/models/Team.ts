@@ -11,8 +11,7 @@ const TeamBaseCollection = new Tyr.Collection({
       link: 'organization',
       relate: 'ownedBy',
       graclType: ['subject', 'resource']
-    },
-    graclResourcePermissionIds: { is: 'array', link: 'graclPermission' }
+    }
   }
 });
 

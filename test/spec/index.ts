@@ -19,7 +19,7 @@ const permissionKey = 'graclResourcePermissionIds',
       root = __dirname.replace(/test\/spec/, ''),
       secure = new tyranidGracl.GraclPlugin({
         verbose: VERBOSE_LOGGING,
-        permissionIdProperty: permissionKey,
+        permissionsProperty: permissionKey,
         permissionTypes: [
           { name: 'edit', abstract: false },
           { name: 'view', parent: 'edit', abstract: false },
@@ -211,11 +211,11 @@ describe('tyranid-gracl', () => {
 
       expect(existingPermissions).to.have.lengthOf(1);
       expect(existingPermissions[0]['resourceId'].toString(), 'resourceId')
-        .to.equal(updatedChopped[secure.populatedPermissionsProperty][0]['resourceId'].toString());
+        .to.equal(updatedChopped[secure.permissionsProperty][0]['resourceId'].toString());
       expect(existingPermissions[0]['subjectId'].toString(), 'subjectId')
-        .to.equal(updatedChopped[secure.populatedPermissionsProperty][0]['subjectId'].toString());
+        .to.equal(updatedChopped[secure.permissionsProperty][0]['subjectId'].toString());
       expect(existingPermissions[0]['access']['view-post'], 'access')
-        .to.equal(updatedChopped[secure.populatedPermissionsProperty][0]['access']['view-post']);
+        .to.equal(updatedChopped[secure.permissionsProperty][0]['access']['view-post']);
     });
 
 
@@ -263,17 +263,6 @@ describe('tyranid-gracl', () => {
       );
     });
 
-    it('should create a lock when updating permission and set to false when complete', async () => {
-      await giveBenAccessToChoppedPosts();
-
-      const locks = await tyranidGracl.PermissionLocks.findAll({}),
-            chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
-
-      expect(locks).to.have.lengthOf(1);
-      expect(locks[0]['resourceId']).to.equal(chopped.$uid);
-      expect(locks[0]['locked']).to.equal(false);
-    });
-
 
     it('should successfully find permission when multiple permissions parents', async () => {
       await giveBenAccessToChoppedPosts();
@@ -286,30 +275,22 @@ describe('tyranid-gracl', () => {
     });
 
 
-    it('should throw error when trying to lock same resource twice', async() => {
-      const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
-      await tyranidGracl.PermissionsModel.lockPermissionsForResource(chipotle);
-      await expectAsyncToThrow(
-        () => tyranidGracl.PermissionsModel.lockPermissionsForResource(chipotle),
-        /another update is in progress/,
-        'cannot lock resource that is already locked'
-      );
-      await tyranidGracl.PermissionsModel.unlockPermissionsForResource(chipotle);
-    });
-
-
     it('should modify existing permissions instead of creating new ones', async () => {
       await giveBenAccessToChoppedPosts();
 
       const ben     = await Tyr.byName['user'].findOne({ name: 'ben' }),
-            chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
+            chopped = await secure.permissionsModel.populatePermissions(
+              await Tyr.byName['organization'].findOne({ name: 'Chopped' })
+            );
 
-      expect(chopped[secure.permissionIdProperty], 'chopped should start with one permission').to.have.lengthOf(1);
+      expect(chopped[secure.permissionsProperty], 'chopped should start with one permission').to.have.lengthOf(1);
 
       expect(ben, 'ben should exist').to.exist;
       expect(chopped, 'chopped should exist').to.exist;
 
-      const updatedChopped = await chopped['$allow']('view-user', ben);
+      const updatedChopped = await secure.permissionsModel.populatePermissions(
+        await chopped['$allow']('view-user', ben)
+      );
 
       expect(updatedChopped[permissionKey], 'chopped should end with one permission').to.have.lengthOf(1);
 
@@ -328,7 +309,7 @@ describe('tyranid-gracl', () => {
             post = await Tyr.byName['post'].findOne({ text: 'Why burritos are amazing.' }),
             chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
 
-      expect(!ted[secure.permissionIdProperty]).to.equal(true);
+      expect(!ted[secure.permissionsProperty], 'initially should have no permissions').to.equal(true);
 
       const permissionsForTed = await Tyr.byName['graclPermission'].findAll({
         $or: [
@@ -337,7 +318,7 @@ describe('tyranid-gracl', () => {
         ]
       });
 
-      expect(permissionsForTed).to.have.lengthOf(0);
+      expect(permissionsForTed, 'global search for permissions should turn up nothing').to.have.lengthOf(0);
 
       const prePermissionChecks = await Promise.all([
         chopped['$isAllowed']('view-user', ted),
@@ -347,7 +328,7 @@ describe('tyranid-gracl', () => {
         chipotle['$isAllowed']('view-post', ted)
       ]);
 
-      expect(_.all(prePermissionChecks)).to.equal(false);
+      expect(_.all(prePermissionChecks), 'all initial perm checks should return false').to.equal(false);
 
       const permissionOperations = await Promise.all([
         chopped['$allow']('view-user', ted),
@@ -359,7 +340,11 @@ describe('tyranid-gracl', () => {
 
       const updatedTed = await Tyr.byName['user'].findOne({ name: 'ted' });
 
-      expect(ted[secure.permissionIdProperty]).to.have.lengthOf(1);
+      const populated = await secure.permissionsModel.populatePermissions(ted);
+
+      expect(populated[secure.permissionsProperty],
+        'after populating teds permission (as resource), one permission should show up'
+      ).to.have.lengthOf(1);
 
       const updatedPermissionsForTed = await Tyr.byName['graclPermission'].findAll({
         $or: [
@@ -394,15 +379,15 @@ describe('tyranid-gracl', () => {
 
       expect(_.all(postPermissionChecks)).to.equal(false);
 
-      const updatedChopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' }),
-            updatedCava = await Tyr.byName['organization'].findOne({ name: 'Cava' }),
-            updatedPost = await Tyr.byName['post'].findOne({ text: 'Why burritos are amazing.' }),
-            updatedChipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
+      const updatedChopped = await secure.permissionsModel.populatePermissions(await Tyr.byName['organization'].findOne({ name: 'Chopped' })),
+            updatedCava = await secure.permissionsModel.populatePermissions(await Tyr.byName['organization'].findOne({ name: 'Cava' })),
+            updatedPost = await secure.permissionsModel.populatePermissions(await Tyr.byName['post'].findOne({ text: 'Why burritos are amazing.' })),
+            updatedChipotle = await secure.permissionsModel.populatePermissions(await Tyr.byName['organization'].findOne({ name: 'Chipotle' }));
 
-      expect(updatedChopped[secure.permissionIdProperty]).to.have.length(0);
-      expect(updatedCava[secure.permissionIdProperty]).to.have.length(0);
-      expect(updatedPost[secure.permissionIdProperty]).to.have.length(0);
-      expect(updatedChipotle[secure.permissionIdProperty]).to.have.length(0);
+      expect(updatedChopped[secure.permissionsProperty]).to.have.length(0);
+      expect(updatedCava[secure.permissionsProperty]).to.have.length(0);
+      expect(updatedPost[secure.permissionsProperty]).to.have.length(0);
+      expect(updatedChipotle[secure.permissionsProperty]).to.have.length(0);
     });
 
 

@@ -16,8 +16,7 @@ const UserBaseCollection = new Tyr.Collection({
         graclType: ['subject', 'resource']
       }
     },
-    organizationId: { link: 'organization' },
-    graclResourcePermissionIds: { is: 'array', link: 'graclPermission' }
+    organizationId: { link: 'organization' }
   }
 });
 
