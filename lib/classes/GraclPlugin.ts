@@ -175,9 +175,9 @@ export class GraclPlugin {
   /**
    *  Get all children of a permission
    */
-  _permissionParentCache: { [key: string]: string[] } = {};
+  private _permissionChildCache: { [key: string]: string[] } = {};
   getPermissionChildren(perm: string): string[] {
-    if (this._permissionParentCache[perm]) return this._permissionParentCache[perm].slice();
+    if (this._permissionChildCache[perm]) return this._permissionChildCache[perm].slice();
 
     const {
       action,
@@ -200,7 +200,7 @@ export class GraclPlugin {
         children.push(name);
       }
     }
-    return (this._permissionParentCache[perm] = _.unique(children)).slice();
+    return (this._permissionChildCache[perm] = _.unique(children)).slice();
   }
 
 
@@ -222,15 +222,9 @@ export class GraclPlugin {
 
 
   /**
-   *  Cache for all permissions request (permissions are static
-      so we only need to compute once)
-   */
-  _allPossiblePermissionsCache: string[];
-
-
-  /**
    *  Get a list of all possible permission strings
    */
+  private _allPossiblePermissionsCache: string[];
   getAllPossiblePermissionTypes(): string[] {
     if (this._allPossiblePermissionsCache) return this._allPossiblePermissionsCache.slice();
 
