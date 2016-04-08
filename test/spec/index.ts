@@ -14,26 +14,28 @@ type GraclPlugin = tyranidGracl.GraclPlugin;
 
 const VERBOSE_LOGGING = false;
 
+const permissionTypes = [
+  { name: 'edit', abstract: false },
+  { name: 'view', parent: 'edit', abstract: false },
+  { name: 'delete', abstract: false },
+  { name: 'abstract_view_chart', abstract: true, parents: [
+    'view-user',
+    'view-post'
+  ]},
+  { name: 'view_alignment_triangle_private', abstract: true },
+
+  { name: 'view-blog', collection: true, parents: [
+    'view_alignment_triangle_private'
+  ]},
+];
+
 
 const permissionKey = 'graclResourcePermissionIds',
       root = __dirname.replace(/test\/spec/, ''),
       secure = new tyranidGracl.GraclPlugin({
         verbose: VERBOSE_LOGGING,
         permissionsProperty: permissionKey,
-        permissionTypes: [
-          { name: 'edit', abstract: false },
-          { name: 'view', parent: 'edit', abstract: false },
-          { name: 'delete', abstract: false },
-          { name: 'abstract_view_chart', abstract: true, parents: [
-            'view-user',
-            'view-post'
-          ]},
-          { name: 'view_alignment_triangle_private', abstract: true },
-
-          { name: 'view-blog', collection: true, parents: [
-            'view_alignment_triangle_private'
-          ]},
-        ]
+        permissionTypes: permissionTypes
       });
 
 
@@ -166,6 +168,7 @@ describe('tyranid-gracl', () => {
 
   describe('Creating the plugin', () => {
 
+
     it('should correctly produce paths between collections', () => {
       for (const a in expectedLinkPaths) {
         for (const b in expectedLinkPaths[a]) {
@@ -174,6 +177,7 @@ describe('tyranid-gracl', () => {
         }
       }
     });
+
 
     it('should add permissions methods to documents', async () => {
       const ben = await Tyr.byName['user'].findOne({ name: 'ben' });
@@ -197,10 +201,39 @@ describe('tyranid-gracl', () => {
       }
     });
 
+
     it('should create subject and resource classes for collections without links in or out', () => {
       expect(secure.graclHierarchy.resources.has('usagelog')).to.equal(true);
       expect(secure.graclHierarchy.subjects.has('usagelog')).to.equal(true);
     });
+
+
+    it('should return all relevant permissions on GraclPlugin.getAllPermissionTypes()', () => {
+      const number_of_resources = secure.graclHierarchy.resources.size;
+      const number_of_crud_perms = _.filter(permissionTypes, (perm: { [k: string]: any }) => {
+        return !perm['abstract'] && !perm['collection'];
+      }).length;
+      const number_of_abstract_perms = _.filter(permissionTypes, (perm: { [k: string]: any }) => {
+        return perm['abstract'];
+      }).length;
+      const allPermissionTypes = secure.getAllPossiblePermissionTypes();
+      expect(allPermissionTypes, 'should have the correct number')
+        .to.have.lengthOf(
+          number_of_abstract_perms + (number_of_resources * number_of_crud_perms)
+        );
+    });
+
+
+    it('should return correct parent permissions on graclPermission.getPermissionParents(perm)', () => {
+      const view_blog_parents = secure.getPermissionParents('view-blog');
+      expect(view_blog_parents, 'view-blog should have two parent permissions').to.have.lengthOf(2);
+      expect(view_blog_parents, 'view-blog should have edit-blog parent').to.contain('edit-blog');
+      expect(
+        view_blog_parents,
+        'view-blog should have view_alignment_triangle_private parent'
+      ).to.contain('view_alignment_triangle_private');
+    });
+
 
   });
 

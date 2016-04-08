@@ -26,36 +26,22 @@ export const documentMethods = {
 
   async $entitiesWithPermission(permissionType: string, graclType?: 'resource' | 'subject'): Promise<string[]> {
     const doc = <Tyr.Document> this,
-          checked = new Set(),
           plugin = PermissionsModel.getGraclPlugin();
 
     graclType = graclType || 'subject';
-    const otherType = graclType === 'resource' ? 'subjectId' : 'resourceId';
 
-    checked.add(permissionType);
+    const otherType = graclType === 'resource' ? 'subjectId' : 'resourceId',
+          allPermissionTypes = [ permissionType ].concat(plugin.getPermissionParents(permissionType));
 
-    const docs = await PermissionsModel.findAll({
+    return <string[]> _.chain(await PermissionsModel.findAll({
       [`${graclType}Id`]: doc.$uid,
-      [`access.${permissionType}`]: true
-    });
-
-    const entities = _.map(docs, otherType);
-
-    const nextPermissions = plugin.nextPermissions(permissionType);
-    while (nextPermissions.length) {
-      const perm = nextPermissions.pop();
-      if (!checked.has(perm)) {
-        checked.add(perm);
-        nextPermissions.push(...plugin.nextPermissions(perm));
-        const nextDocs = await PermissionsModel.findAll({
-          [`${graclType}Id`]: doc.$uid,
-          [`access.${perm}`]: true
-        });
-        entities.push(..._.map(nextDocs, otherType));
-      }
-    }
-
-    return <string[]> _.unique(entities);
+      $or: allPermissionTypes.map(perm => {
+        return { [`access.${perm}`]: true };
+      })
+    }))
+    .map(otherType)
+    .unique()
+    .value();
   },
 
 

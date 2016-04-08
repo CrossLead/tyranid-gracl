@@ -174,6 +174,59 @@ export class GraclPlugin {
 
 
   /**
+   *  Get all parent permissions of perm
+   */
+  getPermissionParents(perm: string): string[] {
+    const parents: string[] = [];
+    let nextPermissions = this.nextPermissions(perm);
+    while (nextPermissions.length) {
+      parents.push(...nextPermissions);
+      nextPermissions = <string[]> _.chain(nextPermissions)
+        .map(p => this.nextPermissions(p))
+        .flatten()
+        .value();
+    }
+    return _.unique(parents);
+  }
+
+
+  /**
+   *  Cache for all permissions request (permissions are static
+      so we only need to compute once)
+   */
+  _allPossiblePermissionsCache: string[];
+
+
+  /**
+   *  Get a list of all possible permission strings
+   */
+  getAllPossiblePermissionTypes(): string[] {
+    if (this._allPossiblePermissionsCache) return this._allPossiblePermissionsCache.slice();
+
+    const permissionSchema = this.permissionTypes;
+    const allPermissions: string[] = [];
+    const resourceCollections = Array.from(this.graclHierarchy.resources.keys());
+
+    for (const perm of permissionSchema) {
+      if (perm.abstract || perm.collection) {
+        allPermissions.push(perm.name);
+      } else {
+        for (const resourceCollection of resourceCollections) {
+          const formatted = this.formatPermissionType({
+            action: perm.name,
+            collection: resourceCollection
+          });
+          allPermissions.push(formatted);
+        }
+      }
+    }
+
+    return (this._allPossiblePermissionsCache = _.unique(allPermissions)).slice();
+  }
+
+
+
+  /**
    * validate and insert provided permissionHierarchy into model
    */
   constructPermissionHierarchy(permissionsTypes: permissionTypeList ): permissionHierarchy {
@@ -684,17 +737,7 @@ export class GraclPlugin {
     }
 
     // get all permission actions in order...
-    const permissionTypes = [ permissionType ],
-          getNext = (n: string[]) => {
-            return _.chain(n).map(p => this.nextPermissions(p)).flatten().value();
-          };
-
-    let next = [ permissionType ];
-    while ((next = <string[]> getNext(next)).length) {
-      for (const perm of next) {
-        permissionTypes.push(perm);
-      }
-    }
+    const permissionTypes = [ permissionType ].concat(this.getPermissionParents(permissionType));
 
     /**
      *  Iterate through permissions action hierarchy, getting access
