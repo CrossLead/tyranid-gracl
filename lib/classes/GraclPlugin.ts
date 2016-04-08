@@ -670,6 +670,12 @@ export class GraclPlugin {
       return false;
     }
 
+    if (!subjectDocument.$model) {
+      throw new Error(
+        `The subjectDocument passed to GraclPlugin.query() must be a tyranid document!`
+      );
+    }
+
     if (!this.graclHierarchy.resources.has(queriedCollectionName)) {
       this.log(
         `Querying against collection (${queriedCollectionName}) with no resource class -- no restriction enforced`
