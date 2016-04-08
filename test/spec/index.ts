@@ -224,7 +224,7 @@ describe('tyranid-gracl', () => {
     });
 
 
-    it('should return correct parent permissions on graclPermission.getPermissionParents(perm)', () => {
+    it('should return correct parent permissions on GraclPlugin.getPermissionParents(perm)', () => {
       const view_blog_parents = secure.getPermissionParents('view-blog');
       expect(view_blog_parents, 'view-blog should have two parent permissions').to.have.lengthOf(2);
       expect(view_blog_parents, 'view-blog should have edit-blog parent').to.contain('edit-blog');
@@ -232,6 +232,15 @@ describe('tyranid-gracl', () => {
         view_blog_parents,
         'view-blog should have view_alignment_triangle_private parent'
       ).to.contain('view_alignment_triangle_private');
+    });
+
+
+    it('should return correct permission children on GraclPlugin.getPermissionChildren(perm)', () => {
+      const edit_post_children = secure.getPermissionChildren('edit-post');
+      const edit_children = secure.getPermissionChildren('edit');
+      expect(edit_children, 'should include crud child').to.contain('view');
+      expect(edit_post_children, 'should include specifically set abstract child').to.contain('abstract_view_chart');
+      expect(edit_post_children, 'should include collection specific crud child').to.contain('view-post');
     });
 
 

@@ -172,6 +172,37 @@ export class GraclPlugin {
   }
 
 
+  /**
+   *  Get all children of a permission
+   */
+  _permissionParentCache: { [key: string]: string[] } = {};
+  getPermissionChildren(perm: string): string[] {
+    if (this._permissionParentCache[perm]) return this._permissionParentCache[perm].slice();
+
+    const {
+      action,
+      collection
+    } = this.parsePermissionString(perm);
+
+    if (!this.permissionHierarchy[action]) {
+      throw new Error(`Permission ${perm} does not exist!`);
+    }
+
+    const children: string[] = [];
+    for (const alt of this.permissionTypes) {
+      const name = this.formatPermissionType({
+        action: alt.name,
+        collection: collection
+      });
+
+      const parents = this.getPermissionParents(name);
+      if (parents.indexOf(perm) >= 0) {
+        children.push(name);
+      }
+    }
+    return (this._permissionParentCache[perm] = _.unique(children)).slice();
+  }
+
 
   /**
    *  Get all parent permissions of perm
