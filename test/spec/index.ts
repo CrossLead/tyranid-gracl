@@ -483,10 +483,6 @@ describe('tyranid-gracl', () => {
   });
 
 
-
-
-
-
   describe('plugin.query()', () => {
 
     it('should return false with no user', async () => {
