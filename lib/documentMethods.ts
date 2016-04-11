@@ -45,15 +45,15 @@ export const documentMethods = {
   },
 
 
-  $permissions(permissionType?: string, graclType?: 'resource' | 'subject') {
+  $permissions(permissionType?: string, graclType?: 'resource' | 'subject', direct?: boolean) {
     const doc = <Tyr.Document> this;
     graclType = graclType || 'subject';
     if (graclType !== 'resource' && graclType !== 'subject') {
       throw new TypeError(`graclType must be either subject or resource!`);
     }
     return graclType === 'resource'
-      ? PermissionsModel.getPermissionsOfTypeForResource(doc, permissionType)
-      : PermissionsModel.getPermissionsOfTypeForSubject(doc, permissionType);
+      ? PermissionsModel.getPermissionsOfTypeForResource(doc, permissionType, direct)
+      : PermissionsModel.getPermissionsOfTypeForSubject(doc, permissionType, direct);
   },
 
 

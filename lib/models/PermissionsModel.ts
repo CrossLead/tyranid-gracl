@@ -173,15 +173,16 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
   static async getPermissionsOfTypeForResource(
             resourceDocument: Tyr.Document,
-            permissionType?: string
+            permissionType?: string,
+            direct?: boolean
           ) {
-    PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
+    if (permissionType) PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
     const resource = PermissionsModel.createResource(resourceDocument);
 
     const query: { [key: string]: any } = {
-      resourceId: {
+      resourceId: (direct ? resourceDocument.$uid : {
         $in: await resource.getHierarchyIds()
-      }
+      })
     };
 
     if (permissionType) {
@@ -197,15 +198,16 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
   static async getPermissionsOfTypeForSubject(
             subjectDocument: Tyr.Document,
-            permissionType?: string
+            permissionType?: string,
+            direct?: boolean
           ) {
 
     const subject = PermissionsModel.createSubject(subjectDocument);
 
     const query: { [key: string]: any } = {
-      subjectId: {
+      subjectId: (direct ? subjectDocument.$uid : {
         $in: await subject.getHierarchyIds()
-      }
+      })
     };
 
     if (permissionType) {

@@ -415,6 +415,12 @@ describe('tyranid-gracl', () => {
       const tedSubjectPermissions = await ted['$permissions']();
       expect(tedSubjectPermissions).to.have.lengthOf(4);
 
+      const tedResourcePermissions = await ted['$permissions'](null, 'resource');
+      expect(tedResourcePermissions).to.have.lengthOf(2);
+
+      const tedDirectResourcePermissions = await ted['$permissions'](null, 'resource', true);
+      expect(tedDirectResourcePermissions).to.have.lengthOf(1);
+
       expect(_.all(permissionChecks)).to.equal(true);
       expect(await chipotle['$isAllowed']('view-post', ted)).to.equal(false);
 
