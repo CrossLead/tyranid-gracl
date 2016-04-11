@@ -71,7 +71,13 @@ describe('tyranid-gracl', () => {
           fileMatch: '[a-z].js' }
       ],
       secure: secure,
-      cls: false
+      cls: false,
+      permissions: {
+        find: 'view',
+        insert: 'edit',
+        update: 'edit',
+        remove: 'delete'
+      }
     });
 
     await secure.createIndexes();

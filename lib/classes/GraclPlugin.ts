@@ -161,6 +161,9 @@ export class GraclPlugin {
 
   formatPermissionType(components: { action: string, collection?: string }) {
     const hierarchyNode = this.permissionHierarchy[components.action];
+    if (!hierarchyNode) {
+      throw new Error(`Invalid permission type: ${components.action}`);
+    }
 
     // if the permission is abstract, it should not be associated with
     // a specific collection, if there is a collection provided and it is not abstract, use it
@@ -718,7 +721,6 @@ export class GraclPlugin {
   async query(queriedCollection: Tyr.CollectionInstance,
               permissionType: string,
               subjectDocument = Tyr.local.user): Promise<boolean | {}> {
-
 
     const queriedCollectionName = queriedCollection.def.name;
 
