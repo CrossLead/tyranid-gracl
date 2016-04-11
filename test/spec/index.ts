@@ -187,20 +187,7 @@ describe('tyranid-gracl', () => {
 
     it('should add permissions methods to documents', async () => {
       const ben = await Tyr.byName['user'].findOne({ name: 'ben' });
-
-      const methods = [
-        '$setPermissionAccess',
-        '$isAllowed',
-        '$allow',
-        '$deny',
-        '$isAllowedForThis',
-        '$allowForThis',
-        '$denyForThis',
-        '$explainPermission',
-        '$permissions',
-        '$allowedEntitiesForCollection',
-        '$entitiesWithPermission'
-      ];
+      const methods = Object.keys(tyranidGracl.documentMethods);
 
       for (const method of methods) {
         expect(ben, `should have method: ${method}`).to.have.property(method);
@@ -308,7 +295,7 @@ describe('tyranid-gracl', () => {
       expect(chipotleCorporateBlog, 'chipotleCorporateBlog should exist').to.exist;
       await expectAsyncToThrow(
         () => chipotleCorporateBlog['$isAllowed']('viewBlahBlah', ben),
-        /Invalid permissionType/g,
+        /Invalid permission type/g,
         'checking \'viewBlahBlah\' should throw'
       );
     });
@@ -461,6 +448,93 @@ describe('tyranid-gracl', () => {
     });
 
 
+
+    it('should remove permissions when using $removePermissionAsSubject', async () => {
+      const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+            chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
+
+      await chopped['$allow']('view-post', ben);
+
+      const access = await chopped['$explainPermission']('view-post', ben);
+
+      expect(access.reason).to.match(/Permission set on <Resource:organization/);
+      expect(access.access).to.equal(true);
+      expect(access.type).to.equal('view-post');
+
+      await ben['$removePermissionAsSubject']('view-post');
+
+      const accessAfterRemove = await chopped['$explainPermission']('view-post', ben);
+
+      expect(accessAfterRemove.reason).to.match(/No permissions were set specifically/);
+      expect(accessAfterRemove.access).to.equal(false);
+      expect(accessAfterRemove.type).to.equal('view-post');
+
+    });
+
+
+    it('should remove permissions when using $removePermissionAsResource', async () => {
+      const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+            chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
+
+      await chopped['$allow']('view-post', ben);
+
+      const access = await chopped['$explainPermission']('view-post', ben);
+
+      expect(access.reason).to.match(/Permission set on <Resource:organization/);
+      expect(access.access).to.equal(true);
+      expect(access.type).to.equal('view-post');
+
+      await chopped['$removePermissionAsResource']('view-post');
+
+      const accessAfterRemove = await chopped['$explainPermission']('view-post', ben);
+
+      expect(accessAfterRemove.reason).to.match(/No permissions were set specifically/);
+      expect(accessAfterRemove.access).to.equal(false);
+      expect(accessAfterRemove.type).to.equal('view-post');
+
+    });
+
+
+    it('should remove permissions for specific access when using $removePermissionAsResource', async () => {
+      const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+            ted = await Tyr.byName['user'].findOne({ name: 'ted' }),
+            chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
+
+      await chopped['$allow']('view-post', ben);
+      await chopped['$deny']('view-post', ted);
+
+      const accessBen = await chopped['$explainPermission']('view-post', ben);
+
+      expect(accessBen.reason).to.match(/Permission set on <Resource:organization/);
+      expect(accessBen.access).to.equal(true);
+      expect(accessBen.type).to.equal('view-post');
+
+
+      const accessTed = await chopped['$explainPermission']('view-post', ted);
+
+      expect(accessTed.reason).to.match(/Permission set on <Resource:organization/);
+      expect(accessTed.access).to.equal(false);
+      expect(accessTed.type).to.equal('view-post');
+
+      await chopped['$removePermissionAsResource']('view-post', 'deny');
+
+      const accessBenAfter = await chopped['$explainPermission']('view-post', ben);
+
+      expect(accessBenAfter.reason).to.match(/Permission set on <Resource:organization/);
+      expect(accessBenAfter.access).to.equal(true);
+      expect(accessBenAfter.type).to.equal('view-post');
+
+
+      const accessTedAfter = await chopped['$explainPermission']('view-post', ted);
+
+      expect(accessTedAfter.reason).to.match(/No permissions were set specifically/);
+      expect(accessTedAfter.access).to.equal(false);
+      expect(accessTedAfter.type).to.equal('view-post');
+
+    });
+
+
+
     it('should correctly check abstract parent of collection-specific permission', async () => {
       const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
             chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
@@ -505,7 +579,7 @@ describe('tyranid-gracl', () => {
     it('should return false with no permissions set for user for specific permission type', async () => {
       await giveBenAccessToChoppedPosts();
 
-      const Post = Tyr.byName['post'],
+      const Post = <any> Tyr.byName['post'],
             ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
             query = await secure.query(Post, 'edit', ben);
 

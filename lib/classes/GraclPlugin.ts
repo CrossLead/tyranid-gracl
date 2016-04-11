@@ -110,6 +110,7 @@ export class GraclPlugin {
   verbose: boolean;
   permissionHierarchy: permissionHierarchy;
   permissionsProperty: string;
+  setOfAllPermissions: Set<string>;
 
 
   permissionsModel = PermissionsModel;
@@ -155,6 +156,14 @@ export class GraclPlugin {
       action,
       collection
     };
+  }
+
+
+
+  validatePermissionExists(perm: string) {
+    if (!this.setOfAllPermissions.has(perm)) {
+      throw new Error(`Invalid permission type: ${perm}`);
+    }
   }
 
 
@@ -526,7 +535,18 @@ export class GraclPlugin {
     if (stage === 'post-link') {
       this.log(`starting boot.`);
 
-      Object.assign(Tyr.documentPrototype, documentMethods);
+      const tyranidDocumentPrototype = <{ [key: string]: any }> Tyr.documentPrototype;
+
+      for (const method in documentMethods) {
+        if (documentMethods.hasOwnProperty(method)) {
+          if (tyranidDocumentPrototype[method]) {
+            throw new Error(
+              `tyranid-gracl: tried to set method ${method} on document prototype, but it already exists!`
+            );
+          }
+          tyranidDocumentPrototype[method] = (<any> documentMethods)[method];
+        }
+      }
 
       type TyrSchemaGraphObjects = {
         links: Tyr.Field[];
@@ -688,6 +708,7 @@ export class GraclPlugin {
       }
 
       this.permissionHierarchy = this.constructPermissionHierarchy(this.permissionTypes);
+      this.setOfAllPermissions = new Set(this.getAllPossiblePermissionTypes());
     }
   }
 
