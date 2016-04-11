@@ -24,7 +24,7 @@
   "dependencies": {
     "gracl": "0.0.2",
     "lodash": "3.10.1",
-    "tyranid": "0.0.160"
+    "tyranid": "0.0.161"
   },
   "babel": {
     "presets": [
