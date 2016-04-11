@@ -497,6 +497,26 @@ describe('tyranid-gracl', () => {
     });
 
 
+    it('should return false with no permissions', async () => {
+      const Post = Tyr.byName['post'],
+            ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+            query = await secure.query(Post, 'edit', ben);
+
+      expect(query, 'query should be false').to.equal(false);
+    });
+
+
+    it('should return false with no permissions set for user for specific permission type', async () => {
+      await giveBenAccessToChoppedPosts();
+
+      const Post = Tyr.byName['post'],
+            ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+            query = await secure.query(Post, 'edit', ben);
+
+      expect(query, 'query should be false').to.equal(false);
+    });
+
+
     it('should return empty object for collection with no permissions hierarchy node', async () => {
       const Chart = Tyr.byName['chart'],
             ben = await Tyr.byName['user'].findOne({ name: 'ben' }),

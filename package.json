@@ -1,6 +1,6 @@
 {
   "name": "tyranid-gracl",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "tyranid.js plugin for gracl",
   "main": "./dist/node4/lib/tyranid-gracl.js",
   "typings": "./dist/es6/lib/tyranid-gracl.d.ts",

@@ -807,9 +807,15 @@ export class GraclPlugin {
           resourceHierarchyClasses = ResourceClass.getHierarchyClassNames(),
           permissionsQuery = {
             subjectId:    { $in: subjectHierarchyIds },
-            resourceType: { $in: resourceHierarchyClasses }
-          },
-          permissions = await PermissionsModel.findAll(permissionsQuery);
+            resourceType: { $in: resourceHierarchyClasses },
+            $or: permissionTypes.map(perm => {
+              return {
+                [`access.${perm}`]: { $exists: true }
+              };
+            })
+          };
+
+    const permissions = await PermissionsModel.findAll(permissionsQuery);
 
     // no permissions found, return no restriction
     if (!Array.isArray(permissions) || permissions.length === 0) {
