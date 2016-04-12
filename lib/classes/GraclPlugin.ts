@@ -533,6 +533,8 @@ export class GraclPlugin {
    */
   boot(stage: Tyr.BootStage) {
     if (stage === 'post-link') {
+      const plugin = this;
+
       this.log(`starting boot.`);
 
       const tyranidDocumentPrototype = <{ [key: string]: any }> Tyr.documentPrototype;
@@ -656,21 +658,85 @@ export class GraclPlugin {
             permissionProperty: this.permissionsProperty,
             repository: this.makeRepository(node.collection, type),
             async getParents(): Promise<gracl.Node[]> {
-              const thisNode = <gracl.Node> this;
+              const thisNode = <gracl.Node> this,
+                    ParentClass = thisNode.getParentClass();
 
               let ids: any = parentNamePath.get(thisNode.doc);
 
-              if (!(ids instanceof Array)) {
+              if (ids && !(ids instanceof Array)) {
                 ids = [ ids ];
+              }
+
+              // if no immediate parents, recurse
+              // up resource chain and check for
+              // alternate path to current node
+              if (!(ids && ids.length)) {
+                const hierarchyClasses = ParentClass.getHierarchyClassNames(),
+                      thisCollection = Tyr.byName[thisNode.getName()],
+                      doc = <Tyr.Document> thisNode.doc;
+
+                hierarchyClasses.shift(); // remove parent we already tried
+
+                // try to find a path between one of the hierarchy classes
+                // (starting from lowest and recursing upward)
+                let currentParent: string;
+                while (currentParent = hierarchyClasses.shift()) {
+                  const currentParentCollection = Tyr.byName[currentParent],
+                        path = plugin.getShortestPath(thisCollection, currentParentCollection),
+                        CurrentParentNodeClass = type === 'resources'
+                          ? plugin.graclHierarchy.getResource(currentParent)
+                          : plugin.graclHierarchy.getSubject(currentParent);
+
+                  if (path.length && path.length >= 2) {
+                    let currentCollection = Tyr.byName[path.shift()],
+                        nextCollection = Tyr.byName[path.shift()],
+                        linkField = findLinkInCollection(currentCollection, nextCollection);
+
+                    ids = linkField.namePath.get(doc) || [];
+
+                    if (!Array.isArray(ids)) {
+                      ids = [ ids ];
+                    }
+
+                    // this potential path has found a dead end,
+                    // we need to try another upper level resource
+                    if (!ids.length) {
+                      continue;
+                    }
+
+                    while (linkField.link.def.name !== currentParent) {
+                      currentCollection = nextCollection;
+                      nextCollection = Tyr.byName[path.shift()];
+                      linkField = findLinkInCollection(currentCollection, nextCollection);
+                      const nextDocuments = await currentCollection.byIds(ids);
+                      ids = _.chain(nextDocuments)
+                        .map(d => linkField.namePath.get(d))
+                        .flatten()
+                        .compact()
+                        .value();
+                    }
+
+                    if (ids.length) {
+                      const parentDocs = await nextCollection.byIds(ids),
+                            populated = await Promise.all(
+                              parentDocs.map(p => PermissionsModel.populatePermissions(p))
+                            ),
+                            parents = populated.map(d => new CurrentParentNodeClass(d));
+
+                      return parents;
+                    } else {
+                      return [];
+                    }
+                  }
+                }
+
+                return [];
               }
 
               const linkCollection = node.link,
                     parentObjects  = await linkCollection.findAll({
                                         [linkCollection.def.primaryKey.field]: { $in: ids }
-                                     }),
-                    ParentClass = thisNode.getParentClass();
-
-              if (!parentObjects.length) return [];
+                                     });
 
               const populated = await Promise.all(
                 parentObjects.map(p => PermissionsModel.populatePermissions(p))

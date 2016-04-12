@@ -178,8 +178,8 @@ describe('tyranid-gracl', () => {
     it('should correctly produce paths between collections', () => {
       for (const a in expectedLinkPaths) {
         for (const b in expectedLinkPaths[a]) {
-          expect(secure.getShortestPath(Tyr.byName[a], Tyr.byName[b]), `Path from ${a} to ${b}`)
-            .to.deep.equal(expectedLinkPaths[a][b] || []);
+          const path = secure.getShortestPath(Tyr.byName[a], Tyr.byName[b]);
+          expect(path, `Path from ${a} to ${b}`).to.deep.equal(expectedLinkPaths[a][b] || []);
         }
       }
     });
@@ -332,6 +332,33 @@ describe('tyranid-gracl', () => {
       const access = await chopped['$isAllowed']('abstract_view_chart', ben);
       expect(access).to.equal(true);
     });
+
+
+    it('should skip a link in the hierarchy chain when no immediate parent ids present', async () => {
+      const noTeamUser = await Tyr.byName['user'].findOne({ name: 'noTeams' }),
+            chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' }),
+            chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
+
+      chopped['$allow']('view-post', chipotle);
+
+      const access = await chopped['$isAllowed']('view-post', noTeamUser);
+      expect(access, 'noTeamUser should have access even without teams linking to org')
+        .to.equal(true);
+    });
+
+
+    it('should skip multiple links in the hierarchy chain when no immediate parent ids present', async () => {
+      const freeComment = await Tyr.byName['comment'].findOne({ text: 'TEST_COMMENT' }),
+            ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+            chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
+
+      await chipotle['$allow']('view-comment', ben);
+
+      const access = await freeComment['$isAllowed']('view-comment', ben);
+      expect(access, 'ben should have access through organization')
+        .to.equal(true);
+    });
+
 
 
     it('should modify existing permissions instead of creating new ones', async () => {

@@ -6,6 +6,7 @@ import { Team } from '../models/Team';
 import { Chart } from '../models/Chart';
 import { Inventory } from '../models/Inventory';
 import { Organization } from '../models/Organization';
+import { Comment } from '../models/Comment';
 
 export async function createTestData() {
   // nuke old data...
@@ -78,6 +79,18 @@ export async function createTestData() {
 
 
   /**
+   *  Comment
+   */
+  await Promise.all([
+    // comment with no post id but organizationId which links to higher
+    Comment.insert({
+      text: 'TEST_COMMENT',
+      blogId: chipotleCorporateBlog.$id
+    })
+  ]);
+
+
+  /**
     Teams
    */
   const [
@@ -98,7 +111,8 @@ export async function createTestData() {
    */
   const [
     ben,
-    ted
+    ted,
+    noTeams
   ] = await Promise.all([
 
     User.insert({
@@ -116,6 +130,11 @@ export async function createTestData() {
       teamIds: [
         cavaEngineers.$id
       ]
+    }),
+
+    User.insert({
+      name: 'noTeams',
+      organizationId: chipotle.$id
     })
 
   ]);
