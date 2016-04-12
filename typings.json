@@ -7,6 +7,6 @@
     "mocha": "github:DefinitelyTyped/DefinitelyTyped/mocha/mocha.d.ts#d6dd320291705694ba8e1a79497a908e9f5e6617",
     "node": "github:DefinitelyTyped/DefinitelyTyped/node/node.d.ts#48c1e3c1d6baefa4f1a126f188c27c4fefd36bff",
     "serve-static": "github:DefinitelyTyped/DefinitelyTyped/serve-static/serve-static.d.ts#0fa4e9e61385646ea6a4cba2aef357353d2ce77f",
-    "tyranid": "github:tyranid-org/tyranid-typings/tyranid/index.d.ts#b31b9cdf38338fc206591de26b8c7f9a30b76301"
+    "tyranid": "github:tyranid-org/tyranid-typings/tyranid/index.d.ts#1dce487e686134857d03acc6c977b620e5bc4008"
   }
 }

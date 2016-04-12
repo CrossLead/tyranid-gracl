@@ -287,6 +287,28 @@ describe('tyranid-gracl', () => {
     });
 
 
+    it('should correctly respect combined permission/subject/resource hierarchy', async () => {
+      /**
+        Set deny view-access for parent subject to parent resource
+        Set allow edit-access for child subject to child resource
+
+        should return true when checking if child subject can view
+       */
+
+
+      const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+            chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
+            chipotleCorporateBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' });
+
+      await chipotleCorporateBlog['$allow']('edit-post', ben);
+      await chipotle['$deny']('view-post', chipotle);
+      await chipotle['$deny']('edit-post', chipotle);
+
+      const access = await chipotleCorporateBlog['$isAllowed']('view-post', ben);
+      expect(access, 'Ben should have view access to blog').to.equal(true);
+    });
+
+
     it('should validate permissions', async () => {
       const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
             chipotleCorporateBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' });
@@ -681,6 +703,42 @@ describe('tyranid-gracl', () => {
 
       expect(entities).to.contain(cava['$uid']);
       expect(entities).to.contain(chipotleBlogs[0]['$uid']);
+    });
+
+
+    it('should correctly respect combined permission/subject/resource hierarchy in query()', async () => {
+      /**
+        Set deny view-access for parent subject to parent resource
+        Set allow edit-access for child subject to child resource
+
+        should return true when checking if child subject can view
+       */
+
+
+      const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+            chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
+            chipotleCorporateBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' });
+
+      await chipotleCorporateBlog['$allow']('edit-post', ben);
+      await chipotle['$deny']('view-post', chipotle);
+
+      const {
+        $and: [
+          {
+            $or: [{
+              blogId: { $in: canViewBlogs }
+            }]
+          },
+          {
+            $and: [{
+              blogId: { $nin: cantViewBlogs }
+            }]
+          }
+        ]
+      } = await Tyr.byName['post'].secureQuery({}, 'view', ben);
+
+      expect(canViewBlogs.map((id: any) => id.toString())).to.contain(chipotleCorporateBlog.$id.toString());
+      expect(cantViewBlogs.map((id: any) => id.toString())).to.not.contain(chipotleCorporateBlog.$id.toString());
     });
 
   });

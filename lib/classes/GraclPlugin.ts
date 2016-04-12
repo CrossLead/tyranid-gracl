@@ -880,15 +880,33 @@ export class GraclPlugin {
     };
 
 
+    const resourceArray = Array.from(resourceMap.values());
+    resourceArray.sort((a, b) => {
+      const aDepth = this.graclHierarchy.getResource(a.collection.def.name).getNodeDepth();
+      const bDepth = this.graclHierarchy.getResource(b.collection.def.name).getNodeDepth();
+      return gracl.baseCompare(bDepth, aDepth);
+    });
+
+
+    const alreadySet = new Set<string>();
 
     // extract all collections that have a relevant permission set for the requested resource
-    for (const [ collectionName, { collection, permissions } ] of resourceMap) {
+    for (const { collection, permissions } of resourceArray) {
+      const collectionName = collection.def.name;
 
       let queryRestrictionSet = false;
       if (queriedCollectionLinkFields.has(collectionName) ||
           queriedCollectionName === collectionName) {
 
         for (const permission of permissions.values()) {
+
+          // if a permission was set by a collection of higher depth, keep it...
+          if (alreadySet.has(permission.resourceId)) {
+            continue;
+          } else {
+            alreadySet.add(permission.resourceId);
+          }
+
           const access = getAccess(permission);
           switch (access) {
             // access needs to be exactly true or false
@@ -1016,6 +1034,13 @@ export class GraclPlugin {
         const addIdsToQueryMap = (access: boolean) => (id: string) => {
           const accessString    = access ? 'positive' : 'negative',
                 altAccessString = access ? 'negative' : 'positive';
+
+          const resourceUid = Tyr.byName[linkedCollectionName].idToUid(id);
+          if (alreadySet.has(resourceUid)) {
+            return;
+          } else {
+            alreadySet.add(resourceUid);
+          }
 
           if (!queryMaps[accessString].has(linkedCollectionName)) {
             queryMaps[accessString].set(linkedCollectionName, new Set());
