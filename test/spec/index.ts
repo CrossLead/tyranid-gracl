@@ -2,6 +2,7 @@
 /// <reference path='../test-typings.d.ts'/>
 import Tyr from 'tyranid';
 import * as mongodb from 'mongodb';
+import * as path from 'path';
 import * as _ from 'lodash';
 import * as tyranidGracl from '../../lib/tyranid-gracl';
 import { expect } from 'chai';
@@ -29,9 +30,8 @@ const permissionTypes = [
   ]},
 ];
 
-
 const permissionKey = 'graclResourcePermissionIds',
-      root = __dirname.replace(/test\/spec/, ''),
+      root = __dirname.replace(`${path.sep}test${path.sep}spec`, ''),
       secure = new tyranidGracl.GraclPlugin({
         verbose: VERBOSE_LOGGING,
         permissionsProperty: permissionKey,
@@ -67,7 +67,7 @@ describe('tyranid-gracl', () => {
     Tyr.config({
       db: db,
       validate: [
-        { dir: root + '/test/models',
+        { dir: root + `${path.sep}test${path.sep}models`,
           fileMatch: '[a-z].js' }
       ],
       secure: secure,
