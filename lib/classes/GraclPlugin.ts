@@ -899,19 +899,17 @@ export class GraclPlugin {
           queriedCollectionName === collectionName) {
 
         for (const permission of permissions.values()) {
-
-          // if a permission was set by a collection of higher depth, keep it...
-          if (alreadySet.has(permission.resourceId)) {
-            continue;
-          } else {
-            alreadySet.add(permission.resourceId);
-          }
-
           const access = getAccess(permission);
           switch (access) {
             // access needs to be exactly true or false
             case true:
             case false:
+              // if a permission was set by a collection of higher depth, keep it...
+              if (alreadySet.has(permission.resourceId)) {
+                continue;
+              } else {
+                alreadySet.add(permission.resourceId);
+              }
               const key = (access ? 'positive' : 'negative');
               if (!queryMaps[key].has(collectionName)) {
                 queryMaps[key].set(collectionName, new Set());
