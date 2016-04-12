@@ -9,12 +9,12 @@
     "build": "rm -rf ./dist/ && npm run typings && npm run lint && npm run tscompile && npm run babel",
     "pretest": "npm run build",
     "prepublish": "npm test",
-    "test": "./node_modules/mocha/bin/mocha --require babel-polyfill --require babel-core/register dist/es6/test/spec/**/*.js",
-    "tscompile": "./node_modules/typescript/bin/tsc -d -p ./",
+    "test": "bash -c \"./node_modules/mocha/bin/mocha --require babel-polyfill --require babel-core/register dist/es6/test/spec/**/*.js\"",
+    "tscompile": "bash -c \"./node_modules/typescript/bin/tsc -d -p ./\"",
     "typings": "./node_modules/.bin/typings install",
     "docs": "rm -rf ./docs/ && ./node_modules/typedoc/bin/typedoc --mode file --theme default --experimentalAsyncFunctions --target es6 --out ./docs/ ./lib/ && touch ./docs/.nojekyll",
     "gh-pages": "npm run docs && ./node_modules/gh-pages/bin/gh-pages --dotfiles true -d ./docs/",
-    "lint": "./node_modules/tslint/bin/tslint -c ./tslint.json ./{test,lib}/**/*.ts && echo '> \\033[0;32mlinter passed!\\033[0m'"
+    "lint": "bash -c \"./node_modules/tslint/bin/tslint -c ./tslint.json ./{test,lib}/**/*.ts && echo '> \\033[0;32mlinter passed!\\033[0m'\""
   },
   "engines": {
     "node": ">=4.3.0"
