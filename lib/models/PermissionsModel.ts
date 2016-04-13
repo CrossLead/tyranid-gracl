@@ -41,59 +41,6 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   }
 
 
-
-  static validatePermissionType(permissionType: string, queriedCollection: Tyr.CollectionInstance) {
-
-    const plugin = PermissionsModel.getGraclPlugin(),
-          components = plugin.parsePermissionString(permissionType);
-
-
-    if (!plugin.getPermissionObject(permissionType)) {
-      throw new Error(
-        `Invalid permissionType ${permissionType}! ` +
-        `permission action given ("${components.action}") is not valid. Must be one of (${
-          _.keys(plugin.permissionHierarchy).join(', ')
-        })`
-      );
-    }
-
-    // if given collection name, validate it
-    if (components.collection) {
-      const permissionCollection = Tyr.byName[components.collection];
-      if (!permissionCollection) {
-        throw new Error(`No collection ${components.collection}, permission ` +
-          `of type <action>-<collection> must contain valid collection!`);
-      }
-
-      PermissionsModel.validateAsResource(permissionCollection);
-      PermissionsModel.validateAsResource(queriedCollection);
-
-      const queriedResourceHierarchy = plugin
-        .graclHierarchy
-        .getResource(queriedCollection.def.name)
-        .getHierarchyClassNames();
-
-      const permissionResourceHierarchy = plugin
-        .graclHierarchy
-        .getResource(components.collection)
-        .getHierarchyClassNames();
-
-      if (!(
-            _.contains(permissionResourceHierarchy, queriedCollection.def.name) ||
-            _.contains(queriedResourceHierarchy, components.collection)
-          )) {
-        throw new Error(
-          `Cannot set permission "${permissionType}" on collection ` +
-          `"${components.collection}" as resource, as collection "${queriedCollection.def.name}" ` +
-          `does not exist in the resource hierarchy of "${components.collection}"`
-        );
-      }
-    }
-
-  }
-
-
-
   static validateAsResource(collection: Tyr.CollectionInstance) {
     const plugin = PermissionsModel.getGraclPlugin();
 
@@ -176,7 +123,6 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
             permissionType?: string,
             direct?: boolean
           ) {
-    if (permissionType) PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
     const resource = PermissionsModel.createResource(resourceDocument);
 
     const query: { [key: string]: any } = {
@@ -226,7 +172,6 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       permissionType: string,
       subjectDocument = Tyr.local.user
     ): Promise<boolean> {
-    PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
 
     const plugin = PermissionsModel.getGraclPlugin();
 
@@ -261,7 +206,6 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       permissionType: string,
       subjectDocument = Tyr.local.user
     ): Promise<{ type: string, access: boolean, reason: string }> {
-    PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
 
     const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
 
@@ -282,7 +226,6 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     if (!subjectDocument.$uid) throw new TypeError(`subject document must be a Tyranid document with $uid`);
 
     PermissionsModel.validateAsResource(resourceDocument.$model);
-    PermissionsModel.validatePermissionType(permissionType, resourceDocument.$model);
 
     // set the permission
     await PermissionsModel.findAndModify({
