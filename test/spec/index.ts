@@ -483,6 +483,23 @@ describe('tyranid-gracl', () => {
     });
 
 
+    it('should work if passing uid instead of document', async () => {
+      const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+            chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
+
+      await chopped['$allow']('view-post', ben.$uid);
+      await chopped['$deny']('view-blog', ben.$uid);
+
+      const blogExplaination = await chopped['$explainPermission']('view-blog', ben.$uid);
+      const postAccess = await chopped['$isAllowed']('view-post', ben.$uid);
+
+      expect(blogExplaination.reason, 'blogExplaination.reason').to.match(/Permission set on <Resource:organization/);
+      expect(blogExplaination.access, 'blogExplaination.access').to.equal(false);
+      expect(blogExplaination.type, 'blogExplaination.type').to.equal('view-blog');
+      expect(postAccess, 'postAccess').to.equal(true);
+    });
+
+
     it('should correctly explain permissions', async () => {
       await giveBenAccessToChoppedPosts();
 

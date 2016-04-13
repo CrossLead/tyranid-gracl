@@ -14,6 +14,33 @@ export type Hash<T> = {
 
 
 
+export function createError(message: string) {
+  throw new Error(`tyranid-gracl: ${message}`);
+}
+
+
+
+/**
+ *  parametric type for arbitrary string-keyed objects
+ */
+export function extractIdAndModel(doc: Tyr.Document | string) {
+  if (typeof doc === 'string') {
+    const components: { [key: string]: any } = Tyr.parseUid(doc) || {};
+    if (!components['collection']) createError(`Invalid resource id: ${doc}`);
+    return {
+      $uid: <string> doc,
+      $model: <Tyr.CollectionInstance> components['collection']
+    };
+  } else {
+    return {
+      $uid: <string> doc.$uid,
+      $model: doc.$model
+    };
+  }
+}
+
+
+
 /**
  *  Memoized function to find links for a given collection
     and sort them by the collection name
@@ -92,7 +119,7 @@ export function createInQueries(
                 ): Hash<Hash<Hash<string[]>>[]> {
 
   if (!(key === '$in' || key === '$nin')) {
-    throw new TypeError(`key must be $nin or $in!`);
+    createError(`key must be $nin or $in!`);
   }
 
   const conditions: Hash<Hash<string[]>>[] = [];
@@ -106,7 +133,7 @@ export function createInQueries(
       const link = findLinkInCollection(queriedCollection, Tyr.byName[col]);
 
       if (!link) {
-        throw new Error(
+        createError(
           `No outgoing link from ${queriedCollection.def.name} to ${col}, cannot create restricted ${key} clause!`
         );
       }
@@ -138,7 +165,7 @@ export async function stepThroughCollectionPath(
   const nextCollectionLinkField = findLinkInCollection(nextCollection, previousCollection);
 
   if (!nextCollectionLinkField) {
-    throw new Error(
+    createError(
       `cannot step through collection path, as no link to collection ${nextCollection.def.name} ` +
       `from collection ${previousCollection.def.name}`
     );

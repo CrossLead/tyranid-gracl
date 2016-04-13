@@ -9,7 +9,8 @@ import {
   findLinkInCollection,
   getCollectionLinksSorted,
   createInQueries,
-  stepThroughCollectionPath
+  stepThroughCollectionPath,
+  createError
 } from '../util';
 
 
@@ -126,13 +127,14 @@ export class GraclPlugin {
 
   constructor(opts?: pluginOptions) {
     opts = opts || {};
+    const plugin = this;
 
     if (Array.isArray(opts.permissionTypes) && opts.permissionTypes.length) {
-      this.permissionTypes = opts.permissionTypes;
+      plugin.permissionTypes = opts.permissionTypes;
     }
 
-    this.verbose = opts.verbose || false;
-    this.permissionsProperty = opts.permissionsProperty || '_graclResourcePermissions';
+    plugin.verbose = opts.verbose || false;
+    plugin.permissionsProperty = opts.permissionsProperty || '_graclResourcePermissions';
   };
 
 
@@ -149,7 +151,8 @@ export class GraclPlugin {
 
 
   parsePermissionString(perm: string) {
-    if (!perm) throw new Error(`Tried to split empty permission!`);
+    const plugin = this;
+    if (!perm) plugin.error(`Tried to split empty permission!`);
 
     const [ action, collection ] = perm.split('-');
     return {
@@ -160,18 +163,38 @@ export class GraclPlugin {
 
 
 
+  error(message: string) {
+    createError(message);
+  }
+
+
+
   validatePermissionExists(perm: string) {
-    if (!this.setOfAllPermissions.has(perm)) {
-      throw new Error(`Invalid permission type: ${perm}`);
+    const plugin = this;
+    if (!perm) plugin.error('no permission given!');
+
+    const components = plugin.parsePermissionString(perm);
+
+    if (!plugin.permissionHierarchy[components.action]) {
+      plugin.error(`Invalid permission type: ${components.action}`);
     }
+
+    if (components.collection && !plugin.graclHierarchy.resources.has(components.collection)) {
+      plugin.error(
+        `Collection "${components.collection}" has no ` +
+        `resource class and thus can't be used with permission "${components.action}"`
+      );
+    }
+
   }
 
 
 
   formatPermissionType(components: { action: string, collection?: string }) {
-    const hierarchyNode = this.permissionHierarchy[components.action];
+    const plugin = this;
+    const hierarchyNode = plugin.permissionHierarchy[components.action];
     if (!hierarchyNode) {
-      throw new Error(`Invalid permission type: ${components.action}`);
+      plugin.error(`Invalid permission type: ${components.action}`);
     }
 
     // if the permission is abstract, it should not be associated with
@@ -189,30 +212,31 @@ export class GraclPlugin {
    */
   private _permissionChildCache: { [key: string]: string[] } = {};
   getPermissionChildren(perm: string): string[] {
-    if (this._permissionChildCache[perm]) return this._permissionChildCache[perm].slice();
+    const plugin = this;
+    if (plugin._permissionChildCache[perm]) return plugin._permissionChildCache[perm].slice();
 
     const {
       action,
       collection
-    } = this.parsePermissionString(perm);
+    } = plugin.parsePermissionString(perm);
 
-    if (!this.permissionHierarchy[action]) {
-      throw new Error(`Permission ${perm} does not exist!`);
+    if (!plugin.permissionHierarchy[action]) {
+      plugin.error(`Permission ${perm} does not exist!`);
     }
 
     const children: string[] = [];
-    for (const alt of this.permissionTypes) {
-      const name = this.formatPermissionType({
+    for (const alt of plugin.permissionTypes) {
+      const name = plugin.formatPermissionType({
         action: alt.name,
         collection: collection
       });
 
-      const parents = this.getPermissionParents(name);
+      const parents = plugin.getPermissionParents(name);
       if (parents.indexOf(perm) >= 0) {
         children.push(name);
       }
     }
-    return (this._permissionChildCache[perm] = _.unique(children)).slice();
+    return (plugin._permissionChildCache[perm] = _.unique(children)).slice();
   }
 
 
@@ -220,12 +244,14 @@ export class GraclPlugin {
    *  Get all parent permissions of perm
    */
   getPermissionParents(perm: string): string[] {
-    const parents: string[] = [];
-    let nextPermissions = this.nextPermissions(perm);
+    const parents: string[] = [],
+          plugin = this;
+
+    let nextPermissions = plugin.nextPermissions(perm);
     while (nextPermissions.length) {
       parents.push(...nextPermissions);
       nextPermissions = <string[]> _.chain(nextPermissions)
-        .map(p => this.nextPermissions(p))
+        .map(p => plugin.nextPermissions(p))
         .flatten()
         .value();
     }
@@ -238,18 +264,19 @@ export class GraclPlugin {
    */
   private _allPossiblePermissionsCache: string[];
   getAllPossiblePermissionTypes(): string[] {
-    if (this._allPossiblePermissionsCache) return this._allPossiblePermissionsCache.slice();
+    const plugin = this;
+    if (plugin._allPossiblePermissionsCache) return plugin._allPossiblePermissionsCache.slice();
 
-    const permissionSchema = this.permissionTypes;
+    const permissionSchema = plugin.permissionTypes;
     const allPermissions: string[] = [];
-    const resourceCollections = Array.from(this.graclHierarchy.resources.keys());
+    const resourceCollections = Array.from(plugin.graclHierarchy.resources.keys());
 
     for (const perm of permissionSchema) {
       if (perm.abstract || perm.collection) {
         allPermissions.push(perm.name);
       } else {
         for (const resourceCollection of resourceCollections) {
-          const formatted = this.formatPermissionType({
+          const formatted = plugin.formatPermissionType({
             action: perm.name,
             collection: resourceCollection
           });
@@ -258,7 +285,7 @@ export class GraclPlugin {
       }
     }
 
-    return (this._allPossiblePermissionsCache = _.unique(allPermissions)).slice();
+    return (plugin._allPossiblePermissionsCache = _.unique(allPermissions)).slice();
   }
 
 
@@ -267,9 +294,10 @@ export class GraclPlugin {
    * validate and insert provided permissionHierarchy into model
    */
   constructPermissionHierarchy(permissionsTypes: permissionTypeList ): permissionHierarchy {
+    const plugin = this;
 
-    if (!this.graclHierarchy) {
-      throw new Error(`Must build subject/resource hierarchy before creating permission hierarchy`);
+    if (!plugin.graclHierarchy) {
+      plugin.error(`Must build subject/resource hierarchy before creating permission hierarchy`);
     }
 
     /**
@@ -279,7 +307,7 @@ export class GraclPlugin {
     const sorted = gracl.topologicalSort(_.map(permissionsTypes, perm => {
 
       if (perm['abstract'] === undefined && !perm['collection']) {
-        throw new Error(
+        plugin.error(
           `Must set { abstract: true | false } property for all permission types ` +
           `unless it is a collection-specific permission ` +
           `permission ${JSON.stringify(perm)} does not have "abstract" or "collection" property`
@@ -297,7 +325,7 @@ export class GraclPlugin {
       const parents = perm['parents'];
       if (parents) {
         if (!Array.isArray(parents)) {
-          throw new Error(`parents of permission type must be given as an array!`);
+          plugin.error(`parents of permission type must be given as an array!`);
         }
 
         const colParents = <string[]> [];
@@ -305,15 +333,15 @@ export class GraclPlugin {
           // if we have an <action>-<collection> permission...
           if (/-/.test(parent)) {
             if (!perm['abstract'] && !perm['collection']) {
-              throw new Error(
+              plugin.error(
                 `Cannot set collection-specific permission to be the parent of a non-abstract permission!`
               );
             }
 
-            const parsed = this.parsePermissionString(parent);
+            const parsed = plugin.parsePermissionString(parent);
 
-            if (!this.graclHierarchy.resources.has(parsed.collection)) {
-              throw new Error(
+            if (!plugin.graclHierarchy.resources.has(parsed.collection)) {
+              plugin.error(
                 `Collection ${parsed.collection} in permission ` +
                 `"${parent}" does not exist in the resource hierarchy!`
               );
@@ -343,7 +371,7 @@ export class GraclPlugin {
     }
 
     if (duplicates.size) {
-      throw new Error(`Duplicate permission types provided: ${[...duplicates].join(', ')}`);
+      plugin.error(`Duplicate permission types provided: ${[...duplicates].join(', ')}`);
     }
 
     const hierarchy: permissionHierarchy = {};
@@ -363,7 +391,7 @@ export class GraclPlugin {
           const hierarchyParent = hierarchy[p];
 
           if (abstract && hierarchyParent && !hierarchyParent.abstract) {
-            throw new Error(
+            plugin.error(
               `If a permission is abstract, it either needs an abstract parent ` +
               `or a parent that references a specific collection.`
             );
@@ -371,18 +399,18 @@ export class GraclPlugin {
 
           if (hierarchyParent) return hierarchyParent;
 
-          const parsed = this.parsePermissionString(p);
+          const parsed = plugin.parsePermissionString(p);
 
           if (abstract && !parsed.collection) {
-            throw new Error(
+            plugin.error(
               `Parent permissions of abstract permission must ` +
               `themseleves be abstract or reference a specific collection. ` +
               `Abstract permission ${name} has parent permission ${p} which is not specific to a collection`
             );
           }
 
-          if (!this.graclHierarchy.resources.has(parsed.collection)) {
-            throw new Error(
+          if (!plugin.graclHierarchy.resources.has(parsed.collection)) {
+            plugin.error(
               `Collection ${parsed.collection} in permission ` +
               `"${p}" does not exist in the resource hierarchy!`
             );
@@ -431,21 +459,23 @@ export class GraclPlugin {
 
 
   getPermissionObject(permissionString: string) {
-    return this.permissionHierarchy[this.parsePermissionString(permissionString).action];
+    const plugin = this;
+    return plugin.permissionHierarchy[plugin.parsePermissionString(permissionString).action];
   }
 
 
   nextPermissions(permissionString: string): string[] {
-    const components = this.parsePermissionString(permissionString),
+    const plugin = this;
+    const components = plugin.parsePermissionString(permissionString),
           // get general permissions from action
           actionParents = <Hash<string>[]> _.get(
-            this.permissionHierarchy,
+            plugin.permissionHierarchy,
             `${components.action}.parents`,
             []
           ),
           // if a specific action-collection permission is set in the hierarchy
           permissionStringParents = <Hash<string>[]> _.get(
-            this.permissionHierarchy,
+            plugin.permissionHierarchy,
             `${permissionString}.parents`,
             []
           );
@@ -457,9 +487,9 @@ export class GraclPlugin {
       .map((name: string) => {
         // we need to split the name, as it may include a specific collection
         // for inheritance
-        const parentPermComponents = this.parsePermissionString(name);
+        const parentPermComponents = plugin.parsePermissionString(name);
 
-        return this.formatPermissionType({
+        return plugin.formatPermissionType({
           action: parentPermComponents.action,
           // if there was a specific collection attached to the parent permission
           // use that, otherwise use the same collection as the last permission
@@ -473,7 +503,8 @@ export class GraclPlugin {
 
 
   log(message: string) {
-    if (this.verbose) {
+    const plugin = this;
+    if (plugin.verbose) {
       console.log(`tyranid-gracl: ${message}`);
     }
     return this;
@@ -482,10 +513,11 @@ export class GraclPlugin {
 
 
   getObjectHierarchy() {
-    const hierarchy = {
-      subjects: {},
-      resources: {}
-    };
+    const plugin = this,
+          hierarchy = {
+            subjects: {},
+            resources: {}
+          };
 
     const build = (obj: any) => (node: typeof gracl.Node) => {
       const path = node.getHierarchyClassNames().reverse();
@@ -495,8 +527,8 @@ export class GraclPlugin {
       }
     };
 
-    this.graclHierarchy.subjects.forEach(build(hierarchy.subjects));
-    this.graclHierarchy.resources.forEach(build(hierarchy.resources));
+    plugin.graclHierarchy.subjects.forEach(build(hierarchy.subjects));
+    plugin.graclHierarchy.resources.forEach(build(hierarchy.resources));
     return hierarchy;
   }
 
@@ -507,10 +539,11 @@ export class GraclPlugin {
       the pre-computed paths in GraclPlugin.outgoingLinkPaths
    */
   getShortestPath(colA: Tyr.CollectionInstance, colB: Tyr.CollectionInstance) {
-    let a = colA.def.name,
+    let plugin = this,
+        a = colA.def.name,
         b = colB.def.name,
         originalEdge = `${a}.${b}`,
-        next = this.outgoingLinkPaths;
+        next = plugin.outgoingLinkPaths;
 
     if (!_.get(next, originalEdge)) return [];
 
@@ -535,14 +568,14 @@ export class GraclPlugin {
     if (stage === 'post-link') {
       const plugin = this;
 
-      this.log(`starting boot.`);
+      plugin.log(`starting boot.`);
 
       const tyranidDocumentPrototype = <{ [key: string]: any }> Tyr.documentPrototype;
 
       for (const method in documentMethods) {
         if (documentMethods.hasOwnProperty(method)) {
           if (tyranidDocumentPrototype[method]) {
-            throw new Error(
+            plugin.error(
               `tyranid-gracl: tried to set method ${method} on document prototype, but it already exists!`
             );
           }
@@ -569,7 +602,7 @@ export class GraclPlugin {
         }
       };
 
-      const permissionsProperty = this.permissionsProperty;
+      const permissionsProperty = plugin.permissionsProperty;
 
       // loop through all collections, retrieve
       // ownedBy links
@@ -583,7 +616,7 @@ export class GraclPlugin {
 
         // validate that we can only have one parent of each field.
         if (linkFields.length > 1) {
-          throw new Error(
+          plugin.error(
             `tyranid-gracl permissions hierarchy does not allow for multiple inheritance. ` +
             `Collection ${collectionName} has multiple fields with outgoing ownedBy relations.`
           );
@@ -620,7 +653,7 @@ export class GraclPlugin {
               }
               break;
             default:
-              throw new Error(`Invalid gracl node type set on collection ${collectionName}, type = ${graclType}`);
+              plugin.error(`Invalid gracl node type set on collection ${collectionName}, type = ${graclType}`);
           }
         }
 
@@ -655,8 +688,8 @@ export class GraclPlugin {
             name,
             id: '$uid',
             parent: parentName,
-            permissionProperty: this.permissionsProperty,
-            repository: this.makeRepository(node.collection, type),
+            permissionProperty: plugin.permissionsProperty,
+            repository: plugin.makeRepository(node.collection, type),
             async getParents(): Promise<gracl.Node[]> {
               const thisNode = <gracl.Node> this,
                     ParentClass = thisNode.getParentClass();
@@ -692,41 +725,35 @@ export class GraclPlugin {
                         nextCollection = Tyr.byName[path.shift()],
                         linkField = findLinkInCollection(currentCollection, nextCollection);
 
-                    ids = linkField.namePath.get(doc) || [];
+                    const idProp = linkField.namePath.get(doc) || [];
 
-                    if (!Array.isArray(ids)) {
-                      ids = [ ids ];
-                    }
+                    let ids: string[] = !idProp
+                      ? []
+                      : (Array.isArray(idProp) ? idProp : [ idProp ]);
 
                     // this potential path has found a dead end,
                     // we need to try another upper level resource
-                    if (!ids.length) {
-                      continue;
-                    }
+                    if (!ids.length) continue;
 
                     while (linkField.link.def.name !== currentParent) {
                       currentCollection = nextCollection;
                       nextCollection = Tyr.byName[path.shift()];
                       linkField = findLinkInCollection(currentCollection, nextCollection);
                       const nextDocuments = await currentCollection.byIds(ids);
-                      ids = _.chain(nextDocuments)
+                      ids = <string[]> _.chain(nextDocuments)
                         .map(d => linkField.namePath.get(d))
                         .flatten()
                         .compact()
                         .value();
                     }
 
-                    if (ids.length) {
-                      const parentDocs = await nextCollection.byIds(ids),
-                            populated = await Promise.all(
-                              parentDocs.map(p => PermissionsModel.populatePermissions(p))
-                            ),
-                            parents = populated.map(d => new CurrentParentNodeClass(d));
+                    if (!ids.length) continue;
 
-                      return parents;
-                    } else {
-                      return [];
-                    }
+                    const parentDocs = await nextCollection.byIds(ids),
+                          populated = await Promise.all(parentDocs.map(PermissionsModel.populatePermissions)),
+                          parents = populated.map(d => new CurrentParentNodeClass(d));
+
+                    return parents;
                   }
                 }
 
@@ -738,9 +765,7 @@ export class GraclPlugin {
                                         [linkCollection.def.primaryKey.field]: { $in: ids }
                                      });
 
-              const populated = await Promise.all(
-                parentObjects.map(p => PermissionsModel.populatePermissions(p))
-              );
+              const populated = await Promise.all(parentObjects.map(PermissionsModel.populatePermissions));
 
               return populated.map(doc => new ParentClass(doc));
             }
@@ -753,28 +778,28 @@ export class GraclPlugin {
             nodes.set(name, {
               name,
               id: '$uid',
-              permissionProperty: this.permissionsProperty,
-              repository: this.makeRepository(parent, type)
+              permissionProperty: plugin.permissionsProperty,
+              repository: plugin.makeRepository(parent, type)
             });
           }
         }
 
       }
 
-      this.log(`creating link graph.`);
-      this.outgoingLinkPaths = GraclPlugin.buildLinkGraph();
+      plugin.log(`creating link graph.`);
+      plugin.outgoingLinkPaths = GraclPlugin.buildLinkGraph();
 
-      this.graclHierarchy = new gracl.Graph({
+      plugin.graclHierarchy = new gracl.Graph({
         subjects: Array.from(schemaMaps.subjects.values()),
         resources: Array.from(schemaMaps.resources.values())
       });
 
-      if (this.verbose) {
-        this.logHierarchy();
+      if (plugin.verbose) {
+        plugin.logHierarchy();
       }
 
-      this.permissionHierarchy = this.constructPermissionHierarchy(this.permissionTypes);
-      this.setOfAllPermissions = new Set(this.getAllPossiblePermissionTypes());
+      plugin.permissionHierarchy = plugin.constructPermissionHierarchy(plugin.permissionTypes);
+      plugin.setOfAllPermissions = new Set(plugin.getAllPossiblePermissionTypes());
     }
   }
 
@@ -784,11 +809,12 @@ export class GraclPlugin {
    *  Display neatly formatted view of permissions hierarchy
    */
   logHierarchy() {
+    const plugin = this;
     console.log(`created gracl permissions hierarchy based on tyranid schemas: `);
     console.log(
       '  | \n  | ' +
       JSON
-        .stringify(this.getObjectHierarchy(), null, 4)
+        .stringify(plugin.getObjectHierarchy(), null, 4)
         .replace(/[{},\":]/g, '')
         .replace(/^\s*\n/gm, '')
         .split('\n')
@@ -809,49 +835,50 @@ export class GraclPlugin {
               permissionType: string,
               subjectDocument = Tyr.local.user): Promise<boolean | {}> {
 
-    const queriedCollectionName = queriedCollection.def.name;
+    const queriedCollectionName = queriedCollection.def.name,
+          plugin = this;
 
-    if (this.unsecuredCollections.has(queriedCollectionName)) {
-      this.log(`skipping query modification for ${queriedCollectionName} as it is flagged as unsecured`);
+    if (plugin.unsecuredCollections.has(queriedCollectionName)) {
+      plugin.log(`skipping query modification for ${queriedCollectionName} as it is flagged as unsecured`);
       return {};
     }
 
     if (!permissionType) {
-      throw new Error(`No permissionType given to GraclPlugin.query()`);
+      plugin.error(`No permissionType given to GraclPlugin.query()`);
     }
 
-    if (!this.graclHierarchy) {
-      throw new Error(`Must call GraclPlugin.boot() before using GraclPlugin.query()`);
+    if (!plugin.graclHierarchy) {
+      plugin.error(`Must call GraclPlugin.boot() before using GraclPlugin.query()`);
     }
 
-    const components = this.parsePermissionString(permissionType);
+    const components = plugin.parsePermissionString(permissionType);
 
-    permissionType = this.formatPermissionType({
+    permissionType = plugin.formatPermissionType({
       action: components.action,
       collection: components.collection || queriedCollectionName
     });
 
     // if no subjectDocument, no restriction...
     if (!subjectDocument) {
-      this.log(`No subjectDocument passed to GraclPlugin.query() (or found on Tyr.local) -- no documents allowed`);
+      plugin.log(`No subjectDocument passed to GraclPlugin.query() (or found on Tyr.local) -- no documents allowed`);
       return false;
     }
 
     if (!subjectDocument.$model) {
-      throw new Error(
+      plugin.error(
         `The subjectDocument passed to GraclPlugin.query() must be a tyranid document!`
       );
     }
 
-    if (!this.graclHierarchy.resources.has(queriedCollectionName)) {
-      this.log(
+    if (!plugin.graclHierarchy.resources.has(queriedCollectionName)) {
+      plugin.log(
         `Querying against collection (${queriedCollectionName}) with no resource class -- no restriction enforced`
       );
       return {};
     }
 
     // get all permission actions in order...
-    const permissionTypes = [ permissionType ].concat(this.getPermissionParents(permissionType));
+    const permissionTypes = [ permissionType ].concat(plugin.getPermissionParents(permissionType));
 
     /**
      *  Iterate through permissions action hierarchy, getting access
@@ -873,11 +900,11 @@ export class GraclPlugin {
 
 
     // extract subject and resource Gracl classes
-    const ResourceClass = this.graclHierarchy.getResource(queriedCollectionName),
-          SubjectClass  = this.graclHierarchy.getSubject(subjectDocument.$model.def.name),
+    const ResourceClass = plugin.graclHierarchy.getResource(queriedCollectionName),
+          SubjectClass  = plugin.graclHierarchy.getSubject(subjectDocument.$model.def.name),
           subject       = new SubjectClass(subjectDocument);
 
-    this.log(
+    plugin.log(
       `restricting query for collection = ${queriedCollectionName} ` +
       `permissionType = ${permissionType} ` +
       `subject = ${subject.toString()}`
@@ -906,7 +933,7 @@ export class GraclPlugin {
 
     // no permissions found, return no restriction
     if (!Array.isArray(permissions) || permissions.length === 0) {
-      this.log(`No permissions found, returning false`);
+      plugin.log(`No permissions found, returning false`);
       return false;
     }
 
@@ -948,8 +975,8 @@ export class GraclPlugin {
 
     const resourceArray = Array.from(resourceMap.values());
     resourceArray.sort((a, b) => {
-      const aDepth = this.graclHierarchy.getResource(a.collection.def.name).getNodeDepth();
-      const bDepth = this.graclHierarchy.getResource(b.collection.def.name).getNodeDepth();
+      const aDepth = plugin.graclHierarchy.getResource(a.collection.def.name).getNodeDepth();
+      const bDepth = plugin.graclHierarchy.getResource(b.collection.def.name).getNodeDepth();
       return gracl.baseCompare(bDepth, aDepth);
     });
 
@@ -1019,10 +1046,10 @@ export class GraclPlugin {
         */
 
         // get computed shortest path between the two collections
-        const path = this.getShortestPath(queriedCollection, collection);
+        const path = plugin.getShortestPath(queriedCollection, collection);
 
         if (!path.length) {
-          throw new Error(
+          plugin.error(
             `${errorMessageHeader}, as there is no path between ` +
             `collections ${queriedCollectionName} and ${collectionName} in the schema.`
           );
@@ -1032,14 +1059,14 @@ export class GraclPlugin {
         const pathEndCollectionName = path.pop();
 
         if (collectionName !== pathEndCollectionName) {
-          throw new Error(
+          plugin.error(
             `Path returned for collection pair ${queriedCollectionName} and ${collectionName} is invalid`
           );
         }
 
         // assert that the penultimate path collection exists as a link on the queriedCollection
         if (!queriedCollectionLinkFields.has(path[1])) {
-          throw new Error(
+          plugin.error(
             `Path returned for collection pair ${queriedCollectionName} and ${collectionName} ` +
             `must have the penultimate path exist as a link on the collection being queried, ` +
             `the penultimate collection path between ${queriedCollectionName} and ${collectionName} ` +
@@ -1076,7 +1103,7 @@ export class GraclPlugin {
                 nextCollection = Tyr.byName[nextCollectionName = _.last(path)];
 
           if (!pathCollection) {
-            throw new Error(
+            plugin.error(
               `${errorMessageHeader}, invalid collection name given in path! collection: ${pathCollectionName}`
             );
           }
@@ -1125,7 +1152,7 @@ export class GraclPlugin {
       }
 
       if (!queryRestrictionSet) {
-        throw new Error(
+        plugin.error(
           `${errorMessageHeader}, unable to set query restriction ` +
           `to satisfy permissions relating to collection ${collectionName}`
         );

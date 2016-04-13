@@ -3,6 +3,7 @@ import * as _ from 'lodash';
 import Tyr from 'tyranid';
 import * as gracl from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
+import { extractIdAndModel } from '../util';
 
 
 export const PermissionsBaseCollection = new Tyr.Collection({
@@ -35,7 +36,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   static getGraclPlugin(): GraclPlugin {
     const plugin = <GraclPlugin> Tyr.secure;
     if (!plugin) {
-      throw new Error(`No gracl plugin available, must instantiate GraclPlugin and pass to Tyr.config()!`);
+      plugin.error(`No gracl plugin available, must instantiate GraclPlugin and pass to Tyr.config()!`);
     }
     return plugin;
   }
@@ -45,11 +46,11 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     const plugin = PermissionsModel.getGraclPlugin();
 
     if (!collection) {
-      throw new Error(`Attempted to validate undefined collection!`);
+      plugin.error(`Attempted to validate undefined collection!`);
     }
 
     if (!plugin.graclHierarchy.resources.has(collection.def.name)) {
-      throw new Error(
+      plugin.error(
         `Attempted to set/get permission using ${collection.def.name} as resource, ` +
         `no relevant resource class found in tyranid-gracl plugin!`
       );
@@ -79,16 +80,17 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
 
   static createSubject(subjectDocument: Tyr.Document): gracl.Subject {
+    const plugin = PermissionsModel.getGraclPlugin();
+
     if (!(subjectDocument && subjectDocument.$uid)) {
-      throw new Error('No subject document provided (or Tyr.local.user is unavailable)!');
+      plugin.error('No subject document provided (or Tyr.local.user is unavailable)!');
     }
 
-    const plugin = PermissionsModel.getGraclPlugin(),
-          subjectCollectionName  = subjectDocument.$model.def.name,
+    const subjectCollectionName  = subjectDocument.$model.def.name,
           SubjectClass           = plugin.graclHierarchy.getSubject(subjectCollectionName);
 
     if (!SubjectClass) {
-      throw new Error(
+      plugin.error(
         `Attempted to set/get permission using ${subjectCollectionName} as subject, ` +
         `no relevant subject class found in tyranid-gracl plugin!`
       );
@@ -99,16 +101,17 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
 
   static createResource(resourceDocument: Tyr.Document): gracl.Resource {
+    const plugin = PermissionsModel.getGraclPlugin();
+
     if (!(resourceDocument && resourceDocument.$uid)) {
-      throw new Error('No resource document provided (or Tyr.local.user is unavailable)!');
+      plugin.error('No resource document provided (or Tyr.local.user is unavailable)!');
     }
 
-    const plugin = PermissionsModel.getGraclPlugin(),
-          resourceCollectionName  = resourceDocument.$model.def.name,
+    const resourceCollectionName  = resourceDocument.$model.def.name,
           ResourceClass           = plugin.graclHierarchy.getResource(resourceCollectionName);
 
     if (!ResourceClass) {
-      throw new Error(
+      plugin.error(
         `Attempted to set/get permission using ${resourceCollectionName} as resource, ` +
         `no relevant resource class found in tyranid-gracl plugin!`
       );
@@ -168,12 +171,20 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
 
   static async isAllowed(
-      resourceDocument: Tyr.Document,
+      resourceData: Tyr.Document | string,
       permissionType: string,
-      subjectDocument = Tyr.local.user
+      subjectData: Tyr.Document | string
     ): Promise<boolean> {
 
     const plugin = PermissionsModel.getGraclPlugin();
+
+    let resourceDocument = typeof resourceData === 'string'
+      ? await Tyr.byUid(resourceData)
+      : resourceData;
+
+    let subjectDocument = typeof subjectData === 'string'
+      ? await Tyr.byUid(subjectData)
+      : subjectData;
 
     if (!resourceDocument[plugin.permissionsProperty]) {
       resourceDocument = await PermissionsModel.populatePermissions(resourceDocument);
@@ -202,10 +213,24 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
 
   static async explainPermission(
-      resourceDocument: Tyr.Document,
+      resourceData: Tyr.Document | string,
       permissionType: string,
-      subjectDocument = Tyr.local.user
+      subjectData: Tyr.Document | string
     ): Promise<{ type: string, access: boolean, reason: string }> {
+    const plugin = PermissionsModel.getGraclPlugin();
+    plugin.validatePermissionExists(permissionType);
+
+    let resourceDocument = typeof resourceData === 'string'
+      ? await Tyr.byUid(resourceData)
+      : resourceData;
+
+    let subjectDocument = typeof subjectData === 'string'
+      ? await Tyr.byUid(subjectData)
+      : subjectData;
+
+    if (!resourceDocument[plugin.permissionsProperty]) {
+      resourceDocument = await PermissionsModel.populatePermissions(resourceDocument);
+    }
 
     const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
 
@@ -213,46 +238,56 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   }
 
 
-
   static async setPermissionAccess(
-          resourceDocument: Tyr.Document,
+          resourceDocument: Tyr.Document | string,
           permissionType: string,
           access: boolean,
-          subjectDocument = Tyr.local.user
+          subjectDocument: Tyr.Document | string
         ): Promise<Tyr.Document> {
-    if (!resourceDocument) throw new TypeError(`called PermissionsModel.setPermission() without resourceDocument`);
-    if (!resourceDocument.$uid) throw new TypeError(`resource document must be a Tyranid document with $uid`);
-    if (!subjectDocument) throw new TypeError(`called PermissionsModel.setPermission() without subjectDocument`);
-    if (!subjectDocument.$uid) throw new TypeError(`subject document must be a Tyranid document with $uid`);
+    const plugin = PermissionsModel.getGraclPlugin();
+    plugin.validatePermissionExists(permissionType);
 
-    PermissionsModel.validateAsResource(resourceDocument.$model);
+    if (!resourceDocument) throw new TypeError(`no resource given to setPermissionAccess`);
+    if (!subjectDocument) throw new TypeError(`no subject given to setPermissionAccess`);
+
+    const resourceComponents = extractIdAndModel(resourceDocument),
+          subjectComponents = extractIdAndModel(subjectDocument);
+
+    PermissionsModel.validateAsResource(resourceComponents.$model);
 
     // set the permission
     await PermissionsModel.findAndModify({
       query: {
-        subjectId: subjectDocument.$uid,
-        resourceId: resourceDocument.$uid
+        subjectId: subjectComponents.$uid,
+        resourceId: resourceComponents.$uid,
       },
       update: {
         $set: {
-          subjectId: subjectDocument.$uid,
-          resourceId: resourceDocument.$uid,
-          subjectType: subjectDocument.$model.def.name,
-          resourceType: resourceDocument.$model.def.name,
+          subjectId: subjectComponents.$uid,
+          resourceId: resourceComponents.$uid,
+          subjectType: subjectComponents.$model.def.name,
+          resourceType: resourceComponents.$model.def.name,
           [`access.${permissionType}`]: access
         }
       },
       upsert: true
     });
 
-    return PermissionsModel.populatePermissions(resourceDocument);
+    if (typeof resourceDocument === 'string') {
+      const doc = await Tyr.byUid(resourceDocument);
+      return PermissionsModel.populatePermissions(doc);
+    } else {
+      return PermissionsModel.populatePermissions(resourceDocument);
+    }
   }
-
 
 
 
   static async populatePermissions(resourceDocument: Tyr.Document): Promise<Tyr.Document> {
     const plugin = PermissionsModel.getGraclPlugin();
+
+    PermissionsModel.validateAsResource(resourceDocument.$model);
+
     resourceDocument[plugin.permissionsProperty] = await PermissionsModel.findAll({
       resourceId: resourceDocument.$uid
     });
@@ -268,7 +303,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     const uid = doc.$uid,
           plugin = PermissionsModel.getGraclPlugin();
 
-    if (!uid) throw new Error('No $uid property on document!');
+    if (!uid) plugin.error('No $uid property on document!');
 
     await PermissionsModel.remove({
       $or: [
