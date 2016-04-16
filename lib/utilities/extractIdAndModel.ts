@@ -1,9 +1,6 @@
 import Tyr from 'tyranid';
 import { createError } from './createError';
 
-/**
- *  parametric type for arbitrary string-keyed objects
- */
 export function extractIdAndModel(doc: Tyr.Document | string) {
   if (typeof doc === 'string') {
     const components: { [key: string]: any } = Tyr.parseUid(doc) || {};
