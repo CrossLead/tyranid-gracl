@@ -3,4 +3,5 @@ tmp/*
 docs/*
 .publish/*
 npm-debug.log
-dist/*
+dist-node4/*
+dist-es6/*

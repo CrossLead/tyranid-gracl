@@ -6,15 +6,16 @@
     "declaration": false,
     "noImplicitAny": true,
     "noImplicitReturns": true,
-    "removeComments": true,
+    "removeComments": false,
     "noLib": false,
-    "outDir": "./dist/es6/",
+    "outDir": "./dist-es6/",
     "inlineSourceMap": true
   },
   "exclude": [
     "node_modules",
     "scripts",
     "typings",
-    "dist"
+    "dist-es6",
+    "dist-node4"
   ]
 }

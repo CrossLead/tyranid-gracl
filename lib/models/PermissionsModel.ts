@@ -6,7 +6,7 @@ import { GraclPlugin } from '../classes/GraclPlugin';
 import { extractIdAndModel } from '../utilities/';
 
 
-export const PermissionsBaseCollection = new Tyr.Collection({
+export const PermissionsBaseCollection = <Tyr.CollectionInstance> new Tyr.Collection({
   id: '_gp',
   name: 'graclPermission',
   dbName: 'graclPermissions',
@@ -24,13 +24,12 @@ export const PermissionsBaseCollection = new Tyr.Collection({
   }
 });
 
-
 /**
   Collection to contain all permissions used by gracl
 
   Note: requires explicit cast to tyr.collectioninstance for tsc to pass
  */
-export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseCollection) {
+export class PermissionsModel extends PermissionsBaseCollection {
 
 
   static getGraclPlugin(): GraclPlugin {

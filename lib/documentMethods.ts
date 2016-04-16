@@ -9,13 +9,13 @@ import { PermissionsModel } from './models/PermissionsModel';
 export const documentMethods = {
 
 
-  $removePermissionAsSubject(permissionType: string, type?: 'allow' | 'deny', uid?: string) {
-    return <Tyr.Document> this.$removeEntityPermission('subject', permissionType, type, uid);
+  $removePermissionAsSubject(permissionType: string, type?: 'allow' | 'deny', uid?: string): Promise<Tyr.Document> {
+    return <Promise<Tyr.Document>> this.$removeEntityPermission('subject', permissionType, type, uid);
   },
 
 
-  $removePermissionAsResource(permissionType: string, type?: 'allow' | 'deny', uid?: string) {
-    return <Tyr.Document> this.$removeEntityPermission('resource', permissionType, type, uid);
+  $removePermissionAsResource(permissionType: string, type?: 'allow' | 'deny', uid?: string): Promise<Tyr.Document> {
+    return <Promise<Tyr.Document>> this.$removeEntityPermission('resource', permissionType, type, uid);
   },
 
 
@@ -24,7 +24,7 @@ export const documentMethods = {
       permissionType: string,
       accessType?: 'allow' | 'deny',
       alternateUid?: string
-    ) {
+    ): Promise<Tyr.Document> {
     if (!(graclType === 'subject' || graclType === 'resource')) {
       throw new TypeError(`graclType must be subject or resource`);
     }
@@ -33,7 +33,8 @@ export const documentMethods = {
       ? 'resource'
       : 'subject';
 
-    const doc = <Tyr.Document> this,
+    const context = <any> this,
+          doc = <Tyr.Document> context,
           plugin = PermissionsModel.getGraclPlugin();
 
     if (!permissionType) {
@@ -50,7 +51,7 @@ export const documentMethods = {
       throw new TypeError(`accessType must be allow or deny`);
     }
 
-    if (graclType === 'resource') plugin.permissionsModel.validateAsResource(this.$model);
+    if (graclType === 'resource') plugin.permissionsModel.validateAsResource(doc.$model);
 
     const query: { [key: string]: any } = {
       [`${graclType}Id`]: doc.$uid
@@ -83,7 +84,8 @@ export const documentMethods = {
 
   // return collections that a document can view
   $allowedEntitiesForCollection(collectionName: string): Promise<string[]>  {
-    const doc = <Tyr.Document> this,
+    const context = <any> this,
+          doc = <Tyr.Document> context,
           plugin = PermissionsModel.getGraclPlugin();
 
     // get all the resource entities with view-<collection> permission set to true
@@ -97,7 +99,8 @@ export const documentMethods = {
 
 
   async $entitiesWithPermission(permissionType: string, graclType?: 'resource' | 'subject'): Promise<string[]> {
-    const doc = <Tyr.Document> this,
+    const context = <any> this,
+          doc = <Tyr.Document> context,
           plugin = PermissionsModel.getGraclPlugin();
 
     graclType = graclType || 'subject';
@@ -117,8 +120,10 @@ export const documentMethods = {
   },
 
 
-  $permissions(permissionType?: string, graclType?: 'resource' | 'subject', direct?: boolean) {
-    const doc = <Tyr.Document> this;
+  $permissions(permissionType?: string, graclType?: 'resource' | 'subject', direct?: boolean): Promise<Tyr.Document[]> {
+    const context = <any> this,
+          doc = <Tyr.Document> context;
+
     const plugin = PermissionsModel.getGraclPlugin();
     if (permissionType) plugin.validatePermissionExists(permissionType);
 
@@ -139,8 +144,9 @@ export const documentMethods = {
     ): Promise<Tyr.Document> {
     const plugin = PermissionsModel.getGraclPlugin();
     plugin.validatePermissionExists(permissionType);
+    const context = <any> this,
+          doc = <Tyr.Document> context;
 
-    const doc = <Tyr.Document> this;
     return PermissionsModel.setPermissionAccess(doc, permissionType, access, subjectDocument);
   },
 
@@ -149,8 +155,9 @@ export const documentMethods = {
     permissionType: string,
     subjectDocument: Tyr.Document | string = Tyr.local.user
   ): Promise<boolean> {
-    let doc = <Tyr.Document> this;
-    const plugin = PermissionsModel.getGraclPlugin();
+    const context = <any> this,
+          doc = <Tyr.Document> context,
+          plugin = PermissionsModel.getGraclPlugin();
     plugin.validatePermissionExists(permissionType);
     PermissionsModel.validateAsResource(doc.$model);
 
@@ -159,7 +166,8 @@ export const documentMethods = {
 
 
   $isAllowedForThis(permissionAction: string, subjectDocument: Tyr.Document | string = Tyr.local.user): Promise<boolean> {
-    const doc = <Tyr.Document> this,
+    const context = <any> this,
+          doc = <Tyr.Document> context,
           plugin = PermissionsModel.getGraclPlugin(),
           permissionType = plugin.formatPermissionType({
             action: permissionAction,
@@ -171,41 +179,46 @@ export const documentMethods = {
 
 
   $allow(permissionType: string, subjectDocument: Tyr.Document | string = Tyr.local.user): Promise<Tyr.Document> {
-    return this.$setPermissionAccess(permissionType, true, subjectDocument);
+    return <Promise<Tyr.Document>> this.$setPermissionAccess(permissionType, true, subjectDocument);
   },
 
 
   $deny(permissionType: string, subjectDocument: Tyr.Document | string = Tyr.local.user): Promise<Tyr.Document> {
-    return this.$setPermissionAccess(permissionType, false, subjectDocument);
+    return <Promise<Tyr.Document>> this.$setPermissionAccess(permissionType, false, subjectDocument);
   },
 
 
   $allowForThis(permissionAction: string, subjectDocument: Tyr.Document | string = Tyr.local.user): Promise<Tyr.Document> {
-    const doc = <Tyr.Document> this,
+    const context = <any> this,
+          doc = <Tyr.Document> context,
           plugin = PermissionsModel.getGraclPlugin(),
           permissionType = plugin.formatPermissionType({
             action: permissionAction,
             collection: doc.$model.def.name
           });
 
-    return this.$allow(permissionType, subjectDocument);
+    return <Promise<Tyr.Document>> this.$allow(permissionType, subjectDocument);
   },
 
 
   $denyForThis(permissionAction: string, subjectDocument: Tyr.Document | string = Tyr.local.user): Promise<Tyr.Document> {
-    const doc = <Tyr.Document> this,
+    const context = <any> this,
+          doc = <Tyr.Document> context,
           plugin = PermissionsModel.getGraclPlugin(),
           permissionType = plugin.formatPermissionType({
             action: permissionAction,
             collection: doc.$model.def.name
           });
 
-    return this.$deny(permissionType, subjectDocument);
+    return <Promise<Tyr.Document>> this.$deny(permissionType, subjectDocument);
   },
 
 
   async $explainPermission(permissionType: string, subjectDocument: Tyr.Document | string = Tyr.local.user) {
-    return PermissionsModel.explainPermission((<Tyr.Document> this), permissionType, subjectDocument);
+    const context = <any> this,
+          doc = <Tyr.Document> context;
+
+    return PermissionsModel.explainPermission(doc, permissionType, subjectDocument);
   }
 
 

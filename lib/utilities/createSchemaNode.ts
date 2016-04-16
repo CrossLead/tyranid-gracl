@@ -15,7 +15,7 @@ export function createSchemaNode(collection: Tyr.CollectionInstance, type: strin
     parent: node && node.link.def.name,
 
     async getPermission(subject: Subject): Promise<Permission> {
-      const thisNode = <Node> this;
+      const thisNode = <Node> (<any> this);
       const subjectId = subject.getId(),
             resourceId = thisNode.getId();
 
@@ -28,7 +28,7 @@ export function createSchemaNode(collection: Tyr.CollectionInstance, type: strin
         subjectId,
         resourceId: '',
         resourceType: '',
-        subjectType: this.getName(),
+        subjectType: thisNode.getName(),
         access: {}
       });
     },
@@ -36,7 +36,7 @@ export function createSchemaNode(collection: Tyr.CollectionInstance, type: strin
     async getParents(): Promise<Node[]> {
       if (!node) return [];
 
-      const thisNode = this;
+      const thisNode = <Node> (<any> this);
       const ParentClass = thisNode.getParentClass();
       const plugin = PermissionsModel.getGraclPlugin();
 
