@@ -1,34 +1,41 @@
 /// <reference path='../../typings/main.d.ts' />
 import Tyr from 'tyranid';
-import * as gracl from 'gracl';
 import * as _ from 'lodash';
+import {
+  Permission,
+  topologicalSort,
+  Node,
+  Graph,
+  baseCompare,
+  SchemaNode,
+  Subject
+} from 'gracl';
+
 import { PermissionsModel } from '../models/PermissionsModel';
 import { documentMethods } from '../documentMethods';
 import {
   Hash,
+  permissionHierarchy,
+  permissionTypeList
+} from '../interfaces';
+import {
   findLinkInCollection,
   getCollectionLinksSorted,
   createInQueries,
   stepThroughCollectionPath,
-  createError
-} from '../util';
+  createError,
+  makeRepository,
+  createSchemaNode
+} from '../utilities/';
 
 
-export type permissionTypeList = {
-  [key: string]: any,
-  abstract?: boolean,
-  collection?: boolean,
-  name: string,
-  parents?: string[]
-}[];
 
-
-export type permissionHierarchy = Hash<any>;
 export type pluginOptions = {
   verbose?: boolean;
   permissionTypes?: permissionTypeList;
   permissionsProperty?: string;
 };
+
 
 
 export class GraclPlugin {
@@ -100,7 +107,7 @@ export class GraclPlugin {
   /*
    * Instance properties
    */
-  graclHierarchy: gracl.Graph;
+  graclHierarchy: Graph;
   outgoingLinkPaths: Hash<Hash<string>>;
   unsecuredCollections = new Set([
     PermissionsModel.def.name
@@ -304,7 +311,7 @@ export class GraclPlugin {
      * Run topological sort on permissions values,
        checking for circular dependencies / missing nodes
      */
-    const sorted = gracl.topologicalSort(_.map(permissionsTypes, perm => {
+    const sorted = topologicalSort(_.map(permissionsTypes, perm => {
 
       if (perm['abstract'] === undefined && !perm['collection']) {
         plugin.error(
@@ -431,33 +438,6 @@ export class GraclPlugin {
   }
 
 
-  makeRepository(collection: Tyr.CollectionInstance, graclType: string): gracl.Repository {
-    const plugin = this;
-    if (graclType !== 'resources' && graclType !== 'subjects') {
-      throw new TypeError(`graclType must be subjects or resources, given ${graclType}`);
-    }
-    return {
-
-      async getEntity(id: string, node: gracl.Node): Promise<Tyr.Document> {
-        let doc = await collection.byId(id);
-        if (graclType === 'resouces' && !doc[plugin.permissionsProperty]) {
-          doc = await PermissionsModel.populatePermissions(doc);
-        }
-        return doc;
-      },
-
-      async saveEntity(id: string, doc: Tyr.Document, node: gracl.Node): Promise<Tyr.Document> {
-        await doc.$save();
-        if (graclType === 'resouces' && !doc[plugin.permissionsProperty]) {
-          doc = await PermissionsModel.populatePermissions(doc);
-        }
-        return doc;
-      }
-
-    };
-  }
-
-
   getPermissionObject(permissionString: string) {
     const plugin = this;
     return plugin.permissionHierarchy[plugin.parsePermissionString(permissionString).action];
@@ -519,7 +499,7 @@ export class GraclPlugin {
             resources: {}
           };
 
-    const build = (obj: any) => (node: typeof gracl.Node) => {
+    const build = (obj: any) => (node: typeof Node) => {
       const path = node.getHierarchyClassNames().reverse();
       let o = obj;
       for (const name of path) {
@@ -660,20 +640,23 @@ export class GraclPlugin {
       });
 
       const schemaMaps = {
-        subjects: new Map<string, gracl.SchemaNode>(),
-        resources: new Map<string, gracl.SchemaNode>()
+        subjects: new Map<string, SchemaNode>(),
+        resources: new Map<string, SchemaNode>()
       };
 
       for (const type of ['subjects', 'resources']) {
-        let nodes: Map<string, gracl.SchemaNode>,
+        let nodes: Map<string, SchemaNode>,
             tyrObjects: TyrSchemaGraphObjects;
 
+        let graclType: string;
         if (type === 'subjects') {
           nodes = schemaMaps.subjects;
           tyrObjects = graclGraphNodes.subjects;
+          graclType = 'subject';
         } else {
           nodes = schemaMaps.resources;
           tyrObjects = graclGraphNodes.resources;
+          graclType = 'resource';
         }
 
         for (const node of tyrObjects.links) {
@@ -684,103 +667,13 @@ export class GraclPlugin {
           /**
            * Create node in Gracl graph with a custom getParents() method
            */
-          nodes.set(name, {
-            name,
-            id: '$uid',
-            parent: parentName,
-            permissionProperty: plugin.permissionsProperty,
-            repository: plugin.makeRepository(node.collection, type),
-            async getParents(): Promise<gracl.Node[]> {
-              const thisNode = <gracl.Node> this,
-                    ParentClass = thisNode.getParentClass();
-
-              let ids: any = parentNamePath.get(thisNode.doc);
-
-              if (ids && !(ids instanceof Array)) {
-                ids = [ ids ];
-              }
-
-              // if no immediate parents, recurse
-              // up resource chain and check for
-              // alternate path to current node
-              if (!(ids && ids.length)) {
-                const hierarchyClasses = ParentClass.getHierarchyClassNames(),
-                      thisCollection = Tyr.byName[thisNode.getName()],
-                      doc = <Tyr.Document> thisNode.doc;
-
-                hierarchyClasses.shift(); // remove parent we already tried
-
-                // try to find a path between one of the hierarchy classes
-                // (starting from lowest and recursing upward)
-                let currentParent: string;
-                while (currentParent = hierarchyClasses.shift()) {
-                  const currentParentCollection = Tyr.byName[currentParent],
-                        path = plugin.getShortestPath(thisCollection, currentParentCollection),
-                        CurrentParentNodeClass = type === 'resources'
-                          ? plugin.graclHierarchy.getResource(currentParent)
-                          : plugin.graclHierarchy.getSubject(currentParent);
-
-                  if (path.length && path.length >= 2) {
-                    let currentCollection = Tyr.byName[path.shift()],
-                        nextCollection = Tyr.byName[path.shift()],
-                        linkField = findLinkInCollection(currentCollection, nextCollection);
-
-                    const idProp = linkField.namePath.get(doc) || [];
-
-                    let ids: string[] = !idProp
-                      ? []
-                      : (Array.isArray(idProp) ? idProp : [ idProp ]);
-
-                    // this potential path has found a dead end,
-                    // we need to try another upper level resource
-                    if (!ids.length) continue;
-
-                    while (linkField.link.def.name !== currentParent) {
-                      currentCollection = nextCollection;
-                      nextCollection = Tyr.byName[path.shift()];
-                      linkField = findLinkInCollection(currentCollection, nextCollection);
-                      const nextDocuments = await currentCollection.byIds(ids);
-                      ids = <string[]> _.chain(nextDocuments)
-                        .map(d => linkField.namePath.get(d))
-                        .flatten()
-                        .compact()
-                        .value();
-                    }
-
-                    if (!ids.length) continue;
-
-                    const parentDocs = await nextCollection.byIds(ids),
-                          populated = await Promise.all(parentDocs.map(PermissionsModel.populatePermissions)),
-                          parents = populated.map(d => new CurrentParentNodeClass(d));
-
-                    return parents;
-                  }
-                }
-
-                return [];
-              }
-
-              const linkCollection = node.link,
-                    parentObjects  = await linkCollection.findAll({
-                                        [linkCollection.def.primaryKey.field]: { $in: ids }
-                                     });
-
-              const populated = await Promise.all(parentObjects.map(PermissionsModel.populatePermissions));
-
-              return populated.map(doc => new ParentClass(doc));
-            }
-          });
+          nodes.set(name, createSchemaNode(node.collection, graclType, node));
         }
 
         for (const parent of tyrObjects.parents) {
           const name = parent.def.name;
           if (!nodes.has(name)) {
-            nodes.set(name, {
-              name,
-              id: '$uid',
-              permissionProperty: plugin.permissionsProperty,
-              repository: plugin.makeRepository(parent, type)
-            });
+            nodes.set(name, createSchemaNode(parent, graclType));
           }
         }
 
@@ -789,7 +682,7 @@ export class GraclPlugin {
       plugin.log(`creating link graph.`);
       plugin.outgoingLinkPaths = GraclPlugin.buildLinkGraph();
 
-      plugin.graclHierarchy = new gracl.Graph({
+      plugin.graclHierarchy = new Graph({
         subjects: Array.from(schemaMaps.subjects.values()),
         resources: Array.from(schemaMaps.resources.values())
       });
@@ -883,7 +776,7 @@ export class GraclPlugin {
     /**
      *  Iterate through permissions action hierarchy, getting access
      */
-    const getAccess = (permission: gracl.Permission) => {
+    const getAccess = (permission: Permission) => {
       let perm: boolean;
       for (const type of permissionTypes) {
 
@@ -977,7 +870,7 @@ export class GraclPlugin {
     resourceArray.sort((a, b) => {
       const aDepth = plugin.graclHierarchy.getResource(a.collection.def.name).getNodeDepth();
       const bDepth = plugin.graclHierarchy.getResource(b.collection.def.name).getNodeDepth();
-      return gracl.baseCompare(bDepth, aDepth);
+      return baseCompare(bDepth, aDepth);
     });
 
 

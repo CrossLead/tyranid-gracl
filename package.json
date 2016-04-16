@@ -1,6 +1,6 @@
 {
   "name": "tyranid-gracl",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "description": "tyranid.js plugin for gracl",
   "main": "./dist/node4/lib/tyranid-gracl.js",
   "typings": "./dist/es6/lib/tyranid-gracl.d.ts",
@@ -22,7 +22,7 @@
   "author": "bsouthga@gmail.com",
   "license": "MIT",
   "dependencies": {
-    "gracl": "0.0.3",
+    "gracl": "0.0.6",
     "lodash": "3.10.1",
     "tyranid": "0.0.165"
   },

@@ -3,7 +3,7 @@ import * as _ from 'lodash';
 import Tyr from 'tyranid';
 import * as gracl from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { extractIdAndModel } from '../util';
+import { extractIdAndModel } from '../utilities/';
 
 
 export const PermissionsBaseCollection = new Tyr.Collection({
