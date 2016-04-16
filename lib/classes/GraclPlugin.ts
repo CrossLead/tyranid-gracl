@@ -33,7 +33,6 @@ import {
 export type pluginOptions = {
   verbose?: boolean;
   permissionTypes?: permissionTypeList;
-  permissionsProperty?: string;
 };
 
 
@@ -117,7 +116,6 @@ export class GraclPlugin {
   // plugin options
   verbose: boolean;
   permissionHierarchy: permissionHierarchy;
-  permissionsProperty: string;
   setOfAllPermissions: Set<string>;
 
 
@@ -141,7 +139,6 @@ export class GraclPlugin {
     }
 
     plugin.verbose = opts.verbose || false;
-    plugin.permissionsProperty = opts.permissionsProperty || '_graclResourcePermissions';
   };
 
 
@@ -581,8 +578,6 @@ export class GraclPlugin {
           parents: []
         }
       };
-
-      const permissionsProperty = plugin.permissionsProperty;
 
       // loop through all collections, retrieve
       // ownedBy links

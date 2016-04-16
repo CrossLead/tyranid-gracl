@@ -153,7 +153,6 @@ export const documentMethods = {
     const plugin = PermissionsModel.getGraclPlugin();
     plugin.validatePermissionExists(permissionType);
     PermissionsModel.validateAsResource(doc.$model);
-    doc = await PermissionsModel.populatePermissions(doc);
 
     return PermissionsModel.isAllowed(doc, permissionType, subjectDocument);
   },
@@ -206,8 +205,7 @@ export const documentMethods = {
 
 
   async $explainPermission(permissionType: string, subjectDocument: Tyr.Document | string = Tyr.local.user) {
-    const doc = await PermissionsModel.populatePermissions(<Tyr.Document> this);
-    return PermissionsModel.explainPermission(doc, permissionType, subjectDocument);
+    return PermissionsModel.explainPermission((<Tyr.Document> this), permissionType, subjectDocument);
   }
 
 

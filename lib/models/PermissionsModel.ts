@@ -59,18 +59,13 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
 
 
-  static async getGraclClasses(
+  static getGraclClasses(
                 resourceDocument: Tyr.Document,
                 subjectDocument: Tyr.Document
-              ): Promise<{ subject: gracl.Subject, resource: gracl.Resource }> {
-
+              ): { subject: gracl.Subject, resource: gracl.Resource } {
 
     const plugin = PermissionsModel.getGraclPlugin(),
           resourceCollectionName = resourceDocument.$model.def.name;
-
-    if (!resourceDocument[plugin.permissionsProperty]) {
-      resourceDocument = await PermissionsModel.populatePermissions(resourceDocument);
-    }
 
     const subject  = PermissionsModel.createSubject(subjectDocument),
           resource = PermissionsModel.createResource(resourceDocument);
@@ -186,14 +181,10 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       ? await Tyr.byUid(subjectData)
       : subjectData;
 
-    if (!resourceDocument[plugin.permissionsProperty]) {
-      resourceDocument = await PermissionsModel.populatePermissions(resourceDocument);
-    }
-
     const {
             subject,
             resource
-          } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument),
+          } = PermissionsModel.getGraclClasses(resourceDocument, subjectDocument),
           components = plugin.parsePermissionString(permissionType),
           nextPermissions = plugin.nextPermissions(permissionType),
           access = await resource.isAllowed(subject, permissionType);
@@ -228,11 +219,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       ? await Tyr.byUid(subjectData)
       : subjectData;
 
-    if (!resourceDocument[plugin.permissionsProperty]) {
-      resourceDocument = await PermissionsModel.populatePermissions(resourceDocument);
-    }
-
-    const { subject, resource } = await PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
+    const { subject, resource } = PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
 
     return await resource.determineAccess(subject, permissionType);
   }
@@ -275,25 +262,11 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
     if (typeof resourceDocument === 'string') {
       const doc = await Tyr.byUid(resourceDocument);
-      return PermissionsModel.populatePermissions(doc);
+      return doc;
     } else {
-      return PermissionsModel.populatePermissions(resourceDocument);
+      return resourceDocument;
     }
   }
-
-
-
-  static async populatePermissions(resourceDocument: Tyr.Document): Promise<Tyr.Document> {
-    const plugin = PermissionsModel.getGraclPlugin();
-
-    PermissionsModel.validateAsResource(resourceDocument.$model);
-
-    resourceDocument[plugin.permissionsProperty] = await PermissionsModel.findAll({
-      resourceId: resourceDocument.$uid
-    });
-    return resourceDocument;
-  }
-
 
 
   /**
@@ -311,8 +284,6 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
         { resourceId: uid }
       ]
     });
-
-    delete doc[plugin.permissionsProperty];
 
     return doc;
   }

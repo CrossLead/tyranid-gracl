@@ -1,4 +1,5 @@
 import Tyr from 'tyranid';
+import * as _ from 'lodash';
 import { SchemaNode, Repository, Node, Subject, Permission } from 'gracl';
 import { makeRepository, findLinkInCollection } from './';
 import { PermissionsModel } from '../models/PermissionsModel';
@@ -97,8 +98,7 @@ export function createSchemaNode(collection: Tyr.CollectionInstance, type: strin
             if (!ids.length) continue;
 
             const parentDocs = await nextCollection.byIds(ids),
-                  populated = await Promise.all(parentDocs.map(PermissionsModel.populatePermissions)),
-                  parents = populated.map(d => new CurrentParentNodeClass(d));
+                  parents = _.map(parentDocs, d => new CurrentParentNodeClass(d));
 
             return parents;
           }
@@ -112,9 +112,7 @@ export function createSchemaNode(collection: Tyr.CollectionInstance, type: strin
                                 [linkCollection.def.primaryKey.field]: { $in: ids }
                              });
 
-      const populated = await Promise.all(parentObjects.map(PermissionsModel.populatePermissions));
-
-      return populated.map(doc => new ParentClass(doc));
+      return _.map(parentObjects, doc => new ParentClass(doc));
     }
 
   };
