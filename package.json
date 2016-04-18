@@ -23,7 +23,7 @@
   "author": "bsouthga@gmail.com",
   "license": "MIT",
   "dependencies": {
-    "gracl": "0.0.6",
+    "gracl": "0.0.7",
     "lodash": "3.10.1",
     "tyranid": "0.0.165"
   },

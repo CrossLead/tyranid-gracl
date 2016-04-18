@@ -821,6 +821,15 @@ test.serial('should filter based on abstract parent access of collection-specifi
 });
 
 
+test.serial('should get view access to parent when parent can view itself', async () => {
+   const ben = await Tyr.byName['user'].findOne({ name: 'ben' });
+   const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
+   await chipotle['$allow']('view-organization', chipotle);
+   const access = await chipotle['$isAllowed']('view-organization', ben);
+   expect(access, 'ben should have access through parent').to.equal(true);
+});
+
+
 test.serial('should default to lowest hierarchy permission', async () => {
   const chopped      = await giveBenAccessToChoppedPosts(),
         ben          = await Tyr.byName['user'].findOne({ name: 'ben' }),
