@@ -3,7 +3,7 @@ import * as _ from 'lodash';
 import Tyr from 'tyranid';
 import * as gracl from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { extractIdAndModel } from '../utilities/';
+import { extractIdAndModel, createError } from '../utilities/';
 
 
 export const PermissionsBaseCollection = <Tyr.CollectionInstance> new Tyr.Collection({
@@ -264,14 +264,22 @@ export class PermissionsModel extends PermissionsBaseCollection {
       );
     } catch (error) {
       // hack for https://jira.mongodb.org/browse/SERVER-14322
-      if (attempt < 5 && /E11000 duplicate key error/.test(error.message)) {
-        return PermissionsModel.setPermissionAccess(
-          resourceDocument,
-          permissionType,
-          access,
-          subjectDocument,
-          attempt++
-        );
+      if (attempt < 10 && /E11000 duplicate key error/.test(error.message)) {
+        return <Tyr.Document> (await new Promise((resolve, reject) => {
+          setTimeout(() => {
+            PermissionsModel.setPermissionAccess(
+              resourceDocument,
+              permissionType,
+              access,
+              subjectDocument,
+              attempt++
+            )
+            .then(resolve)
+            .catch(reject);
+          }, 100);
+        }));
+      } else if (/E11000 duplicate key error/.test(error.message)) {
+        createError(`Attempted to update permission 10 times, but recieved "E11000 duplicate key error" on each attempt`);
       }
       throw new Error(error);
     }
