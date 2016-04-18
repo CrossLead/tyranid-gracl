@@ -248,11 +248,13 @@ export class PermissionsModel extends PermissionsBaseCollection {
         resourceId: resourceComponents.$uid,
       },
       {
-        $set: {
+        $setOnInsert: {
           subjectId: subjectComponents.$uid,
           resourceId: resourceComponents.$uid,
           subjectType: subjectComponents.$model.def.name,
-          resourceType: resourceComponents.$model.def.name,
+          resourceType: resourceComponents.$model.def.name
+        },
+        $set: {
           [`access.${permissionType}`]: access
         }
       },
