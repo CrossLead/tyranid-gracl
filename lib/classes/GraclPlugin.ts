@@ -143,14 +143,25 @@ export class GraclPlugin {
 
 
 
-  createIndexes() {
-    return PermissionsModel.db.createIndex(
+  async createIndexes() {
+    this.log(`Creating indexes...`);
+
+    await PermissionsModel.db.createIndex(
       {
         subjectId: 1,
         resourceId: 1
       },
       { unique: true }
     );
+
+    await PermissionsModel.db.createIndex(
+      {
+        resourceType: 1,
+        subjectType: 1,
+      },
+      { unique: false }
+    );
+
   }
 
 

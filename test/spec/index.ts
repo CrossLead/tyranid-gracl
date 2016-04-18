@@ -10,6 +10,7 @@ import { expectedLinkPaths } from '../helpers/expectedLinkPaths';
 import { createTestData } from '../helpers/createTestData';
 import { expectAsyncToThrow } from '../helpers/expectAsyncToThrow';
 import test from 'ava';
+import { Blog } from '../models/Blog';
 
 type GraclPlugin = tyranidGracl.GraclPlugin;
 
@@ -840,4 +841,39 @@ test.serial('should default to lowest hierarchy permission', async () => {
 
   expect(postsBenCanSee).to.have.lengthOf(1);
   expect(_.map(postsBenCanSee, '$id')).to.not.contain(post.$id);
+});
+
+
+test.serial('Should handle lots of concurrent permissions updates', async () => {
+  const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
+        ben          = await Tyr.byName['user'].findOne({ name: 'ben' });
+
+  await Promise.all(
+    _.map(
+      _.range(1000),
+      () => Blog.addPost(Math.random().toString(), chipotleBlog)
+    )
+  );
+
+  const posts = await Tyr.byName['post'].findAll({});
+
+  expect(posts.length, 'should be at least 1000 posts').to.be.greaterThan(1000);
+
+  // 14,000 concurrent updates
+  await Promise.all(posts.map(p => Promise.all([
+    p['$allow']('view-post', ben),
+    p['$allow']('edit-post', ben),
+    p['$allow']('delete-post', ben),
+    p['$allow']('view-blog', ben),
+    p['$allow']('view-team', ben),
+    p['$allow']('view-user', ben),
+    p['$allow']('edit-blog', ben),
+    p['$allow']('view-post', ben),
+    p['$allow']('edit-post', ben),
+    p['$allow']('delete-post', ben),
+    p['$allow']('view-blog', ben),
+    p['$allow']('view-team', ben),
+    p['$allow']('view-user', ben),
+    p['$allow']('edit-blog', ben)
+  ])));
 });

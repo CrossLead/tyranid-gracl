@@ -242,12 +242,12 @@ export class PermissionsModel extends PermissionsBaseCollection {
     PermissionsModel.validateAsResource(resourceComponents.$model);
 
     // set the permission
-    await PermissionsModel.findAndModify({
-      query: {
+    await PermissionsModel.db.findOneAndUpdate(
+      {
         subjectId: subjectComponents.$uid,
         resourceId: resourceComponents.$uid,
       },
-      update: {
+      {
         $set: {
           subjectId: subjectComponents.$uid,
           resourceId: resourceComponents.$uid,
@@ -256,8 +256,8 @@ export class PermissionsModel extends PermissionsBaseCollection {
           [`access.${permissionType}`]: access
         }
       },
-      upsert: true
-    });
+      { upsert: true }
+    );
 
     if (typeof resourceDocument === 'string') {
       const doc = await Tyr.byUid(resourceDocument);
