@@ -228,7 +228,8 @@ export class PermissionsModel extends PermissionsBaseCollection {
           resourceDocument: Tyr.Document | string,
           permissionType: string,
           access: boolean,
-          subjectDocument: Tyr.Document | string
+          subjectDocument: Tyr.Document | string,
+          attempt = 0
         ): Promise<Tyr.Document> {
     const plugin = PermissionsModel.getGraclPlugin();
     plugin.validatePermissionExists(permissionType);
@@ -242,24 +243,39 @@ export class PermissionsModel extends PermissionsBaseCollection {
     PermissionsModel.validateAsResource(resourceComponents.$model);
 
     // set the permission
-    await PermissionsModel.db.findOneAndUpdate(
-      {
-        subjectId: subjectComponents.$uid,
-        resourceId: resourceComponents.$uid,
-      },
-      {
-        $setOnInsert: {
+    try {
+      await PermissionsModel.db.findOneAndUpdate(
+        {
           subjectId: subjectComponents.$uid,
           resourceId: resourceComponents.$uid,
-          subjectType: subjectComponents.$model.def.name,
-          resourceType: resourceComponents.$model.def.name
         },
-        $set: {
-          [`access.${permissionType}`]: access
-        }
-      },
-      { upsert: true }
-    );
+        {
+          $setOnInsert: {
+            subjectId: subjectComponents.$uid,
+            resourceId: resourceComponents.$uid,
+            subjectType: subjectComponents.$model.def.name,
+            resourceType: resourceComponents.$model.def.name
+          },
+          $set: {
+            [`access.${permissionType}`]: access
+          }
+        },
+        { upsert: true }
+      );
+    } catch (error) {
+      // hack for https://jira.mongodb.org/browse/SERVER-14322
+      if (attempt < 5 && /E11000 duplicate key error/.test(error.message)) {
+        return PermissionsModel.setPermissionAccess(
+          resourceDocument,
+          permissionType,
+          access,
+          subjectDocument,
+          attempt++
+        );
+      }
+      throw new Error(error);
+    }
+
 
     if (typeof resourceDocument === 'string') {
       const doc = await Tyr.byUid(resourceDocument);
