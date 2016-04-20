@@ -82,7 +82,9 @@ export const documentMethods = {
   },
 
 
-  // return collections that a document can view
+  /**
+   * retrieve a list of uids that the document has explicit access to in the given collection
+   */
   $allowedEntitiesForCollection(collectionName: string): Promise<string[]>  {
     const context = <any> this,
           doc = <Tyr.Document> context,
@@ -98,6 +100,10 @@ export const documentMethods = {
   },
 
 
+  /**
+      retrieve a list of uids that have access to the document (if graclType === 'resource')
+      or the document has access to (if graclType === 'subject' -- default)
+   */
   async $entitiesWithPermission(permissionType: string, graclType?: 'resource' | 'subject'): Promise<string[]> {
     const context = <any> this,
           doc = <Tyr.Document> context,
@@ -120,6 +126,12 @@ export const documentMethods = {
   },
 
 
+  /**
+    retrieve all the permissions relating to the document
+    for a specific permission (if given, otherwise all permissions)
+    given that the document is a subject (default) or a resource
+    (if passed graclType = 'resource')
+   */
   $permissions(permissionType?: string, graclType?: 'resource' | 'subject', direct?: boolean): Promise<Tyr.Document[]> {
     const context = <any> this,
           doc = <Tyr.Document> context;
