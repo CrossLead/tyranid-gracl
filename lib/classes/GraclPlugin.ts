@@ -856,11 +856,11 @@ export class GraclPlugin {
       // ownedBy links
       collections.forEach(col => {
         const linkFields = plugin.getCollectionLinksSorted(col, { relate: 'ownedBy', direction: 'outgoing' }),
-              graclTypeAnnotation = col.def['graclType'],
+              graclTypeAnnotation = <string[]> _.get(col, 'def.graclConfig.types', []),
               collectionName = col.def.name;
 
         // if no links at all, skip
-        if (!(linkFields.length || graclTypeAnnotation)) return;
+        if (!(linkFields.length || graclTypeAnnotation.length)) return;
 
         // validate that we can only have one parent of each field.
         if (linkFields.length > 1) {
@@ -871,15 +871,10 @@ export class GraclPlugin {
         }
 
         const [ field ] = linkFields;
-        let { graclType } = field ? field.def : col.def;
+        const graclType = _.get(field, 'def.graclTypes', graclTypeAnnotation);
 
         // if no graclType property on this collection, skip the collection
-        if (!graclType) return;
-
-        // validate gracl type
-        if (!Array.isArray(graclType)) {
-          graclType = [ graclType ];
-        }
+        if (!(graclType && graclType.length)) return;
 
         let currentType: string;
         while (currentType = graclType.pop()) {

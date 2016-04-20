@@ -22,3 +22,10 @@ export type pluginOptions = {
   verbose?: boolean;
   permissionTypes?: permissionTypeList;
 };
+
+export type schemaGraclConfigObject = {
+  permissions?: {
+    thisCollectionOnly?: boolean;
+  };
+  types?: ('string' | 'resource')[];
+}

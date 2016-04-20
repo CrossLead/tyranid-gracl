@@ -10,7 +10,7 @@ export const CommentBaseCollection = new Tyr.Collection({
     postId: {
       link: 'post',
       relate: 'ownedBy',
-      graclType: 'resource'
+      graclTypes: [ 'resource' ]
     },
     blogId: { link: 'blog' }
   }
