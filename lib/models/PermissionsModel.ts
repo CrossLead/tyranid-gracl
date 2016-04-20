@@ -39,86 +39,14 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   }
 
 
-  static validateAsResource(collection: Tyr.CollectionInstance) {
-    const plugin = PermissionsModel.getGraclPlugin();
-
-    if (!collection) {
-      plugin.error(`Attempted to validate undefined collection!`);
-    }
-
-    if (!plugin.graclHierarchy.resources.has(collection.def.name)) {
-      plugin.error(
-        `Attempted to set/get permission using ${collection.def.name} as resource, ` +
-        `no relevant resource class found in tyranid-gracl plugin!`
-      );
-    }
-  }
-
-
-
-  static getGraclClasses(
-                resourceDocument: Tyr.Document,
-                subjectDocument: Tyr.Document
-              ): { subject: gracl.Subject, resource: gracl.Resource } {
+  static async getPermissionsOfTypeForResource(
+    resourceDocument: Tyr.Document,
+    permissionType?: string,
+    direct?: boolean
+  ) {
 
     const plugin = PermissionsModel.getGraclPlugin(),
-          resourceCollectionName = resourceDocument.$model.def.name;
-
-    const subject  = PermissionsModel.createSubject(subjectDocument),
-          resource = PermissionsModel.createResource(resourceDocument);
-
-    return { subject, resource };
-  }
-
-
-  static createSubject(subjectDocument: Tyr.Document): gracl.Subject {
-    const plugin = PermissionsModel.getGraclPlugin();
-
-    if (!(subjectDocument && subjectDocument.$uid)) {
-      plugin.error('No subject document provided (or Tyr.local.user is unavailable)!');
-    }
-
-    const subjectCollectionName  = subjectDocument.$model.def.name,
-          SubjectClass           = plugin.graclHierarchy.getSubject(subjectCollectionName);
-
-    if (!SubjectClass) {
-      plugin.error(
-        `Attempted to set/get permission using ${subjectCollectionName} as subject, ` +
-        `no relevant subject class found in tyranid-gracl plugin!`
-      );
-    }
-
-    return new SubjectClass(subjectDocument);
-  }
-
-
-  static createResource(resourceDocument: Tyr.Document): gracl.Resource {
-    const plugin = PermissionsModel.getGraclPlugin();
-
-    if (!(resourceDocument && resourceDocument.$uid)) {
-      plugin.error('No resource document provided (or Tyr.local.user is unavailable)!');
-    }
-
-    const resourceCollectionName  = resourceDocument.$model.def.name,
-          ResourceClass           = plugin.graclHierarchy.getResource(resourceCollectionName);
-
-    if (!ResourceClass) {
-      plugin.error(
-        `Attempted to set/get permission using ${resourceCollectionName} as resource, ` +
-        `no relevant resource class found in tyranid-gracl plugin!`
-      );
-    }
-
-    return new ResourceClass(resourceDocument);
-  }
-
-
-  static async getPermissionsOfTypeForResource(
-            resourceDocument: Tyr.Document,
-            permissionType?: string,
-            direct?: boolean
-          ) {
-    const resource = PermissionsModel.createResource(resourceDocument);
+          resource = plugin.createResource(resourceDocument);
 
     const query: { [key: string]: any } = {
       resourceId: (direct ? resourceDocument.$uid : {
@@ -138,12 +66,12 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
 
   static async getPermissionsOfTypeForSubject(
-            subjectDocument: Tyr.Document,
-            permissionType?: string,
-            direct?: boolean
-          ) {
-
-    const subject = PermissionsModel.createSubject(subjectDocument);
+    subjectDocument: Tyr.Document,
+    permissionType?: string,
+    direct?: boolean
+  ) {
+    const plugin = PermissionsModel.getGraclPlugin(),
+          subject = plugin.createSubject(subjectDocument);
 
     const query: { [key: string]: any } = {
       subjectId: (direct ? subjectDocument.$uid : {
@@ -163,10 +91,10 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
 
   static async isAllowed(
-      resourceData: Tyr.Document | string,
-      permissionType: string,
-      subjectData: Tyr.Document | string
-    ): Promise<boolean> {
+    resourceData: Tyr.Document | string,
+    permissionType: string,
+    subjectData: Tyr.Document | string
+  ): Promise<boolean> {
 
     const plugin = PermissionsModel.getGraclPlugin();
 
@@ -181,7 +109,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     const {
             subject,
             resource
-          } = PermissionsModel.getGraclClasses(resourceDocument, subjectDocument),
+          } = plugin.getGraclClasses(resourceDocument, subjectDocument),
           components = plugin.parsePermissionString(permissionType),
           nextPermissions = plugin.nextPermissions(permissionType),
           access = await resource.isAllowed(subject, permissionType);
@@ -201,10 +129,10 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
 
   static async explainPermission(
-      resourceData: Tyr.Document | string,
-      permissionType: string,
-      subjectData: Tyr.Document | string
-    ): Promise<permissionExplaination> {
+    resourceData: Tyr.Document | string,
+    permissionType: string,
+    subjectData: Tyr.Document | string
+  ): Promise<permissionExplaination> {
     const plugin = PermissionsModel.getGraclPlugin();
     plugin.validatePermissionExists(permissionType);
 
@@ -216,19 +144,19 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       ? await Tyr.byUid(subjectData)
       : subjectData;
 
-    const { subject, resource } = PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
+    const { subject, resource } = plugin.getGraclClasses(resourceDocument, subjectDocument);
 
     return await resource.determineAccess(subject, permissionType);
   }
 
 
   static async setPermissionAccess(
-          resourceDocument: Tyr.Document | string,
-          permissionType: string,
-          access: boolean,
-          subjectDocument: Tyr.Document | string,
-          attempt = 0
-        ): Promise<Tyr.Document> {
+    resourceDocument: Tyr.Document | string,
+    permissionType: string,
+    access: boolean,
+    subjectDocument: Tyr.Document | string,
+    attempt = 0
+  ): Promise<Tyr.Document> {
     const plugin = PermissionsModel.getGraclPlugin();
     plugin.validatePermissionExists(permissionType);
 
@@ -238,7 +166,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     const resourceComponents = plugin.extractIdAndModel(resourceDocument),
           subjectComponents = plugin.extractIdAndModel(subjectDocument);
 
-    PermissionsModel.validateAsResource(resourceComponents.$model);
+    plugin.validateAsResource(resourceComponents.$model);
 
     // set the permission
     try {

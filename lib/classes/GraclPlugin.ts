@@ -11,6 +11,7 @@ import {
   baseCompare,
   SchemaNode,
   Subject,
+  Resource,
   Repository
 } from 'gracl';
 
@@ -143,11 +144,87 @@ export class GraclPlugin {
 
 
 
+  validateAsResource(collection: Tyr.CollectionInstance) {
+    const plugin = this;
+
+    if (!collection) {
+      plugin.error(`Attempted to validate undefined collection!`);
+    }
+
+    if (!plugin.graclHierarchy.resources.has(collection.def.name)) {
+      plugin.error(
+        `Attempted to set/get permission using ${collection.def.name} as resource, ` +
+        `no relevant resource class found in tyranid-gracl plugin!`
+      );
+    }
+  }
+
+
+
+  createResource(resourceDocument: Tyr.Document): Resource {
+    const plugin = this;
+
+    if (!(resourceDocument && resourceDocument.$uid)) {
+      plugin.error('No resource document provided (or Tyr.local.user is unavailable)!');
+    }
+
+    const resourceCollectionName  = resourceDocument.$model.def.name,
+          ResourceClass           = plugin.graclHierarchy.getResource(resourceCollectionName);
+
+    if (!ResourceClass) {
+      plugin.error(
+        `Attempted to set/get permission using ${resourceCollectionName} as resource, ` +
+        `no relevant resource class found in tyranid-gracl plugin!`
+      );
+    }
+
+    return new ResourceClass(resourceDocument);
+  }
+
+
+
+  createSubject(subjectDocument: Tyr.Document): Subject {
+    const plugin = this;
+
+    if (!(subjectDocument && subjectDocument.$uid)) {
+      plugin.error('No subject document provided (or Tyr.local.user is unavailable)!');
+    }
+
+    const subjectCollectionName  = subjectDocument.$model.def.name,
+          SubjectClass           = plugin.graclHierarchy.getSubject(subjectCollectionName);
+
+    if (!SubjectClass) {
+      plugin.error(
+        `Attempted to set/get permission using ${subjectCollectionName} as subject, ` +
+        `no relevant subject class found in tyranid-gracl plugin!`
+      );
+    }
+
+    return new SubjectClass(subjectDocument);
+  }
+
+
+
+  getGraclClasses(
+    resourceDocument: Tyr.Document,
+    subjectDocument: Tyr.Document
+  ): { subject: Subject, resource: Resource } {
+    const plugin = this,
+          resourceCollectionName = resourceDocument.$model.def.name;
+
+    const subject  = plugin.createSubject(subjectDocument),
+          resource = plugin.createResource(resourceDocument);
+
+    return { subject, resource };
+  }
+
+
+
   createInQueries(
-                    map: Map<string, Set<string>>,
-                    queriedCollection: Tyr.CollectionInstance,
-                    key: '$nin' | '$in'
-                  ): Hash<Hash<Hash<string[]>>[]> {
+    map: Map<string, Set<string>>,
+    queriedCollection: Tyr.CollectionInstance,
+    key: '$nin' | '$in'
+  ): Hash<Hash<Hash<string[]>>[]> {
     const plugin = this;
 
     if (!(key === '$in' || key === '$nin')) {
@@ -916,9 +993,9 @@ export class GraclPlugin {
    *  Compare a collection by name with a field by name
    */
   compareCollectionWithField(
-                    aCol: Tyr.CollectionInstance,
-                    bCol: Tyr.Field
-                  ) {
+    aCol: Tyr.CollectionInstance,
+    bCol: Tyr.Field
+  ) {
 
     const a = aCol.def.name,
           b = bCol.link.def.name;
@@ -1009,9 +1086,11 @@ export class GraclPlugin {
   /**
    *  Method for creating a specific query based on a schema object
    */
-  async query(queriedCollection: Tyr.CollectionInstance,
-              permissionType: string,
-              subjectDocument = Tyr.local.user): Promise<boolean | {}> {
+  async query(
+    queriedCollection: Tyr.CollectionInstance,
+    permissionType: string,
+    subjectDocument = Tyr.local.user
+  ): Promise<boolean | {}> {
 
     const queriedCollectionName = queriedCollection.def.name,
           plugin = this;

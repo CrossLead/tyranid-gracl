@@ -138,7 +138,7 @@ await user.$removeEntityPermission('resource', 'view-user', 'deny');
       throw new TypeError(`accessType must be allow or deny`);
     }
 
-    if (graclType === 'resource') plugin.permissionsModel.validateAsResource(doc.$model);
+    if (graclType === 'resource') plugin.validateAsResource(doc.$model);
 
     const query: { [key: string]: any } = {
       [`${graclType}Id`]: doc.$uid
@@ -308,7 +308,7 @@ const userHasAccessToBlog = await blog.$isAllowed('view-blog', user);
           doc = <Tyr.Document> context,
           plugin = PermissionsModel.getGraclPlugin();
     plugin.validatePermissionExists(permissionType);
-    PermissionsModel.validateAsResource(doc.$model);
+    plugin.validateAsResource(doc.$model);
 
     return PermissionsModel.isAllowed(doc, permissionType, subjectDocument);
   },
