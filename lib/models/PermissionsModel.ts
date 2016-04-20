@@ -3,7 +3,6 @@ import * as _ from 'lodash';
 import Tyr from 'tyranid';
 import * as gracl from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { extractIdAndModel, createError } from '../utilities/';
 import { permissionExplaination } from '../interfaces';
 
 
@@ -236,8 +235,8 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     if (!resourceDocument) throw new TypeError(`no resource given to setPermissionAccess`);
     if (!subjectDocument) throw new TypeError(`no subject given to setPermissionAccess`);
 
-    const resourceComponents = extractIdAndModel(resourceDocument),
-          subjectComponents = extractIdAndModel(subjectDocument);
+    const resourceComponents = plugin.extractIdAndModel(resourceDocument),
+          subjectComponents = plugin.extractIdAndModel(subjectDocument);
 
     PermissionsModel.validateAsResource(resourceComponents.$model);
 
@@ -278,7 +277,9 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
           }, 100);
         }));
       } else if (/E11000 duplicate key error/.test(error.message)) {
-        createError(`Attempted to update permission 10 times, but recieved "E11000 duplicate key error" on each attempt`);
+        plugin.error(
+          `Attempted to update permission 10 times, but recieved "E11000 duplicate key error" on each attempt`
+        );
       }
       throw new Error(error);
     }

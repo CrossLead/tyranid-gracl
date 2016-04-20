@@ -87,7 +87,7 @@ test.beforeEach(createTestData);
 test.serial('should correctly find links using getCollectionLinksSorted', () => {
   const Chart = Tyr.byName['chart'],
         options = { direction: 'outgoing' },
-        links = tyranidGracl.getCollectionLinksSorted(Chart, options);
+        links = secure.getCollectionLinksSorted(Chart, options);
 
   expect(links, 'should produce sorted links')
     .to.deep.equal(_.sortBy(Chart.links(options), field => field.link.def.name));
@@ -96,7 +96,7 @@ test.serial('should correctly find links using getCollectionLinksSorted', () => 
 test.serial('should find specific link using findLinkInCollection', () => {
   const Chart     = Tyr.byName['chart'],
         User      = Tyr.byName['user'],
-        linkField = tyranidGracl.findLinkInCollection(Chart, User);
+        linkField = secure.findLinkInCollection(Chart, User);
 
   expect(linkField).to.exist;
   expect(linkField.link.def.name).to.equal('user');
@@ -119,7 +119,7 @@ test.serial('should correctly create formatted queries using createInQueries', a
     [ 'chart', new Set(chartIds) ]
   ]);
 
-  const query = tyranidGracl.createInQueries(queryAgainstChartMap, Tyr.byName['chart'], '$in');
+  const query = secure.createInQueries(queryAgainstChartMap, Tyr.byName['chart'], '$in');
 
   const _idRestriction = _.find(query['$or'], v => _.contains(_.keys(v), '_id')),
         blogIdRestriction = _.find(query['$or'], v => _.contains(_.keys(v), 'blogId')),
@@ -130,7 +130,7 @@ test.serial('should correctly create formatted queries using createInQueries', a
   checkStringEq(userIdsRestriction['userIds']['$in'], userIds, 'should find correct property');
 
   const createQueryNoLink = () => {
-    tyranidGracl.createInQueries(queryAgainstChartMap, Tyr.byName['organization'], '$in');
+    secure.createInQueries(queryAgainstChartMap, Tyr.byName['organization'], '$in');
   };
 
   expect(createQueryNoLink, 'creating query for collection with no outgoing link to mapped collection')
@@ -145,14 +145,14 @@ test.serial('should return correct ids after calling stepThroughCollectionPath',
         chipotlePosts = await Tyr.byName['post'].findAll({ blogId: { $in: blogIds } }),
         postIds = <string[]> _.map(chipotlePosts, '_id');
 
-  const steppedPostIds = await tyranidGracl.stepThroughCollectionPath(
+  const steppedPostIds = await secure.stepThroughCollectionPath(
     blogIds, Tyr.byName['blog'], Tyr.byName['post']
   );
 
   checkStringEq(steppedPostIds, postIds, 'ids after stepping should be all relevant ids');
 
   await expectAsyncToThrow(
-    () => tyranidGracl.stepThroughCollectionPath(
+    () => secure.stepThroughCollectionPath(
       blogIds, Tyr.byName['blog'], Tyr.byName['user']
     ),
     /cannot step through collection path, as no link to collection/,

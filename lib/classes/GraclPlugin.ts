@@ -7,9 +7,11 @@ import {
   topologicalSort,
   Node,
   Graph,
+  binaryIndexOf,
   baseCompare,
   SchemaNode,
-  Subject
+  Subject,
+  Repository
 } from 'gracl';
 
 import { PermissionsModel } from '../models/PermissionsModel';
@@ -21,17 +23,6 @@ import {
   permissionHierarchy,
   permissionTypeList
 } from '../interfaces';
-
-import {
-  findLinkInCollection,
-  getCollectionLinksSorted,
-  createInQueries,
-  stepThroughCollectionPath,
-  createError,
-  makeRepository,
-  createSchemaNode
-} from '../utilities/';
-
 
 
 export type pluginOptions = {
@@ -107,6 +98,7 @@ export class GraclPlugin {
   }
 
 
+
   /*
    * Instance properties
    */
@@ -151,6 +143,195 @@ export class GraclPlugin {
 
 
 
+  createInQueries(
+                    map: Map<string, Set<string>>,
+                    queriedCollection: Tyr.CollectionInstance,
+                    key: '$nin' | '$in'
+                  ): Hash<Hash<Hash<string[]>>[]> {
+    const plugin = this;
+
+    if (!(key === '$in' || key === '$nin')) {
+      this.error(`key must be $nin or $in!`);
+    }
+
+    const conditions: Hash<Hash<string[]>>[] = [];
+
+    for (const [col, idSet] of map.entries()) {
+      // if the collection is the same as the one being queried, use the primary id field
+      let prop: string;
+      if (col === queriedCollection.def.name) {
+        prop = queriedCollection.def.primaryKey.field;
+      } else {
+        const link = plugin.findLinkInCollection(queriedCollection, Tyr.byName[col]);
+
+        if (!link) {
+          this.error(
+            `No outgoing link from ${queriedCollection.def.name} to ${col}, cannot create restricted ${key} clause!`
+          );
+        }
+
+        prop = link.spath;
+      }
+
+      conditions.push({ [<string> prop]: { [<string> key]: [...idSet] } });
+    }
+
+    return { [key === '$in' ? '$or' : '$and']: conditions };
+  }
+
+
+
+  createSchemaNode(collection: Tyr.CollectionInstance, type: string, node?: Tyr.Field): SchemaNode {
+    const plugin = this;
+
+    return <SchemaNode> {
+
+      id: '$uid',
+      name: collection.def.name,
+      repository: plugin.makeRepository(collection, type),
+      type: type,
+      parent: node && node.link.def.name,
+
+      async getPermission(subject: Subject): Promise<Permission> {
+        const thisNode = <Node> (<any> this);
+        const subjectId = subject.getId(),
+              resourceId = thisNode.getId();
+
+        const perm = <any> (await PermissionsModel.findOne({
+          subjectId,
+          resourceId
+        }));
+
+        return <Permission> (perm || {
+          subjectId,
+          resourceId: '',
+          resourceType: '',
+          subjectType: thisNode.getName(),
+          access: {}
+        });
+      },
+
+      async getParents(): Promise<Node[]> {
+        if (!node) return [];
+
+        const thisNode = <Node> (<any> this);
+        const ParentClass = thisNode.getParentClass();
+        const parentNamePath = node.collection.parsePath(node.path);
+
+        let ids: any = parentNamePath.get(thisNode.doc);
+
+        if (ids && !(ids instanceof Array)) {
+          ids = [ ids ];
+        }
+
+        // if no immediate parents, recurse
+        // up resource chain and check for
+        // alternate path to current node
+        if (!(ids && ids.length)) {
+          const hierarchyClasses = ParentClass.getHierarchyClassNames(),
+                thisCollection = Tyr.byName[thisNode.getName()],
+                doc = <Tyr.Document> thisNode.doc;
+
+          hierarchyClasses.shift(); // remove parent we already tried
+
+          // try to find a path between one of the hierarchy classes
+          // (starting from lowest and recursing upward)
+          let currentParent: string;
+          while (currentParent = hierarchyClasses.shift()) {
+            const currentParentCollection = Tyr.byName[currentParent],
+                  path = plugin.getShortestPath(thisCollection, currentParentCollection),
+                  CurrentParentNodeClass = type === 'resource'
+                    ? plugin.graclHierarchy.getResource(currentParent)
+                    : plugin.graclHierarchy.getSubject(currentParent);
+
+            if (path.length && path.length >= 2) {
+              let currentCollection = Tyr.byName[path.shift()],
+                  nextCollection = Tyr.byName[path.shift()],
+                  linkField = plugin.findLinkInCollection(currentCollection, nextCollection);
+
+              const idProp = linkField.namePath.get(doc) || [];
+
+              let ids: string[] = !idProp
+                ? []
+                : (Array.isArray(idProp) ? idProp : [ idProp ]);
+
+              // this potential path has found a dead end,
+              // we need to try another upper level resource
+              if (!ids.length) continue;
+
+              while (linkField.link.def.name !== currentParent) {
+                currentCollection = nextCollection;
+                nextCollection = Tyr.byName[path.shift()];
+                linkField = plugin.findLinkInCollection(currentCollection, nextCollection);
+                const nextDocuments = await currentCollection.byIds(ids);
+                ids = <string[]> _.chain(nextDocuments)
+                  .map(d => linkField.namePath.get(d))
+                  .flatten()
+                  .compact()
+                  .value();
+              }
+
+              if (!ids.length) continue;
+
+              const parentDocs = await nextCollection.byIds(ids),
+                    parents = _.map(parentDocs, d => new CurrentParentNodeClass(d));
+
+              return parents;
+            }
+          }
+
+          return [];
+        }
+
+        const linkCollection = node.link,
+              parentObjects  = await linkCollection.findAll({
+                                  [linkCollection.def.primaryKey.field]: { $in: ids }
+                               });
+
+        return _.map(parentObjects, doc => new ParentClass(doc));
+      }
+
+    };
+  }
+
+
+
+  async stepThroughCollectionPath(
+    ids: string[],
+    previousCollection: Tyr.CollectionInstance,
+    nextCollection: Tyr.CollectionInstance,
+    secure: boolean = false
+  ) {
+    const plugin = this;
+
+    // find the field in the current path collection which we need to get
+    // for the ids of the next path collection
+    const nextCollectionLinkField = plugin.findLinkInCollection(nextCollection, previousCollection);
+
+    if (!nextCollectionLinkField) {
+      plugin.error(
+        `cannot step through collection path, as no link to collection ${nextCollection.def.name} ` +
+        `from collection ${previousCollection.def.name}`
+      );
+    }
+
+    const nextCollectionId = nextCollection.def.primaryKey.field;
+
+    // get the objects in the second to last collection of the path using
+    // the ids of the last collection in the path
+    const nextCollectionDocs = await nextCollection.findAll(
+      { [nextCollectionLinkField.spath]: { $in: ids } },
+      { _id: 1, [nextCollectionId]: 1 },
+      { tyranid: { secure } }
+    );
+
+    // extract their primary ids using the primary field
+    return <string[]> _.map(nextCollectionDocs, nextCollectionId);
+  }
+
+
+
+
   async createIndexes() {
     this.log(`Creating indexes...`);
 
@@ -187,7 +368,7 @@ export class GraclPlugin {
 
 
   error(message: string) {
-    createError(message);
+    throw new Error(`tyranid-gracl: ${message}`);
   }
 
 
@@ -601,7 +782,7 @@ export class GraclPlugin {
       // loop through all collections, retrieve
       // ownedBy links
       collections.forEach(col => {
-        const linkFields = getCollectionLinksSorted(col, { relate: 'ownedBy', direction: 'outgoing' }),
+        const linkFields = plugin.getCollectionLinksSorted(col, { relate: 'ownedBy', direction: 'outgoing' }),
               graclTypeAnnotation = col.def['graclType'],
               collectionName = col.def.name;
 
@@ -681,13 +862,13 @@ export class GraclPlugin {
           /**
            * Create node in Gracl graph with a custom getParents() method
            */
-          nodes.set(name, createSchemaNode(node.collection, graclType, node));
+          nodes.set(name, plugin.createSchemaNode(node.collection, graclType, node));
         }
 
         for (const parent of tyrObjects.parents) {
           const name = parent.def.name;
           if (!nodes.has(name)) {
-            nodes.set(name, createSchemaNode(parent, graclType));
+            nodes.set(name, plugin.createSchemaNode(parent, graclType));
           }
         }
 
@@ -708,6 +889,96 @@ export class GraclPlugin {
       plugin.permissionHierarchy = plugin.constructPermissionHierarchy(plugin.permissionTypes);
       plugin.setOfAllPermissions = new Set(plugin.getAllPossiblePermissionTypes());
     }
+  }
+
+
+
+  extractIdAndModel(doc: Tyr.Document | string) {
+    const plugin = this;
+    if (typeof doc === 'string') {
+      const components: { [key: string]: any } = Tyr.parseUid(doc) || {};
+      if (!components['collection']) plugin.error(`Invalid resource id: ${doc}`);
+      return {
+        $uid: <string> doc,
+        $model: <Tyr.CollectionInstance> components['collection']
+      };
+    } else {
+      return {
+        $uid: <string> doc.$uid,
+        $model: doc.$model
+      };
+    }
+  }
+
+
+
+  /**
+   *  Compare a collection by name with a field by name
+   */
+  compareCollectionWithField(
+                    aCol: Tyr.CollectionInstance,
+                    bCol: Tyr.Field
+                  ) {
+
+    const a = aCol.def.name,
+          b = bCol.link.def.name;
+
+    return baseCompare(a, b);
+  }
+
+
+
+  /**
+   *  Function to find if <linkCollection> appears on an outgoing link field
+      on <col>, uses memoized <getCollectionFieldSorted> for O(1) field lookup
+      and binary search for feild search => O(log(n)) lookup
+   */
+  findLinkInCollection(
+    col: Tyr.CollectionInstance,
+    linkCollection: Tyr.CollectionInstance
+  ): Tyr.Field {
+    const plugin = this,
+          links = plugin.getCollectionLinksSorted(col),
+          index = binaryIndexOf(links, linkCollection, plugin.compareCollectionWithField);
+
+    return links[index];
+  }
+
+
+
+  _sortedLinkCache: { [key: string]: Tyr.Field[] } = {};
+  getCollectionLinksSorted(
+    col: Tyr.CollectionInstance,
+    opts: any = { direction: 'outgoing' }
+  ): Tyr.Field[] {
+    const plugin = this,
+          collectionFieldCache = plugin._sortedLinkCache,
+          hash = `${col.def.name}:${_.pairs(opts).map(e => e.join('=')).sort().join(':')}`;
+
+    if (collectionFieldCache[hash]) return collectionFieldCache[hash];
+
+    // sort fields by link collection name
+    const links = _.sortBy(col.links(opts), field => field.link.def.name);
+
+    return collectionFieldCache[hash] = links;
+  }
+
+
+  makeRepository(collection: Tyr.CollectionInstance, graclType: string): Repository {
+    if (graclType !== 'resource' && graclType !== 'subject') {
+      throw new TypeError(`graclType must be subject or resource, given ${graclType}`);
+    }
+    return {
+
+      getEntity(id: string, node: Node): Promise<Tyr.Document> {
+        return collection.byId(id);
+      },
+
+      saveEntity(id: string, doc: Tyr.Document, node: Node): Promise<Tyr.Document> {
+        return doc.$save();
+      }
+
+    };
   }
 
 
@@ -868,7 +1139,7 @@ export class GraclPlugin {
     // loop through all the fields in the collection that we are
     // building the query string for, grabbing all fields that are links
     // and storing them in a map of (linkFieldCollection => Field)
-    const queriedCollectionLinkFields = getCollectionLinksSorted(queriedCollection)
+    const queriedCollectionLinkFields = plugin.getCollectionLinksSorted(queriedCollection)
       .reduce((map, field) => {
         map.set(field.def.link, field);
         return map;
@@ -997,8 +1268,8 @@ export class GraclPlugin {
         const pathEndCollection = Tyr.byName[pathEndCollectionName],
               nextCollection = Tyr.byName[_.last(path)];
 
-        positiveIds = await stepThroughCollectionPath(positiveIds, pathEndCollection, nextCollection);
-        negativeIds = await stepThroughCollectionPath(negativeIds, pathEndCollection, nextCollection);
+        positiveIds = await plugin.stepThroughCollectionPath(positiveIds, pathEndCollection, nextCollection);
+        negativeIds = await plugin.stepThroughCollectionPath(negativeIds, pathEndCollection, nextCollection);
 
         // the remaining path collection is equal to the collection we are trying to query,
         // we don't need to do another link in the path, as the current path collection
@@ -1019,8 +1290,8 @@ export class GraclPlugin {
            * we need to recursively collect objects along the path,
              until we reach a collection that linked to the queriedCollection
            */
-          positiveIds = await stepThroughCollectionPath(positiveIds, pathCollection, nextCollection);
-          negativeIds = await stepThroughCollectionPath(negativeIds, pathCollection, nextCollection);
+          positiveIds = await plugin.stepThroughCollectionPath(positiveIds, pathCollection, nextCollection);
+          negativeIds = await plugin.stepThroughCollectionPath(negativeIds, pathCollection, nextCollection);
         }
 
         // now, "nextCollectionName" should be referencing a collection
@@ -1066,8 +1337,8 @@ export class GraclPlugin {
       }
     }
 
-    const positiveRestriction = createInQueries(queryMaps['positive'], queriedCollection, '$in'),
-          negativeRestriction = createInQueries(queryMaps['negative'], queriedCollection, '$nin');
+    const positiveRestriction = plugin.createInQueries(queryMaps['positive'], queriedCollection, '$in'),
+          negativeRestriction = plugin.createInQueries(queryMaps['negative'], queriedCollection, '$nin');
 
     const restricted: Hash<any> = {},
           hasPositive = !!positiveRestriction['$or'].length,
