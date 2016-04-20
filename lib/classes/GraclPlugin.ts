@@ -488,6 +488,7 @@ export class GraclPlugin {
   }
 
 
+
   /**
    *  Get all children of a permission
    */
@@ -1023,7 +1024,7 @@ export class GraclPlugin {
 
 
 
-  _sortedLinkCache: { [key: string]: Tyr.Field[] } = {};
+  private _sortedLinkCache: { [key: string]: Tyr.Field[] } = {};
   getCollectionLinksSorted(
     col: Tyr.CollectionInstance,
     opts: any = { direction: 'outgoing' }
@@ -1039,6 +1040,7 @@ export class GraclPlugin {
 
     return collectionFieldCache[hash] = links;
   }
+
 
 
   makeRepository(collection: Tyr.CollectionInstance, graclType: string): Repository {
