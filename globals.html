@@ -79,30 +79,18 @@
 							<h3>Type aliases</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-type-alias"><a href="globals.html#hash" class="tsd-kind-icon">Hash</a></li>
+								<li class="tsd-kind-type-alias"><a href="globals.html#tyrschemagraphobjects" class="tsd-kind-icon">Tyr<wbr>Schema<wbr>Graph<wbr>Objects</a></li>
 								<li class="tsd-kind-type-alias"><a href="globals.html#permissionexplaination" class="tsd-kind-icon">permission<wbr>Explaination</a></li>
 								<li class="tsd-kind-type-alias"><a href="globals.html#permissionhierarchy" class="tsd-kind-icon">permission<wbr>Hierarchy</a></li>
 								<li class="tsd-kind-type-alias"><a href="globals.html#permissiontypelist" class="tsd-kind-icon">permission<wbr>Type<wbr>List</a></li>
 								<li class="tsd-kind-type-alias"><a href="globals.html#pluginoptions" class="tsd-kind-icon">plugin<wbr>Options</a></li>
+								<li class="tsd-kind-type-alias"><a href="globals.html#schemagraclconfigobject" class="tsd-kind-icon">schema<wbr>Gracl<wbr>Config<wbr>Object</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
 							<h3>Variables</h3>
 							<ul class="tsd-index-list">
 								<li class="tsd-kind-variable"><a href="globals.html#permissionsbasecollection" class="tsd-kind-icon">Permissions<wbr>Base<wbr>Collection</a></li>
-								<li class="tsd-kind-variable"><a href="globals.html#getcollectionlinkssorted" class="tsd-kind-icon">get<wbr>Collection<wbr>Links<wbr>Sorted</a></li>
-							</ul>
-						</section>
-						<section class="tsd-index-section ">
-							<h3>Functions</h3>
-							<ul class="tsd-index-list">
-								<li class="tsd-kind-function"><a href="globals.html#comparecollectionwithfield" class="tsd-kind-icon">compare<wbr>Collection<wbr>With<wbr>Field</a></li>
-								<li class="tsd-kind-function"><a href="globals.html#createerror" class="tsd-kind-icon">create<wbr>Error</a></li>
-								<li class="tsd-kind-function"><a href="globals.html#createinqueries" class="tsd-kind-icon">create<wbr>InQueries</a></li>
-								<li class="tsd-kind-function"><a href="globals.html#createschemanode" class="tsd-kind-icon">create<wbr>Schema<wbr>Node</a></li>
-								<li class="tsd-kind-function"><a href="globals.html#extractidandmodel" class="tsd-kind-icon">extract<wbr>IdAnd<wbr>Model</a></li>
-								<li class="tsd-kind-function"><a href="globals.html#findlinkincollection" class="tsd-kind-icon">find<wbr>Link<wbr>InCollection</a></li>
-								<li class="tsd-kind-function"><a href="globals.html#makerepository" class="tsd-kind-icon">make<wbr>Repository</a></li>
-								<li class="tsd-kind-function"><a href="globals.html#stepthroughcollectionpath" class="tsd-kind-icon">step<wbr>Through<wbr>Collection<wbr>Path</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
@@ -122,14 +110,9 @@
 					<div class="tsd-signature tsd-kind-icon">Hash<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L4">interfaces.ts:4</a></li>
+							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L3">interfaces.ts:3</a></li>
 						</ul>
 					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p> parametric type for arbitrary string-keyed objects</p>
-						</div>
-					</div>
 					<div class="tsd-type-declaration">
 						<h4>Type declaration</h4>
 						<ul class="tsd-parameters">
@@ -140,12 +123,33 @@
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-type-alias">
+					<a name="tyrschemagraphobjects" class="tsd-anchor"></a>
+					<h3>Tyr<wbr>Schema<wbr>Graph<wbr>Objects</h3>
+					<div class="tsd-signature tsd-kind-icon">Tyr<wbr>Schema<wbr>Graph<wbr>Objects<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L38">interfaces.ts:38</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5>links<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Field</span><span class="tsd-signature-symbol">[]</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5>parents<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CollectionInstance</span><span class="tsd-signature-symbol">[]</span></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias">
 					<a name="permissionexplaination" class="tsd-anchor"></a>
 					<h3>permission<wbr>Explaination</h3>
 					<div class="tsd-signature tsd-kind-icon">permission<wbr>Explaination<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L19">interfaces.ts:19</a></li>
+							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L17">interfaces.ts:17</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -169,7 +173,7 @@
 					<div class="tsd-signature tsd-kind-icon">permission<wbr>Hierarchy<span class="tsd-signature-symbol">:</span> <a href="globals.html#hash" class="tsd-signature-type">Hash</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L17">interfaces.ts:17</a></li>
+							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L15">interfaces.ts:15</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -179,7 +183,7 @@
 					<div class="tsd-signature tsd-kind-icon">permission<wbr>Type<wbr>List<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L9">interfaces.ts:9</a></li>
+							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L7">interfaces.ts:7</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -209,7 +213,7 @@
 					<div class="tsd-signature tsd-kind-icon">plugin<wbr>Options<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/classes/GraclPlugin.ts#L37">classes/GraclPlugin.ts:37</a></li>
+							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L23">interfaces.ts:23</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -220,6 +224,38 @@
 							</li>
 							<li class="tsd-parameter">
 								<h5><span class="tsd-flag ts-flagOptional">Optional</span> verbose<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias">
+					<a name="schemagraclconfigobject" class="tsd-anchor"></a>
+					<h3>schema<wbr>Gracl<wbr>Config<wbr>Object</h3>
+					<div class="tsd-signature tsd-kind-icon">schema<wbr>Gracl<wbr>Config<wbr>Object<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L28">interfaces.ts:28</a></li>
+						</ul>
+					</aside>
+					<div class="tsd-type-declaration">
+						<h4>Type declaration</h4>
+						<ul class="tsd-parameters">
+							<li class="tsd-parameter">
+								<h5><span class="tsd-flag ts-flagOptional">Optional</span> permissions<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">object</span></h5>
+								<ul class="tsd-parameters">
+									<li class="tsd-parameter">
+										<h5><span class="tsd-flag ts-flagOptional">Optional</span> exclude<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
+									</li>
+									<li class="tsd-parameter">
+										<h5><span class="tsd-flag ts-flagOptional">Optional</span> include<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
+									</li>
+									<li class="tsd-parameter">
+										<h5><span class="tsd-flag ts-flagOptional">Optional</span> this<wbr>Collection<wbr>Only<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
+									</li>
+								</ul>
+							</li>
+							<li class="tsd-parameter">
+								<h5><span class="tsd-flag ts-flagOptional">Optional</span> types<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">"string"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"resource"</span></h5>
 							</li>
 						</ul>
 					</div>
@@ -236,292 +272,6 @@
 							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/models/PermissionsModel.ts#L9">models/PermissionsModel.ts:9</a></li>
 						</ul>
 					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-variable">
-					<a name="getcollectionlinkssorted" class="tsd-anchor"></a>
-					<h3>get<wbr>Collection<wbr>Links<wbr>Sorted</h3>
-					<div class="tsd-signature tsd-kind-icon">get<wbr>Collection<wbr>Links<wbr>Sorted<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/utilities/getCollectionLinksSorted.ts#L9">utilities/getCollectionLinksSorted.ts:9</a></li>
-						</ul>
-					</aside>
-					<div class="tsd-comment tsd-typography">
-						<div class="lead">
-							<p> Memoized function to find links for a given collection
-							and sort them by the collection name</p>
-						</div>
-					</div>
-					<div class="tsd-type-declaration">
-						<h4>Type declaration</h4>
-						<ul class="tsd-parameters">
-							<li class="tsd-parameter-siganture">
-								<ul class="tsd-signatures tsd-kind-type-literal tsd-parent-kind-variable tsd-is-not-exported">
-									<li class="tsd-signature tsd-kind-icon"><span class="tsd-signature-symbol">(</span>col<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CollectionInstance</span>, opts<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Field</span><span class="tsd-signature-symbol">[]</span></li>
-								</ul>
-								<ul class="tsd-descriptions">
-									<li class="tsd-description">
-										<h4 class="tsd-parameters-title">Parameters</h4>
-										<ul class="tsd-parameters">
-											<li>
-												<h5>col: <span class="tsd-signature-type">CollectionInstance</span></h5>
-											</li>
-											<li>
-												<h5><span class="tsd-flag ts-flagOptional">Optional</span> opts: <span class="tsd-signature-type">any</span></h5>
-											</li>
-										</ul>
-										<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Field</span><span class="tsd-signature-symbol">[]</span></h4>
-									</li>
-								</ul>
-							</li>
-							<li class="tsd-parameter">
-								<h5>cache<span class="tsd-signature-symbol">: </span><a href="globals.html#hash" class="tsd-signature-type">Hash</a></h5>
-							</li>
-						</ul>
-					</div>
-				</section>
-			</section>
-			<section class="tsd-panel-group tsd-member-group ">
-				<h2>Functions</h2>
-				<section class="tsd-panel tsd-member tsd-kind-function">
-					<a name="comparecollectionwithfield" class="tsd-anchor"></a>
-					<h3>compare<wbr>Collection<wbr>With<wbr>Field</h3>
-					<ul class="tsd-signatures tsd-kind-function">
-						<li class="tsd-signature tsd-kind-icon">compare<wbr>Collection<wbr>With<wbr>Field<span class="tsd-signature-symbol">(</span>aCol<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CollectionInstance</span>, bCol<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Field</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">number</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/utilities/findLinkInCollection.ts#L8">utilities/findLinkInCollection.ts:8</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p> Compare a collection by name with a field by name</p>
-								</div>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>aCol: <span class="tsd-signature-type">CollectionInstance</span></h5>
-								</li>
-								<li>
-									<h5>bCol: <span class="tsd-signature-type">Field</span></h5>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">number</span></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-function">
-					<a name="createerror" class="tsd-anchor"></a>
-					<h3>create<wbr>Error</h3>
-					<ul class="tsd-signatures tsd-kind-function">
-						<li class="tsd-signature tsd-kind-icon">create<wbr>Error<span class="tsd-signature-symbol">(</span>message<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/utilities/createError.ts#L1">utilities/createError.ts:1</a></li>
-								</ul>
-							</aside>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>message: <span class="tsd-signature-type">string</span></h5>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-function">
-					<a name="createinqueries" class="tsd-anchor"></a>
-					<h3>create<wbr>InQueries</h3>
-					<ul class="tsd-signatures tsd-kind-function">
-						<li class="tsd-signature tsd-kind-icon">create<wbr>InQueries<span class="tsd-signature-symbol">(</span>map<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Map</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Set</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span>, queriedCollection<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CollectionInstance</span>, key<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">"$nin"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"$in"</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="globals.html#hash" class="tsd-signature-type">Hash</a></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/utilities/createInQueries.ts#L7">utilities/createInQueries.ts:7</a></li>
-								</ul>
-							</aside>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>map: <span class="tsd-signature-type">Map</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">Set</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></h5>
-								</li>
-								<li>
-									<h5>queriedCollection: <span class="tsd-signature-type">CollectionInstance</span></h5>
-								</li>
-								<li>
-									<h5>key: <span class="tsd-signature-type">"$nin"</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">"$in"</span></h5>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <a href="globals.html#hash" class="tsd-signature-type">Hash</a></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-function">
-					<a name="createschemanode" class="tsd-anchor"></a>
-					<h3>create<wbr>Schema<wbr>Node</h3>
-					<ul class="tsd-signatures tsd-kind-function">
-						<li class="tsd-signature tsd-kind-icon">create<wbr>Schema<wbr>Node<span class="tsd-signature-symbol">(</span>collection<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CollectionInstance</span>, type<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, node<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Field</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">SchemaNode</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/utilities/createSchemaNode.ts#L8">utilities/createSchemaNode.ts:8</a></li>
-								</ul>
-							</aside>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>collection: <span class="tsd-signature-type">CollectionInstance</span></h5>
-								</li>
-								<li>
-									<h5>type: <span class="tsd-signature-type">string</span></h5>
-								</li>
-								<li>
-									<h5><span class="tsd-flag ts-flagOptional">Optional</span> node: <span class="tsd-signature-type">Field</span></h5>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">SchemaNode</span></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-function">
-					<a name="extractidandmodel" class="tsd-anchor"></a>
-					<h3>extract<wbr>IdAnd<wbr>Model</h3>
-					<ul class="tsd-signatures tsd-kind-function">
-						<li class="tsd-signature tsd-kind-icon">extract<wbr>IdAnd<wbr>Model<span class="tsd-signature-symbol">(</span>doc<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">object</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/utilities/extractIdAndModel.ts#L4">utilities/extractIdAndModel.ts:4</a></li>
-								</ul>
-							</aside>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>doc: <span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span></h5>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">object</span></h4>
-							<ul class="tsd-parameters">
-								<li class="tsd-parameter">
-									<h5>$model<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CollectionInstance</span></h5>
-								</li>
-								<li class="tsd-parameter">
-									<h5>$uid<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
-								</li>
-							</ul>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-function">
-					<a name="findlinkincollection" class="tsd-anchor"></a>
-					<h3>find<wbr>Link<wbr>InCollection</h3>
-					<ul class="tsd-signatures tsd-kind-function">
-						<li class="tsd-signature tsd-kind-icon">find<wbr>Link<wbr>InCollection<span class="tsd-signature-symbol">(</span>col<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CollectionInstance</span>, linkCollection<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CollectionInstance</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Field</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/utilities/findLinkInCollection.ts#L24">utilities/findLinkInCollection.ts:24</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p> Function to find if <linkCollection> appears on an outgoing link field
-											on <col>, uses memoized <getCollectionFieldSorted> for O(1) field lookup
-									and binary search for feild search =&gt; O(log(n)) lookup</p>
-								</div>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>col: <span class="tsd-signature-type">CollectionInstance</span></h5>
-								</li>
-								<li>
-									<h5>linkCollection: <span class="tsd-signature-type">CollectionInstance</span></h5>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Field</span></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-function">
-					<a name="makerepository" class="tsd-anchor"></a>
-					<h3>make<wbr>Repository</h3>
-					<ul class="tsd-signatures tsd-kind-function">
-						<li class="tsd-signature tsd-kind-icon">make<wbr>Repository<span class="tsd-signature-symbol">(</span>collection<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CollectionInstance</span>, graclType<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Repository</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/utilities/makeRepository.ts#L5">utilities/makeRepository.ts:5</a></li>
-								</ul>
-							</aside>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>collection: <span class="tsd-signature-type">CollectionInstance</span></h5>
-								</li>
-								<li>
-									<h5>graclType: <span class="tsd-signature-type">string</span></h5>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Repository</span></h4>
-						</li>
-					</ul>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-function">
-					<a name="stepthroughcollectionpath" class="tsd-anchor"></a>
-					<h3>step<wbr>Through<wbr>Collection<wbr>Path</h3>
-					<ul class="tsd-signatures tsd-kind-function">
-						<li class="tsd-signature tsd-kind-icon">step<wbr>Through<wbr>Collection<wbr>Path<span class="tsd-signature-symbol">(</span>ids<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span>, previousCollection<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CollectionInstance</span>, nextCollection<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CollectionInstance</span>, secure<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Array</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></li>
-					</ul>
-					<ul class="tsd-descriptions">
-						<li class="tsd-description">
-							<aside class="tsd-sources">
-								<ul>
-									<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/utilities/stepThroughCollectionPath.ts#L10">utilities/stepThroughCollectionPath.ts:10</a></li>
-								</ul>
-							</aside>
-							<div class="tsd-comment tsd-typography">
-								<div class="lead">
-									<p> Given collections A and B and an array of object ids of documents from A (A-Ids),
-									find the ids of all documents in B linked to A by <A-Ids></p>
-								</div>
-							</div>
-							<h4 class="tsd-parameters-title">Parameters</h4>
-							<ul class="tsd-parameters">
-								<li>
-									<h5>ids: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
-								</li>
-								<li>
-									<h5>previousCollection: <span class="tsd-signature-type">CollectionInstance</span></h5>
-								</li>
-								<li>
-									<h5>nextCollection: <span class="tsd-signature-type">CollectionInstance</span></h5>
-								</li>
-								<li>
-									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> secure: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> =&nbsp;false</span></h5>
-								</li>
-							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Array</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></h4>
-						</li>
-					</ul>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
@@ -557,7 +307,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L368">documentMethods.ts:368</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L382">documentMethods.ts:382</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -595,7 +345,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L418">documentMethods.ts:418</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L442">documentMethods.ts:442</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -634,7 +384,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L392">documentMethods.ts:392</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L411">documentMethods.ts:411</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -672,7 +422,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L451">documentMethods.ts:451</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L475">documentMethods.ts:475</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -711,7 +461,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L189">documentMethods.ts:189</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L196">documentMethods.ts:196</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -750,7 +500,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L494">documentMethods.ts:494</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L519">documentMethods.ts:519</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -798,7 +548,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L303">documentMethods.ts:303</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L319">documentMethods.ts:319</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -838,7 +588,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L336">documentMethods.ts:336</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L350">documentMethods.ts:350</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -879,7 +629,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L234">documentMethods.ts:234</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L245">documentMethods.ts:245</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -924,7 +674,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L109">documentMethods.ts:109</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L111">documentMethods.ts:111</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -1067,7 +817,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L272">documentMethods.ts:272</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L288">documentMethods.ts:288</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -1123,6 +873,9 @@
 						<a href="globals.html#hash" class="tsd-kind-icon">Hash</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#tyrschemagraphobjects" class="tsd-kind-icon">Tyr<wbr>Schema<wbr>Graph<wbr>Objects</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
 						<a href="globals.html#permissionexplaination" class="tsd-kind-icon">permission<wbr>Explaination</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
@@ -1134,35 +887,11 @@
 					<li class=" tsd-kind-type-alias">
 						<a href="globals.html#pluginoptions" class="tsd-kind-icon">plugin<wbr>Options</a>
 					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#schemagraclconfigobject" class="tsd-kind-icon">schema<wbr>Gracl<wbr>Config<wbr>Object</a>
+					</li>
 					<li class=" tsd-kind-variable">
 						<a href="globals.html#permissionsbasecollection" class="tsd-kind-icon">Permissions<wbr>Base<wbr>Collection</a>
-					</li>
-					<li class=" tsd-kind-variable">
-						<a href="globals.html#getcollectionlinkssorted" class="tsd-kind-icon">get<wbr>Collection<wbr>Links<wbr>Sorted</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#comparecollectionwithfield" class="tsd-kind-icon">compare<wbr>Collection<wbr>With<wbr>Field</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#createerror" class="tsd-kind-icon">create<wbr>Error</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#createinqueries" class="tsd-kind-icon">create<wbr>InQueries</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#createschemanode" class="tsd-kind-icon">create<wbr>Schema<wbr>Node</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#extractidandmodel" class="tsd-kind-icon">extract<wbr>IdAnd<wbr>Model</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#findlinkincollection" class="tsd-kind-icon">find<wbr>Link<wbr>InCollection</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#makerepository" class="tsd-kind-icon">make<wbr>Repository</a>
-					</li>
-					<li class=" tsd-kind-function">
-						<a href="globals.html#stepthroughcollectionpath" class="tsd-kind-icon">step<wbr>Through<wbr>Collection<wbr>Path</a>
 					</li>
 					<li class=" tsd-kind-object-literal">
 						<a href="globals.html#documentmethods" class="tsd-kind-icon">document<wbr>Methods</a>
