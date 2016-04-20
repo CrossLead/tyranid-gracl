@@ -4,6 +4,11 @@ export const CommentBaseCollection = new Tyr.Collection({
   id: 'c0m',
   name: 'comment',
   dbName: 'comments',
+  graclConfig: {
+    permissions: {
+      include: ['view-post', 'view-blog', 'view-comment']
+    }
+  },
   fields: {
     _id: { is: 'mongoid' },
     text: { is: 'string' },

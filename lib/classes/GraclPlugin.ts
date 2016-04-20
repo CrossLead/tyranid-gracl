@@ -55,7 +55,7 @@ export class GraclPlugin {
     { name: 'delete' }
   ];
 
-  private outgoingLinkPaths: Hash<Hash<string>>;
+  private _outgoingLinkPaths: Hash<Hash<string>>;
   private _permissionChildCache: { [key: string]: string[] } = {};
   private _allPossiblePermissionsCache: string[];
   private _sortedLinkCache: { [key: string]: Tyr.Field[] } = {};
@@ -160,7 +160,7 @@ export class GraclPlugin {
       });
     });
 
-    plugin.outgoingLinkPaths = next;
+    plugin._outgoingLinkPaths = next;
   }
 
 
@@ -850,14 +850,14 @@ export class GraclPlugin {
 
   /**
    *  Construct a path from collection a to collection b using
-      the pre-computed paths in GraclPlugin.outgoingLinkPaths
+      the pre-computed paths in plugin._outgoingLinkPaths
    */
   getShortestPath(colA: Tyr.CollectionInstance, colB: Tyr.CollectionInstance) {
     let plugin = this,
         a = colA.def.name,
         b = colB.def.name,
         originalEdge = `${a}.${b}`,
-        next = plugin.outgoingLinkPaths;
+        next = plugin._outgoingLinkPaths;
 
     if (!_.get(next, originalEdge)) return [];
 

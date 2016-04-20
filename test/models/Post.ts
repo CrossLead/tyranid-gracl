@@ -4,6 +4,11 @@ export const PostBaseCollection = new Tyr.Collection({
   id: 'p00',
   name: 'post',
   dbName: 'posts',
+  graclConfig: {
+    permissions: {
+      thisCollectionOnly: true
+    }
+  },
   fields: {
     _id: { is: 'mongoid' },
     title: { is: 'string' },
