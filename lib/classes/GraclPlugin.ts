@@ -38,14 +38,14 @@ export class GraclPlugin {
 
   // some collections may have specific permissions
   // they are restricted to...
-  public allowedPermissionsForCollections = new Map<string, Set<string>>();
+  public permissionRestrictions = new Map<string, Set<string>>();
 
 
   // plugin options
   public verbose: boolean;
   public permissionHierarchy: permissionHierarchy;
   public setOfAllPermissions: Set<string>;
-
+  public crudPermissionSet = new Set<string>();
   public permissionsModel = PermissionsModel;
 
 
@@ -161,6 +161,36 @@ export class GraclPlugin {
     });
 
     plugin.outgoingLinkPaths = next;
+  }
+
+
+
+  getAllowedPermissionsForCollection(collectionName: string) {
+    const plugin = this;
+    if (plugin.permissionRestrictions.has(collectionName)) {
+      return [...plugin.permissionRestrictions.get(collectionName)];
+    }
+    return [...plugin.setOfAllPermissions];
+  }
+
+
+
+  validatePermissionForResource(permissionString: string, resourceCollection: Tyr.CollectionInstance) {
+    const plugin = this,
+          name = resourceCollection.def.name;
+    plugin.validateAsResource(resourceCollection);
+    plugin.validatePermissionExists(permissionString);
+
+    if (plugin.permissionRestrictions.has(name)) {
+      if (!plugin.permissionRestrictions.get(name).has(permissionString)) {
+        plugin.error(
+          `Tried to use permission "${permissionString}" with collection "${name}" ` +
+          `but "${name}" is restricted to the following permissions: ` + (
+            [...plugin.permissionRestrictions.get(name).values()].join(', ')
+          )
+        );
+      }
+    }
   }
 
 
@@ -685,6 +715,10 @@ export class GraclPlugin {
             abstract = node['abstract'],
             collection = node['collection'];
 
+      if (!(abstract || collection)) {
+        plugin.crudPermissionSet.add(name);
+      }
+
       hierarchy[name] = {
         name,
         abstract: abstract,
@@ -983,6 +1017,40 @@ export class GraclPlugin {
         `Must create permissions hierarchy before registering allowed permissions`
       );
     }
+
+    Tyr.collections.forEach(col => {
+      const config = <schemaGraclConfigObject> _.get(col, 'def.graclConfig', {});
+
+      if (config.permissions) {
+
+        let allowedSet: Set<string>;
+
+        if (config.permissions.exclude) {
+          const excludeSet = new Set(config.permissions.exclude);
+          allowedSet = new Set([...plugin.setOfAllPermissions].filter(p => !excludeSet.has(p)));
+        }
+
+        if (config.permissions.include) {
+          allowedSet = new Set(config.permissions.include);
+        }
+
+        // if flagged as this collection only,
+        // add all crud permissions with this collection to allowed mapping
+        if (config.permissions.thisCollectionOnly) {
+          allowedSet = new Set(_.map([...plugin.crudPermissionSet.values()], action => {
+            return plugin.formatPermissionType({
+              action: action,
+              collection: col.def.name
+            });
+          }));
+        }
+
+
+        if (allowedSet) {
+          plugin.permissionRestrictions.set(col.def.name, allowedSet);
+        }
+      }
+    });
 
   }
 

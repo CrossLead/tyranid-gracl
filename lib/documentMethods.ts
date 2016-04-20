@@ -81,6 +81,8 @@ await user.$removePermissionAsResource('view-user', 'deny');
     type?: 'allow' | 'deny',
     uid?: string
   ): Promise<Tyr.Document> {
+    const plugin = PermissionsModel.getGraclPlugin();
+    plugin.validatePermissionForResource(permissionType, (<Tyr.Document> (<any> this)).$model);
     return <Promise<Tyr.Document>> this.$removeEntityPermission('resource', permissionType, type, uid);
   },
 
@@ -126,6 +128,11 @@ await user.$removeEntityPermission('resource', 'view-user', 'deny');
 
     if (!permissionType) {
       throw new TypeError(`No permissionType given!`);
+    }
+
+    if (graclType === 'resource') {
+      const plugin = PermissionsModel.getGraclPlugin();
+      plugin.validatePermissionForResource(permissionType, (<Tyr.Document> (<any> this)).$model);
     }
 
     plugin.validatePermissionExists(permissionType);
@@ -196,6 +203,10 @@ await user.$removeEntityPermission('resource', 'view-user', 'deny');
 
     graclType = graclType || 'subject';
 
+    if (graclType === 'resource') {
+      plugin.validatePermissionForResource(permissionType, doc.$model);
+    }
+
     const otherType = graclType === 'resource' ? 'subjectId' : 'resourceId',
           allPermissionTypes = [ permissionType ].concat(plugin.getPermissionParents(permissionType));
 
@@ -246,6 +257,11 @@ await user.$removeEntityPermission('resource', 'view-user', 'deny');
     if (graclType !== 'resource' && graclType !== 'subject') {
       throw new TypeError(`graclType must be either subject or resource!`);
     }
+
+    if (graclType === 'resource' && permissionType) {
+      plugin.validatePermissionForResource(permissionType, doc.$model);
+    }
+
     return graclType === 'resource'
       ? PermissionsModel.getPermissionsOfTypeForResource(doc, permissionType, direct)
       : PermissionsModel.getPermissionsOfTypeForSubject(doc, permissionType, direct);
@@ -307,9 +323,7 @@ const userHasAccessToBlog = await blog.$isAllowed('view-blog', user);
     const context = <any> this,
           doc = <Tyr.Document> context,
           plugin = PermissionsModel.getGraclPlugin();
-    plugin.validatePermissionExists(permissionType);
-    plugin.validateAsResource(doc.$model);
-
+    plugin.validatePermissionForResource(permissionType, doc.$model);
     return PermissionsModel.isAllowed(doc, permissionType, subjectDocument);
   },
 
@@ -344,7 +358,7 @@ const userHasAccessToBlog = await blog.$isAllowedForThis('view', user);
             action: permissionAction,
             collection: doc.$model.def.name
           });
-
+    plugin.validatePermissionForResource(permissionType, doc.$model);
     return this.$isAllowed(permissionType, subjectDocument);
   },
 
@@ -369,6 +383,11 @@ await blog.$allow('view-blog', user);
     permissionType: string,
     subjectDocument: Tyr.Document | string = Tyr.local.user
   ): Promise<Tyr.Document> {
+    const context = <any> this,
+          doc = <Tyr.Document> context,
+          plugin = PermissionsModel.getGraclPlugin();
+
+    plugin.validatePermissionForResource(permissionType, doc.$model);
     return <Promise<Tyr.Document>> this.$setPermissionAccess(permissionType, true, subjectDocument);
   },
 
@@ -393,6 +412,11 @@ await blog.$deny('view-blog', user);
     permissionType: string,
     subjectDocument: Tyr.Document | string = Tyr.local.user
   ): Promise<Tyr.Document> {
+    const context = <any> this,
+          doc = <Tyr.Document> context,
+          plugin = PermissionsModel.getGraclPlugin();
+
+    plugin.validatePermissionForResource(permissionType, doc.$model);
     return <Promise<Tyr.Document>> this.$setPermissionAccess(permissionType, false, subjectDocument);
   },
 
@@ -426,7 +450,7 @@ await blog.$allowForThis('view', user);
             action: permissionAction,
             collection: doc.$model.def.name
           });
-
+    plugin.validatePermissionForResource(permissionType, doc.$model);
     return <Promise<Tyr.Document>> context.$allow(permissionType, subjectDocument);
   },
 
@@ -460,6 +484,7 @@ await blog.$denyForThis('view', user);
             collection: doc.$model.def.name
           });
 
+    plugin.validatePermissionForResource(permissionType, doc.$model);
     return <Promise<Tyr.Document>> context.$deny(permissionType, subjectDocument);
   },
 
@@ -496,8 +521,10 @@ console.log(explaination.type)
     subjectDocument: Tyr.Document | string = Tyr.local.user
   ): Promise<permissionExplaination> {
     const context = <any> this,
-          doc = <Tyr.Document> context;
+          doc = <Tyr.Document> context,
+          plugin = PermissionsModel.getGraclPlugin();
 
+    plugin.validatePermissionForResource(permissionType, doc.$model);
     return PermissionsModel.explainPermission(doc, permissionType, subjectDocument);
   }
 

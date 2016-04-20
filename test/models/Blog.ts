@@ -5,11 +5,11 @@ export const BlogBaseCollection = new Tyr.Collection({
   id: 'b00',
   name: 'blog',
   dbName: 'blogs',
-  graclConfig: {
-    permissions: {
-      thisCollectionOnly: true
-    }
-  },
+  // graclConfig: {
+  //   permissions: {
+  //     thisCollectionOnly: true
+  //   }
+  // },
   fields: {
     _id: { is: 'mongoid' },
     name: { is: 'string' },
