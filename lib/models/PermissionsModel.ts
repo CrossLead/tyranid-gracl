@@ -26,10 +26,8 @@ export const PermissionsBaseCollection = <Tyr.CollectionInstance> new Tyr.Collec
 
 /**
   Collection to contain all permissions used by gracl
-
-  Note: requires explicit cast to tyr.collectioninstance for tsc to pass
  */
-export class PermissionsModel extends PermissionsBaseCollection {
+export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseCollection) {
 
 
   static getGraclPlugin(): GraclPlugin {

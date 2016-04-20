@@ -16,6 +16,6 @@ export const InventoryBaseCollection = <Tyr.CollectionInstance> (new Tyr.Collect
   }
 }));
 
-export class Inventory extends InventoryBaseCollection {
+export class Inventory extends (<Tyr.CollectionInstance> InventoryBaseCollection) {
 
 }

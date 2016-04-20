@@ -9,7 +9,8 @@ import { permissionExplaination } from './interfaces';
  *  Methods to mixin to Tyr.documentPrototype for working with permissions,
     all these methods are available on any document returned from tyranid.
 
-    Note, all methods are called on the **Resource**, with the subject being **passed as an argument**.
+    Note, all methods are called on the **Resource**, with the subject being **passed as an argument**, UNLESS
+    there is a specific `graclType = 'subject' | 'resource'` parameter for the method.
 
     For example:
 
