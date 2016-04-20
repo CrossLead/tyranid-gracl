@@ -1,6 +1,7 @@
 /// <reference path='../../typings/main.d.ts' />
 import Tyr from 'tyranid';
 import * as _ from 'lodash';
+
 import {
   Permission,
   topologicalSort,
@@ -12,12 +13,15 @@ import {
 } from 'gracl';
 
 import { PermissionsModel } from '../models/PermissionsModel';
+
 import { documentMethods } from '../documentMethods';
+
 import {
   Hash,
   permissionHierarchy,
   permissionTypeList
 } from '../interfaces';
+
 import {
   findLinkInCollection,
   getCollectionLinksSorted,
@@ -113,11 +117,15 @@ export class GraclPlugin {
   ]);
 
 
+  // some collections may have specific permissions
+  // they are restricted to...
+  allowedPermissionsForCollections: Map<string, Set<string>>;
+
+
   // plugin options
   verbose: boolean;
   permissionHierarchy: permissionHierarchy;
   setOfAllPermissions: Set<string>;
-
 
   permissionsModel = PermissionsModel;
 

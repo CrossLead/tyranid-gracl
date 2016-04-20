@@ -15,3 +15,9 @@ export type permissionTypeList = {
 }[];
 
 export type permissionHierarchy = Hash<any>;
+
+export type permissionExplaination = {
+  type: string;
+  reason: string;
+  access: boolean;
+};
