@@ -4,6 +4,7 @@ import Tyr from 'tyranid';
 import * as gracl from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { extractIdAndModel, createError } from '../utilities/';
+import { permissionExplaination } from '../interfaces';
 
 
 export const PermissionsBaseCollection = <Tyr.CollectionInstance> new Tyr.Collection({
@@ -204,7 +205,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       resourceData: Tyr.Document | string,
       permissionType: string,
       subjectData: Tyr.Document | string
-    ): Promise<{ type: string, access: boolean, reason: string }> {
+    ): Promise<permissionExplaination> {
     const plugin = PermissionsModel.getGraclPlugin();
     plugin.validatePermissionExists(permissionType);
 
