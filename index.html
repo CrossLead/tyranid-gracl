@@ -70,74 +70,13 @@
 				<a href="https://badge.fury.io/js/tyranid-gracl"><img src="https://badge.fury.io/js/tyranid-gracl.svg" alt="npm version"></a></p>
 				<p>This repository contains a plugin for <code>tyranid</code> that allows for graph-based acl permissions to be enforced / utilized
 				within tyranid simply by adding a few schema annotations.</p>
-				<h2 id="tyr-document-method-mixins">Tyr.Document method mixins</h2>
-				<h4 id="-doc-allow-perm-string-subject-tyr-document-promise-tyr-document-"><code>doc.$allow(perm: string, subject: Tyr.Document): Promise&lt;Tyr.Document&gt;</code></h4>
-				<pre><code class="lang-javascript"><span class="hljs-comment">// allow a subject to have a permission relating to document</span>
-<span class="hljs-keyword">await</span> <span class="hljs-built_in">document</span>.$allow(<span class="hljs-string">'view-blog'</span>, subject);
-</code></pre>
-				<h4 id="-doc-deny-perm-string-subject-tyr-document-promise-tyr-document-"><code>doc.$deny(perm: string, subject: Tyr.Document): Promise&lt;Tyr.Document&gt;</code></h4>
-				<pre><code class="lang-javascript"><span class="hljs-comment">// deny a subject to have a permission relating to document</span>
-<span class="hljs-keyword">await</span> <span class="hljs-built_in">document</span>.$deny(<span class="hljs-string">'view-blog'</span>, subject);
-</code></pre>
-				<h4 id="-doc-allowforthis-action-string-subject-tyr-document-promise-tyr-document-"><code>doc.$allowForThis(action: string, subject: Tyr.Document): Promise&lt;Tyr.Document&gt;</code></h4>
-				<pre><code class="lang-javascript"><span class="hljs-comment">// allowForThis a subject to have a permission relating to document</span>
-<span class="hljs-comment">// note that the perm here should be an action, not a full &lt;action-collection&gt; perm</span>
-<span class="hljs-keyword">await</span> <span class="hljs-built_in">document</span>.$allowForThis(<span class="hljs-string">'view'</span>, subject);
-</code></pre>
-				<h4 id="-doc-denyforthis-action-string-subject-tyr-document-promise-tyr-document-"><code>doc.$denyForThis(action: string, subject: Tyr.Document): Promise&lt;Tyr.Document&gt;</code></h4>
-				<pre><code class="lang-javascript"><span class="hljs-comment">// denyForThis a subject to have a permission relating to document</span>
-<span class="hljs-comment">// note that the perm here should be an action, not a full &lt;action-collection&gt; perm</span>
-<span class="hljs-keyword">await</span> <span class="hljs-built_in">document</span>.$denyForThis(<span class="hljs-string">'view'</span>, subject);
-</code></pre>
-				<h4 id="-doc-isallowed-perm-string-subject-tyr-document-promise-boolean-"><code>doc.$isAllowed(perm: string, subject: Tyr.Document): Promise&lt;boolean&gt;</code></h4>
-				<pre><code class="lang-javascript"><span class="hljs-comment">// check if a subject has a permission for document</span>
-<span class="hljs-keyword">const</span> bool = <span class="hljs-keyword">await</span> <span class="hljs-built_in">document</span>.$isAllowed(<span class="hljs-string">'view-blog'</span>, subject);
-</code></pre>
-				<h4 id="-doc-isallowedforthis-action-string-subject-tyr-document-promise-boolean-"><code>doc.$isAllowedForThis(action: string, subject: Tyr.Document): Promise&lt;boolean&gt;</code></h4>
-				<pre><code class="lang-javascript"><span class="hljs-comment">// check if a subject has a permission for document</span>
-<span class="hljs-keyword">const</span> post = <span class="hljs-keyword">await</span> Tyr.byName.post.findOne({ name: <span class="hljs-string">'my post'</span> });
-<span class="hljs-comment">// note that the perm here should be an action, not a full &lt;action-collection&gt; perm</span>
-<span class="hljs-keyword">const</span> has_view_post_access = <span class="hljs-keyword">await</span> post.$isAllowed(<span class="hljs-string">'view'</span>, subject);
-</code></pre>
-				<h4 id="-doc-explainpermission-perm-string-subject-tyr-document-promise-access-boolean-reason-string-"><code>doc.$explainPermission(perm: string, subject: Tyr.Document): Promise&lt;{ access: boolean, reason: string }&gt;</code></h4>
-				<pre><code class="lang-javascript"><span class="hljs-comment">// deny a subject to have a permission relating to document</span>
-<span class="hljs-keyword">const</span> explaination = <span class="hljs-keyword">await</span> <span class="hljs-built_in">document</span>.$explainPermission(<span class="hljs-string">'view-blog'</span>, subject);
-<span class="hljs-comment">/**
-  typeof explaination.access === boolean // has access or not
-  typeof explaination.reason === string // explaining why
- */</span>
-</code></pre>
-				<h4 id="-doc-permissions-perm-string-gracltype-resouce-subject-promise-tyr-document-"><code>doc.$permissions(perm?: string, graclType?: &#39;resouce&#39; | &#39;subject&#39;): Promise&lt;Tyr.Document[]&gt;</code></h4>
-				<pre><code class="lang-javascript"><span class="hljs-comment">// retrieve all the permissions relating to the document</span>
-<span class="hljs-comment">// for a specific permission (if given, otherwise all permissions)</span>
-<span class="hljs-comment">// given that the document is a subject (default) or a resource</span>
-<span class="hljs-comment">// (if passed graclType = 'resource')</span>
-<span class="hljs-keyword">const</span> permissionsAsSubject = <span class="hljs-keyword">await</span> <span class="hljs-built_in">document</span>.$permissions();
-<span class="hljs-keyword">const</span> permissionsAsResource = <span class="hljs-keyword">await</span> <span class="hljs-built_in">document</span>.$permissions(<span class="hljs-literal">null</span>, <span class="hljs-string">'resource'</span>);
-<span class="hljs-keyword">const</span> viewPostPermissionsAsResource = <span class="hljs-keyword">await</span> <span class="hljs-built_in">document</span>.$permissions(<span class="hljs-string">'view-post'</span>, <span class="hljs-string">'resource'</span>);
-</code></pre>
-				<h4 id="-doc-entitieswithpermission-perm-string-gracltype-resouce-subject-promise-string-"><code>doc.$entitiesWithPermission(perm: string, graclType?: &#39;resouce&#39; | &#39;subject&#39;): Promise&lt;string[]&gt;</code></h4>
-				<pre><code class="lang-javascript"><span class="hljs-comment">// retrieve a list of uids that have access to the document (if graclType === 'resource')</span>
-<span class="hljs-comment">// or the document has access to (if graclType === 'subject' -- default)</span>
-<span class="hljs-keyword">const</span> all_uids_that_document_has_view_blog_access_to = (
-  <span class="hljs-keyword">await</span> <span class="hljs-built_in">document</span>.$entitiesWithPermission(<span class="hljs-string">'view-blog'</span>)
-);
-
-<span class="hljs-keyword">const</span> all_uids_that_have_view_blog_access_to_document = (
-  <span class="hljs-keyword">await</span> <span class="hljs-built_in">document</span>.$entitiesWithPermission(<span class="hljs-string">'view-blog'</span>, <span class="hljs-string">'resource'</span>)
-);
-</code></pre>
-				<h4 id="-doc-allowedentitiesforcollection-collectionname-string-promise-string-"><code>doc.$allowedEntitiesForCollection(collectionName: string): Promise&lt;string[]&gt;</code></h4>
-				<pre><code class="lang-javascript"><span class="hljs-comment">// retrieve a list of uids that the document has explicit access to in the given collection</span>
-<span class="hljs-keyword">const</span> all_uids_that_document_can_access_in_blog_collection = (
-  <span class="hljs-keyword">await</span> <span class="hljs-built_in">document</span>.$allowedEntitiesForCollection(<span class="hljs-string">'blog'</span>)
-);
-</code></pre>
+				<h2 id="generated-documentation">Generated Documentation</h2>
+				<p><a href="http://crosslead.github.io/tyranid-gracl">http://crosslead.github.io/tyranid-gracl</a></p>
 				<h2 id="setup">Setup</h2>
+				<h3 id="installation">Installation</h3>
+				<pre><code class="lang-shell">npm install tyranid-gracl
+</code></pre>
 				<h3 id="annotate-your-tyranid-schemas">Annotate your tyranid schemas</h3>
-				<p>You need to add a <code>permissionIds</code> property to collections that
-					will have permissions set <em>for</em> them (the &quot;resources&quot;), as well
-				as add annotations indicating the &quot;hierarchy parents&quot;...</p>
 				<pre><code class="lang-javascript">
 <span class="hljs-keyword">import</span> Tyr <span class="hljs-keyword">from</span> <span class="hljs-string">'tyranid'</span>;
 
@@ -148,8 +87,6 @@
   fields: {
     _id: { is: <span class="hljs-string">'mongoid'</span> },
     name: { is: <span class="hljs-string">'string'</span> },
-    <span class="hljs-comment">// permissionsIds should be exactly like this</span>
-    permissionIds: { is: <span class="hljs-string">'array'</span>, link: <span class="hljs-string">'graclPermission'</span> }
   }
 });
 
@@ -170,9 +107,7 @@
       <span class="hljs-comment">// can be both!</span>
       <span class="hljs-comment">// now, organization is implicitly also a subject and resource</span>
       graclType: [ <span class="hljs-string">'subject'</span>, <span class="hljs-string">'resource'</span> ]
-    },
-    <span class="hljs-comment">// also need permissions prop!</span>
-    permissionIds: { is: <span class="hljs-string">'array'</span>, link: <span class="hljs-string">'graclPermission'</span> }
+    }
   }
 });
 
@@ -188,8 +123,7 @@
       link: <span class="hljs-string">'organization'</span>,
       relate: <span class="hljs-string">'ownedBy'</span>,
       graclType: <span class="hljs-string">'resource'</span>
-    },
-    permissionIds: { is: <span class="hljs-string">'array'</span>, link: <span class="hljs-string">'graclPermission'</span> }
+    }
   }
 });
 
@@ -203,14 +137,10 @@
   id: <span class="hljs-string">'ul0'</span>,
   name: <span class="hljs-string">'usagelog'</span>,
   dbName: <span class="hljs-string">'usagelogs'</span>,
+  graclType: [<span class="hljs-string">'resource'</span>]
   fields: {
     _id: { is: <span class="hljs-string">'mongoid'</span> },
-    text: { is: <span class="hljs-string">'string'</span> },
-    permissionIds: {
-      is: <span class="hljs-string">'array'</span>,
-      link: <span class="hljs-string">'graclPermission'</span>,
-      graclType: [ <span class="hljs-string">'subject'</span>, <span class="hljs-string">'resource'</span> ]
-    }
+    text: { is: <span class="hljs-string">'string'</span> }
   }
 });
 </code></pre>
@@ -251,22 +181,11 @@ Tyr.config({
         <span class="hljs-comment">// organizationId of org we want to give user view access to</span>
         organizationId = req.query.organizationId;
 
-  <span class="hljs-keyword">try</span> {
+  <span class="hljs-keyword">const</span> org = <span class="hljs-keyword">await</span> Tyr.byName
+    .organization
+    .byId(organizationId);
 
-    <span class="hljs-keyword">const</span> org = <span class="hljs-keyword">await</span> Tyr.byName
-      .organization
-      .byId(organizationId);
-
-    <span class="hljs-keyword">const</span> updatedOrg = <span class="hljs-keyword">await</span> org.$allow(<span class="hljs-string">'view-blog'</span>, user); <span class="hljs-comment">// set view-blog access to true for user</span>
-
-  } <span class="hljs-keyword">catch</span> (error) {
-    <span class="hljs-keyword">if</span> (<span class="hljs-regexp">/another update is in progress/</span>.test(error.message)) {
-      <span class="hljs-comment">// the permissions model found a simultaneous update request, and denied this update</span>
-      <span class="hljs-keyword">return</span> res.json({ message: <span class="hljs-string">'Cannot update permissions now, try again.'</span> })
-    } <span class="hljs-keyword">else</span> {
-      <span class="hljs-keyword">throw</span> error;
-    }
-  }
+  <span class="hljs-keyword">const</span> updatedOrg = <span class="hljs-keyword">await</span> org.$allow(<span class="hljs-string">'view-blog'</span>, user); <span class="hljs-comment">// set view-blog access to true for user</span>
 
   <span class="hljs-keyword">return</span> res.json(updatedOrg);
 }
@@ -287,22 +206,13 @@ Tyr.config({
   <span class="hljs-keyword">return</span> res.json(canView);
 }
 
-
-
 <span class="hljs-comment">/**
  *  Example express controller using filtered queries
  */</span>
 <span class="hljs-keyword">export</span> <span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">findBlogs</span>(<span class="hljs-params">req, res</span>) </span>{
-  <span class="hljs-keyword">const</span> blogs = <span class="hljs-keyword">await</span> Tyr.byName.blog.findAll({}, <span class="hljs-literal">null</span>, {
-    tyranid: {
-      secure: <span class="hljs-literal">true</span>,
-      user: req.user
-    }
-  });
+  <span class="hljs-keyword">const</span> blogs = <span class="hljs-keyword">await</span> Tyr.byName.blog.findAll({ query: {}, auth: req.user });
   <span class="hljs-keyword">return</span> res.json(blogs);
 }
-
-
 
 <span class="hljs-comment">/**
  *  Example creating a mongodb query that is restricted using permissions
@@ -320,25 +230,12 @@ Tyr.config({
   <span class="hljs-keyword">return</span> secured;
 }
 
-
-
 <span class="hljs-comment">/**
  *  Example express controller to delete all permissions for an entity
  */</span>
 <span class="hljs-keyword">export</span> <span class="hljs-keyword">async</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">deletePermissionsRelatingToUid</span>(<span class="hljs-params">req, res</span>) </span>{
   <span class="hljs-keyword">const</span> uid = req.query.uid;
-
-  <span class="hljs-keyword">try</span> {
-    <span class="hljs-keyword">await</span> Tyr.secure.permissionsModel.deletePermissions(<span class="hljs-keyword">await</span> Tyr.byUid(uid));
-  } <span class="hljs-keyword">catch</span> (error) {
-    <span class="hljs-keyword">if</span> (<span class="hljs-regexp">/another update is in progress/</span>.test(error.message)) {
-      <span class="hljs-comment">// the permissions model found a simultaneous update request, and denied this update</span>
-      <span class="hljs-keyword">return</span> res.json({ message: <span class="hljs-string">'Cannot update permissions now, try again.'</span> })
-    } <span class="hljs-keyword">else</span> {
-      <span class="hljs-keyword">throw</span> error;
-    }
-  }
-
+  <span class="hljs-keyword">await</span> Tyr.secure.permissionsModel.deletePermissions(<span class="hljs-keyword">await</span> Tyr.byUid(uid));
   <span class="hljs-keyword">return</span> res.json({ message: <span class="hljs-string">'Success!'</span> });
 }
 </code></pre>
