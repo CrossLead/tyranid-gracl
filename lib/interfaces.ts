@@ -1,3 +1,5 @@
+import Tyr from 'tyranid';
+
 export type Hash<T> = {
   [key: string]: T;
 };
@@ -29,3 +31,9 @@ export type schemaGraclConfigObject = {
   };
   types?: ('string' | 'resource')[];
 }
+
+
+export type TyrSchemaGraphObjects = {
+  links: Tyr.Field[];
+  parents: Tyr.CollectionInstance[];
+};

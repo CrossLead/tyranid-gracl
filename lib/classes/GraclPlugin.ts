@@ -21,7 +21,9 @@ import {
   Hash,
   permissionHierarchy,
   permissionTypeList,
-  pluginOptions
+  pluginOptions,
+  schemaGraclConfigObject,
+  TyrSchemaGraphObjects
 } from '../interfaces';
 
 
@@ -36,7 +38,7 @@ export class GraclPlugin {
 
   // some collections may have specific permissions
   // they are restricted to...
-  public allowedPermissionsForCollections: Map<string, Set<string>>;
+  public allowedPermissionsForCollections = new Map<string, Set<string>>();
 
 
   // plugin options
@@ -75,6 +77,28 @@ export class GraclPlugin {
 
 
   /**
+    Create Gracl class hierarchy from tyranid schemas,
+    needs to be called after all the tyranid collections are validated
+   */
+  boot(stage: Tyr.BootStage) {
+    if (stage === 'post-link') {
+      const plugin = this;
+
+      plugin.log(`starting boot.`);
+
+      plugin.mixInDocumentMethods();
+      plugin.buildLinkGraph();
+      plugin.createGraclHierarchy();
+      plugin.constructPermissionHierarchy();
+      plugin.registerAllowedPermissionsForCollections();
+
+      if (plugin.verbose) plugin.logHierarchy();
+    }
+  }
+
+
+
+  /**
    *  Create graph of outgoing links to collections and
       compute shortest paths between all edges (if exist)
       using Floyd–Warshall Algorithm with path reconstruction
@@ -82,6 +106,8 @@ export class GraclPlugin {
   buildLinkGraph() {
     const plugin = this,
           g: Hash<Set<string>> = {};
+
+    plugin.log(`creating link graph...`);
 
     _.each(Tyr.collections, col => {
       const links = col.links({ direction: 'outgoing' }),
@@ -493,10 +519,7 @@ export class GraclPlugin {
     const plugin = this;
     if (plugin._permissionChildCache[perm]) return plugin._permissionChildCache[perm].slice();
 
-    const {
-      action,
-      collection
-    } = plugin.parsePermissionString(perm);
+    const { action, collection } = plugin.parsePermissionString(perm);
 
     if (!plugin.permissionHierarchy[action]) {
       plugin.error(`Permission ${perm} does not exist!`);
@@ -514,7 +537,8 @@ export class GraclPlugin {
         children.push(name);
       }
     }
-    return (plugin._permissionChildCache[perm] = _.unique(children)).slice();
+    plugin._permissionChildCache[perm] = _.unique(children);
+    return plugin._permissionChildCache[perm].slice();
   }
 
 
@@ -570,8 +594,10 @@ export class GraclPlugin {
   /**
    * validate and insert provided permissionHierarchy into model
    */
-  constructPermissionHierarchy(permissionsTypes: permissionTypeList ): permissionHierarchy {
+  constructPermissionHierarchy() {
     const plugin = this;
+
+    plugin.log(`constructing permissions hierarchy...`);
 
     if (!plugin.graclHierarchy) {
       plugin.error(`Must build subject/resource hierarchy before creating permission hierarchy`);
@@ -581,7 +607,7 @@ export class GraclPlugin {
      * Run topological sort on permissions values,
        checking for circular dependencies / missing nodes
      */
-    const sorted = topologicalSort(_.map(permissionsTypes, perm => {
+    const sorted = topologicalSort(_.map(plugin.permissionTypes, perm => {
 
       if (perm['abstract'] === undefined && !perm['collection']) {
         plugin.error(
@@ -704,14 +730,18 @@ export class GraclPlugin {
       };
     }
 
-    return hierarchy;
+    // store the hierarchy and set of all permissions
+    plugin.permissionHierarchy = hierarchy;
+    plugin.setOfAllPermissions = new Set(plugin.getAllPossiblePermissionTypes());
   }
+
 
 
   getPermissionObject(permissionString: string) {
     const plugin = this;
     return plugin.permissionHierarchy[plugin.parsePermissionString(permissionString).action];
   }
+
 
 
   nextPermissions(permissionString: string): string[] {
@@ -810,153 +840,150 @@ export class GraclPlugin {
 
 
 
-  /**
-    Create Gracl class hierarchy from tyranid schemas,
-    needs to be called after all the tyranid collections are validated
-   */
-  boot(stage: Tyr.BootStage) {
-    if (stage === 'post-link') {
-      const plugin = this;
+  createGraclHierarchy() {
+    const plugin = this,
+          collections = Tyr.collections,
+          nodeSet     = new Set<string>();
 
-      plugin.log(`starting boot.`);
+    const graclGraphNodes = {
+      subjects: <TyrSchemaGraphObjects> {
+        links: [],
+        parents: []
+      },
+      resources: <TyrSchemaGraphObjects> {
+        links: [],
+        parents: []
+      }
+    };
 
-      const tyranidDocumentPrototype = <{ [key: string]: any }> Tyr.documentPrototype;
+    // loop through all collections, retrieve
+    // ownedBy links
+    collections.forEach(col => {
+      const linkFields = plugin.getCollectionLinksSorted(col, { relate: 'ownedBy', direction: 'outgoing' }),
+            graclConfig = <schemaGraclConfigObject> _.get(col, 'def.graclConfig', {}),
+            graclTypeAnnotation = <string[]> _.get(graclConfig, 'types', []),
+            collectionName = col.def.name;
 
-      for (const method in documentMethods) {
-        if (documentMethods.hasOwnProperty(method)) {
-          if (tyranidDocumentPrototype[method]) {
-            plugin.error(
-              `tyranid-gracl: tried to set method ${method} on document prototype, but it already exists!`
-            );
-          }
-          tyranidDocumentPrototype[method] = (<any> documentMethods)[method];
+      // if no links at all, skip
+      if (!(linkFields.length || graclTypeAnnotation.length)) return;
+
+      // validate that we can only have one parent of each field.
+      if (linkFields.length > 1) {
+        plugin.error(
+          `tyranid-gracl permissions hierarchy does not allow for multiple inheritance. ` +
+          `Collection ${collectionName} has multiple fields with outgoing ownedBy relations.`
+        );
+      }
+
+      const [ field ] = linkFields;
+      const graclType = _.get(field, 'def.graclTypes', graclTypeAnnotation);
+
+      // if no graclType property on this collection, skip the collection
+      if (!(graclType && graclType.length)) return;
+
+      let currentType: string;
+      while (currentType = graclType.pop()) {
+        switch (currentType) {
+          case 'subject':
+            if (field) {
+              graclGraphNodes.subjects.links.push(field);
+              graclGraphNodes.subjects.parents.push(field.link);
+            } else {
+              graclGraphNodes.subjects.parents.push(col);
+            }
+            break;
+          case 'resource':
+            if (field) {
+              graclGraphNodes.resources.links.push(field);
+              graclGraphNodes.resources.parents.push(field.link);
+            } else {
+              graclGraphNodes.resources.parents.push(col);
+            }
+            break;
+          default:
+            plugin.error(`Invalid gracl node type set on collection ${collectionName}, type = ${graclType}`);
         }
       }
 
-      type TyrSchemaGraphObjects = {
-        links: Tyr.Field[];
-        parents: Tyr.CollectionInstance[];
-      };
+    });
 
-      const collections = Tyr.collections,
-            nodeSet     = new Set<string>();
+    const schemaMaps = {
+      subjects: new Map<string, SchemaNode>(),
+      resources: new Map<string, SchemaNode>()
+    };
 
-      const graclGraphNodes = {
-        subjects: <TyrSchemaGraphObjects> {
-          links: [],
-          parents: []
-        },
-        resources: <TyrSchemaGraphObjects> {
-          links: [],
-          parents: []
+    for (const type of ['subjects', 'resources']) {
+      let nodes: Map<string, SchemaNode>,
+          tyrObjects: TyrSchemaGraphObjects;
+
+      let graclType: string;
+      if (type === 'subjects') {
+        nodes = schemaMaps.subjects;
+        tyrObjects = graclGraphNodes.subjects;
+        graclType = 'subject';
+      } else {
+        nodes = schemaMaps.resources;
+        tyrObjects = graclGraphNodes.resources;
+        graclType = 'resource';
+      }
+
+      for (const node of tyrObjects.links) {
+        const name = node.collection.def.name,
+              parentName = node.link.def.name,
+              parentNamePath = node.collection.parsePath(node.path);
+
+        /**
+         * Create node in Gracl graph with a custom getParents() method
+         */
+        nodes.set(name, plugin.createSchemaNode(node.collection, graclType, node));
+      }
+
+      for (const parent of tyrObjects.parents) {
+        const name = parent.def.name;
+        if (!nodes.has(name)) {
+          nodes.set(name, plugin.createSchemaNode(parent, graclType));
         }
-      };
+      }
 
-      // loop through all collections, retrieve
-      // ownedBy links
-      collections.forEach(col => {
-        const linkFields = plugin.getCollectionLinksSorted(col, { relate: 'ownedBy', direction: 'outgoing' }),
-              graclTypeAnnotation = <string[]> _.get(col, 'def.graclConfig.types', []),
-              collectionName = col.def.name;
+    }
 
-        // if no links at all, skip
-        if (!(linkFields.length || graclTypeAnnotation.length)) return;
+    plugin.graclHierarchy = new Graph({
+      subjects: Array.from(schemaMaps.subjects.values()),
+      resources: Array.from(schemaMaps.resources.values())
+    });
+  }
 
-        // validate that we can only have one parent of each field.
-        if (linkFields.length > 1) {
+
+
+  mixInDocumentMethods() {
+    const plugin = this;
+    const tyranidDocumentPrototype = <{ [key: string]: any }> Tyr.documentPrototype;
+
+    plugin.log(`mixing in document methods...`);
+
+    for (const method in documentMethods) {
+      if (documentMethods.hasOwnProperty(method)) {
+        if (tyranidDocumentPrototype[method]) {
           plugin.error(
-            `tyranid-gracl permissions hierarchy does not allow for multiple inheritance. ` +
-            `Collection ${collectionName} has multiple fields with outgoing ownedBy relations.`
+            `tried to set method ${method} on document prototype, but it already exists!`
           );
         }
-
-        const [ field ] = linkFields;
-        const graclType = _.get(field, 'def.graclTypes', graclTypeAnnotation);
-
-        // if no graclType property on this collection, skip the collection
-        if (!(graclType && graclType.length)) return;
-
-        let currentType: string;
-        while (currentType = graclType.pop()) {
-          switch (currentType) {
-            case 'subject':
-              if (field) {
-                graclGraphNodes.subjects.links.push(field);
-                graclGraphNodes.subjects.parents.push(field.link);
-              } else {
-                graclGraphNodes.subjects.parents.push(col);
-              }
-              break;
-            case 'resource':
-              if (field) {
-                graclGraphNodes.resources.links.push(field);
-                graclGraphNodes.resources.parents.push(field.link);
-              } else {
-                graclGraphNodes.resources.parents.push(col);
-              }
-              break;
-            default:
-              plugin.error(`Invalid gracl node type set on collection ${collectionName}, type = ${graclType}`);
-          }
-        }
-
-      });
-
-      const schemaMaps = {
-        subjects: new Map<string, SchemaNode>(),
-        resources: new Map<string, SchemaNode>()
-      };
-
-      for (const type of ['subjects', 'resources']) {
-        let nodes: Map<string, SchemaNode>,
-            tyrObjects: TyrSchemaGraphObjects;
-
-        let graclType: string;
-        if (type === 'subjects') {
-          nodes = schemaMaps.subjects;
-          tyrObjects = graclGraphNodes.subjects;
-          graclType = 'subject';
-        } else {
-          nodes = schemaMaps.resources;
-          tyrObjects = graclGraphNodes.resources;
-          graclType = 'resource';
-        }
-
-        for (const node of tyrObjects.links) {
-          const name = node.collection.def.name,
-                parentName = node.link.def.name,
-                parentNamePath = node.collection.parsePath(node.path);
-
-          /**
-           * Create node in Gracl graph with a custom getParents() method
-           */
-          nodes.set(name, plugin.createSchemaNode(node.collection, graclType, node));
-        }
-
-        for (const parent of tyrObjects.parents) {
-          const name = parent.def.name;
-          if (!nodes.has(name)) {
-            nodes.set(name, plugin.createSchemaNode(parent, graclType));
-          }
-        }
-
+        tyranidDocumentPrototype[method] = (<any> documentMethods)[method];
       }
-
-      plugin.log(`creating link graph.`);
-      plugin.buildLinkGraph();
-
-      plugin.graclHierarchy = new Graph({
-        subjects: Array.from(schemaMaps.subjects.values()),
-        resources: Array.from(schemaMaps.resources.values())
-      });
-
-      if (plugin.verbose) {
-        plugin.logHierarchy();
-      }
-
-      plugin.permissionHierarchy = plugin.constructPermissionHierarchy(plugin.permissionTypes);
-      plugin.setOfAllPermissions = new Set(plugin.getAllPossiblePermissionTypes());
     }
+  }
+
+
+
+  registerAllowedPermissionsForCollections() {
+    const plugin = this;
+
+    if (!plugin.permissionHierarchy) {
+      plugin.error(
+        `Must create permissions hierarchy before registering allowed permissions`
+      );
+    }
+
   }
 
 
