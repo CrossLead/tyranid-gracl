@@ -532,7 +532,7 @@
 					<div class="tsd-signature tsd-kind-icon">document<wbr>Methods<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L22">documentMethods.ts:22</a></li>
+							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L23">documentMethods.ts:23</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -540,7 +540,8 @@
 							<p> Methods to mixin to Tyr.documentPrototype for working with permissions,
 							all these methods are available on any document returned from tyranid.</p>
 						</div>
-						<p>Note, all methods are called on the <strong>Resource</strong>, with the subject being <strong>passed as an argument</strong>.</p>
+						<p>Note, all methods are called on the <strong>Resource</strong>, with the subject being <strong>passed as an argument</strong>, UNLESS
+						there is a specific <code>graclType = &#39;subject&#39; | &#39;resource&#39;</code> parameter for the method.</p>
 						<p>For example:</p>
 						<pre><code class="lang-javascript"><span class="hljs-comment">// checks if &lt;subject&gt; is allowed view-post on &lt;resource&gt;</span>
 <span class="hljs-keyword">const</span> subjectHasAccess = <span class="hljs-keyword">await</span> resource.$isAllowed(<span class="hljs-string">'view-post'</span>, subject);
@@ -556,7 +557,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L367">documentMethods.ts:367</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L368">documentMethods.ts:368</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -594,7 +595,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L417">documentMethods.ts:417</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L418">documentMethods.ts:418</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -633,7 +634,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L391">documentMethods.ts:391</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L392">documentMethods.ts:392</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -671,7 +672,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L450">documentMethods.ts:450</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L451">documentMethods.ts:451</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -710,7 +711,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L188">documentMethods.ts:188</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L189">documentMethods.ts:189</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -749,7 +750,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L493">documentMethods.ts:493</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L494">documentMethods.ts:494</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -797,7 +798,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L302">documentMethods.ts:302</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L303">documentMethods.ts:303</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -837,7 +838,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L335">documentMethods.ts:335</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L336">documentMethods.ts:336</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -878,7 +879,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L233">documentMethods.ts:233</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L234">documentMethods.ts:234</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -923,7 +924,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L108">documentMethods.ts:108</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L109">documentMethods.ts:109</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -972,7 +973,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L78">documentMethods.ts:78</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L79">documentMethods.ts:79</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -1019,7 +1020,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L47">documentMethods.ts:47</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L48">documentMethods.ts:48</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -1066,7 +1067,7 @@
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L271">documentMethods.ts:271</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L272">documentMethods.ts:272</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
