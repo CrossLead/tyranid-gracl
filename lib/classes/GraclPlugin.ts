@@ -1,7 +1,6 @@
 /// <reference path='../../typings/main.d.ts' />
 import Tyr from 'tyranid';
 import * as _ from 'lodash';
-
 import {
   Permission,
   topologicalSort,
@@ -15,25 +14,64 @@ import {
   Repository
 } from 'gracl';
 
+
 import { PermissionsModel } from '../models/PermissionsModel';
-
 import { documentMethods } from '../documentMethods';
-
 import {
   Hash,
   permissionHierarchy,
-  permissionTypeList
+  permissionTypeList,
+  pluginOptions
 } from '../interfaces';
-
-
-export type pluginOptions = {
-  verbose?: boolean;
-  permissionTypes?: permissionTypeList;
-};
 
 
 
 export class GraclPlugin {
+
+
+  public graclHierarchy: Graph;
+  public unsecuredCollections = new Set([
+    PermissionsModel.def.name
+  ]);
+
+  // some collections may have specific permissions
+  // they are restricted to...
+  public allowedPermissionsForCollections: Map<string, Set<string>>;
+
+
+  // plugin options
+  public verbose: boolean;
+  public permissionHierarchy: permissionHierarchy;
+  public setOfAllPermissions: Set<string>;
+
+  public permissionsModel = PermissionsModel;
+
+
+  public permissionTypes: permissionTypeList = [
+    { name: 'edit' },
+    { name: 'view', parents: [ 'edit' ] },
+    { name: 'delete' }
+  ];
+
+  private outgoingLinkPaths: Hash<Hash<string>>;
+  private _permissionChildCache: { [key: string]: string[] } = {};
+  private _allPossiblePermissionsCache: string[];
+  private _sortedLinkCache: { [key: string]: Tyr.Field[] } = {};
+
+
+
+
+  constructor(opts?: pluginOptions) {
+    opts = opts || {};
+    const plugin = this;
+
+    if (Array.isArray(opts.permissionTypes) && opts.permissionTypes.length) {
+      plugin.permissionTypes = opts.permissionTypes;
+    }
+
+    plugin.verbose = opts.verbose || false;
+  };
+
 
 
   /**
@@ -41,8 +79,9 @@ export class GraclPlugin {
       compute shortest paths between all edges (if exist)
       using Floyd–Warshall Algorithm with path reconstruction
    */
-  static buildLinkGraph(): Hash<Hash<string>> {
-    const g: Hash<Set<string>> = {};
+  buildLinkGraph() {
+    const plugin = this,
+          g: Hash<Set<string>> = {};
 
     _.each(Tyr.collections, col => {
       const links = col.links({ direction: 'outgoing' }),
@@ -95,52 +134,8 @@ export class GraclPlugin {
       });
     });
 
-    return next;
+    plugin.outgoingLinkPaths = next;
   }
-
-
-
-  /*
-   * Instance properties
-   */
-  graclHierarchy: Graph;
-  outgoingLinkPaths: Hash<Hash<string>>;
-  unsecuredCollections = new Set([
-    PermissionsModel.def.name
-  ]);
-
-
-  // some collections may have specific permissions
-  // they are restricted to...
-  allowedPermissionsForCollections: Map<string, Set<string>>;
-
-
-  // plugin options
-  verbose: boolean;
-  permissionHierarchy: permissionHierarchy;
-  setOfAllPermissions: Set<string>;
-
-  permissionsModel = PermissionsModel;
-
-
-  permissionTypes: permissionTypeList = [
-    { name: 'edit' },
-    { name: 'view', parents: [ 'edit' ] },
-    { name: 'delete' }
-  ];
-
-
-
-  constructor(opts?: pluginOptions) {
-    opts = opts || {};
-    const plugin = this;
-
-    if (Array.isArray(opts.permissionTypes) && opts.permissionTypes.length) {
-      plugin.permissionTypes = opts.permissionTypes;
-    }
-
-    plugin.verbose = opts.verbose || false;
-  };
 
 
 
@@ -410,7 +405,9 @@ export class GraclPlugin {
 
 
   async createIndexes() {
-    this.log(`Creating indexes...`);
+    const plugin = this;
+
+    plugin.log(`Creating indexes...`);
 
     await PermissionsModel.db.createIndex(
       {
@@ -492,7 +489,6 @@ export class GraclPlugin {
   /**
    *  Get all children of a permission
    */
-  private _permissionChildCache: { [key: string]: string[] } = {};
   getPermissionChildren(perm: string): string[] {
     const plugin = this;
     if (plugin._permissionChildCache[perm]) return plugin._permissionChildCache[perm].slice();
@@ -544,7 +540,6 @@ export class GraclPlugin {
   /**
    *  Get a list of all possible permission strings
    */
-  private _allPossiblePermissionsCache: string[];
   getAllPossiblePermissionTypes(): string[] {
     const plugin = this;
     if (plugin._allPossiblePermissionsCache) return plugin._allPossiblePermissionsCache.slice();
@@ -953,7 +948,7 @@ export class GraclPlugin {
       }
 
       plugin.log(`creating link graph.`);
-      plugin.outgoingLinkPaths = GraclPlugin.buildLinkGraph();
+      plugin.buildLinkGraph();
 
       plugin.graclHierarchy = new Graph({
         subjects: Array.from(schemaMaps.subjects.values()),
@@ -1024,7 +1019,6 @@ export class GraclPlugin {
 
 
 
-  private _sortedLinkCache: { [key: string]: Tyr.Field[] } = {};
   getCollectionLinksSorted(
     col: Tyr.CollectionInstance,
     opts: any = { direction: 'outgoing' }
