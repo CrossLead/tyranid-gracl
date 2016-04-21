@@ -937,6 +937,19 @@ test.serial('Should return correct allowed permissions for given collection', ()
 
 
 
+test.serial('Should throw when trying to set raw crud permission', async() => {
+  const post = await Tyr.byName['post'].findOne({}),
+        ben  = await Tyr.byName['user'].findOne({ name: 'ben' });
+
+  await expectAsyncToThrow(
+    () => post['$allow']('view', ben),
+    /Cannot use raw crud permission/,
+    'Should throw when using a raw crud permission.'
+  );
+});
+
+
+
 test.serial('Should handle lots of concurrent permissions updates', async () => {
   const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
         ben          = await Tyr.byName['user'].findOne({ name: 'ben' });

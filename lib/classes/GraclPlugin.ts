@@ -175,9 +175,32 @@ export class GraclPlugin {
 
 
 
+  isCrudPermission(permissionString: string) {
+    const plugin = this;
+    const components = plugin.parsePermissionString(permissionString);
+    const perm = plugin.getPermissionObject(permissionString);
+    return !components.collection
+      && perm
+      && !perm.abstract
+      && !perm.collection;
+  }
+
+
+
   validatePermissionForResource(permissionString: string, resourceCollection: Tyr.CollectionInstance) {
     const plugin = this,
           name = resourceCollection.def.name;
+
+    if (plugin.isCrudPermission(permissionString)) {
+      plugin.error(
+        `Cannot use raw crud permission "${permissionString}" ` +
+        `without attached resource. Did you mean ${plugin.formatPermissionType({
+          collection: name,
+          action: plugin.parsePermissionString(permissionString).action
+        })}?`
+      );
+    }
+
     plugin.validateAsResource(resourceCollection);
     plugin.validatePermissionExists(permissionString);
 
