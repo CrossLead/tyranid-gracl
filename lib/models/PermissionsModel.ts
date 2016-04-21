@@ -3,7 +3,7 @@ import * as _ from 'lodash';
 import Tyr from 'tyranid';
 import * as gracl from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { extractIdAndModel, createError } from '../utilities/';
+import { permissionExplaination } from '../interfaces';
 
 
 export const PermissionsBaseCollection = <Tyr.CollectionInstance> new Tyr.Collection({
@@ -26,10 +26,8 @@ export const PermissionsBaseCollection = <Tyr.CollectionInstance> new Tyr.Collec
 
 /**
   Collection to contain all permissions used by gracl
-
-  Note: requires explicit cast to tyr.collectioninstance for tsc to pass
  */
-export class PermissionsModel extends PermissionsBaseCollection {
+export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseCollection) {
 
 
   static getGraclPlugin(): GraclPlugin {
@@ -41,86 +39,14 @@ export class PermissionsModel extends PermissionsBaseCollection {
   }
 
 
-  static validateAsResource(collection: Tyr.CollectionInstance) {
-    const plugin = PermissionsModel.getGraclPlugin();
-
-    if (!collection) {
-      plugin.error(`Attempted to validate undefined collection!`);
-    }
-
-    if (!plugin.graclHierarchy.resources.has(collection.def.name)) {
-      plugin.error(
-        `Attempted to set/get permission using ${collection.def.name} as resource, ` +
-        `no relevant resource class found in tyranid-gracl plugin!`
-      );
-    }
-  }
-
-
-
-  static getGraclClasses(
-                resourceDocument: Tyr.Document,
-                subjectDocument: Tyr.Document
-              ): { subject: gracl.Subject, resource: gracl.Resource } {
+  static async getPermissionsOfTypeForResource(
+    resourceDocument: Tyr.Document,
+    permissionType?: string,
+    direct?: boolean
+  ) {
 
     const plugin = PermissionsModel.getGraclPlugin(),
-          resourceCollectionName = resourceDocument.$model.def.name;
-
-    const subject  = PermissionsModel.createSubject(subjectDocument),
-          resource = PermissionsModel.createResource(resourceDocument);
-
-    return { subject, resource };
-  }
-
-
-  static createSubject(subjectDocument: Tyr.Document): gracl.Subject {
-    const plugin = PermissionsModel.getGraclPlugin();
-
-    if (!(subjectDocument && subjectDocument.$uid)) {
-      plugin.error('No subject document provided (or Tyr.local.user is unavailable)!');
-    }
-
-    const subjectCollectionName  = subjectDocument.$model.def.name,
-          SubjectClass           = plugin.graclHierarchy.getSubject(subjectCollectionName);
-
-    if (!SubjectClass) {
-      plugin.error(
-        `Attempted to set/get permission using ${subjectCollectionName} as subject, ` +
-        `no relevant subject class found in tyranid-gracl plugin!`
-      );
-    }
-
-    return new SubjectClass(subjectDocument);
-  }
-
-
-  static createResource(resourceDocument: Tyr.Document): gracl.Resource {
-    const plugin = PermissionsModel.getGraclPlugin();
-
-    if (!(resourceDocument && resourceDocument.$uid)) {
-      plugin.error('No resource document provided (or Tyr.local.user is unavailable)!');
-    }
-
-    const resourceCollectionName  = resourceDocument.$model.def.name,
-          ResourceClass           = plugin.graclHierarchy.getResource(resourceCollectionName);
-
-    if (!ResourceClass) {
-      plugin.error(
-        `Attempted to set/get permission using ${resourceCollectionName} as resource, ` +
-        `no relevant resource class found in tyranid-gracl plugin!`
-      );
-    }
-
-    return new ResourceClass(resourceDocument);
-  }
-
-
-  static async getPermissionsOfTypeForResource(
-            resourceDocument: Tyr.Document,
-            permissionType?: string,
-            direct?: boolean
-          ) {
-    const resource = PermissionsModel.createResource(resourceDocument);
+          resource = plugin.createResource(resourceDocument);
 
     const query: { [key: string]: any } = {
       resourceId: (direct ? resourceDocument.$uid : {
@@ -140,12 +66,12 @@ export class PermissionsModel extends PermissionsBaseCollection {
 
 
   static async getPermissionsOfTypeForSubject(
-            subjectDocument: Tyr.Document,
-            permissionType?: string,
-            direct?: boolean
-          ) {
-
-    const subject = PermissionsModel.createSubject(subjectDocument);
+    subjectDocument: Tyr.Document,
+    permissionType?: string,
+    direct?: boolean
+  ) {
+    const plugin = PermissionsModel.getGraclPlugin(),
+          subject = plugin.createSubject(subjectDocument);
 
     const query: { [key: string]: any } = {
       subjectId: (direct ? subjectDocument.$uid : {
@@ -165,10 +91,10 @@ export class PermissionsModel extends PermissionsBaseCollection {
 
 
   static async isAllowed(
-      resourceData: Tyr.Document | string,
-      permissionType: string,
-      subjectData: Tyr.Document | string
-    ): Promise<boolean> {
+    resourceData: Tyr.Document | string,
+    permissionType: string,
+    subjectData: Tyr.Document | string
+  ): Promise<boolean> {
 
     const plugin = PermissionsModel.getGraclPlugin();
 
@@ -183,7 +109,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
     const {
             subject,
             resource
-          } = PermissionsModel.getGraclClasses(resourceDocument, subjectDocument),
+          } = plugin.getGraclClasses(resourceDocument, subjectDocument),
           components = plugin.parsePermissionString(permissionType),
           nextPermissions = plugin.nextPermissions(permissionType),
           access = await resource.isAllowed(subject, permissionType);
@@ -203,10 +129,10 @@ export class PermissionsModel extends PermissionsBaseCollection {
 
 
   static async explainPermission(
-      resourceData: Tyr.Document | string,
-      permissionType: string,
-      subjectData: Tyr.Document | string
-    ): Promise<{ type: string, access: boolean, reason: string }> {
+    resourceData: Tyr.Document | string,
+    permissionType: string,
+    subjectData: Tyr.Document | string
+  ): Promise<permissionExplaination> {
     const plugin = PermissionsModel.getGraclPlugin();
     plugin.validatePermissionExists(permissionType);
 
@@ -218,29 +144,29 @@ export class PermissionsModel extends PermissionsBaseCollection {
       ? await Tyr.byUid(subjectData)
       : subjectData;
 
-    const { subject, resource } = PermissionsModel.getGraclClasses(resourceDocument, subjectDocument);
+    const { subject, resource } = plugin.getGraclClasses(resourceDocument, subjectDocument);
 
     return await resource.determineAccess(subject, permissionType);
   }
 
 
   static async setPermissionAccess(
-          resourceDocument: Tyr.Document | string,
-          permissionType: string,
-          access: boolean,
-          subjectDocument: Tyr.Document | string,
-          attempt = 0
-        ): Promise<Tyr.Document> {
+    resourceDocument: Tyr.Document | string,
+    permissionType: string,
+    access: boolean,
+    subjectDocument: Tyr.Document | string,
+    attempt = 0
+  ): Promise<Tyr.Document> {
     const plugin = PermissionsModel.getGraclPlugin();
     plugin.validatePermissionExists(permissionType);
 
     if (!resourceDocument) throw new TypeError(`no resource given to setPermissionAccess`);
     if (!subjectDocument) throw new TypeError(`no subject given to setPermissionAccess`);
 
-    const resourceComponents = extractIdAndModel(resourceDocument),
-          subjectComponents = extractIdAndModel(subjectDocument);
+    const resourceComponents = plugin.extractIdAndModel(resourceDocument),
+          subjectComponents = plugin.extractIdAndModel(subjectDocument);
 
-    PermissionsModel.validateAsResource(resourceComponents.$model);
+    plugin.validateAsResource(resourceComponents.$model);
 
     // set the permission
     try {
@@ -279,7 +205,9 @@ export class PermissionsModel extends PermissionsBaseCollection {
           }, 100);
         }));
       } else if (/E11000 duplicate key error/.test(error.message)) {
-        createError(`Attempted to update permission 10 times, but recieved "E11000 duplicate key error" on each attempt`);
+        plugin.error(
+          `Attempted to update permission 10 times, but recieved "E11000 duplicate key error" on each attempt`
+        );
       }
       throw new Error(error);
     }

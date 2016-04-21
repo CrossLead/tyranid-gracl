@@ -1,10 +1,8 @@
-/**
- *  parametric type for arbitrary string-keyed objects
- */
+import Tyr from 'tyranid';
+
 export type Hash<T> = {
   [key: string]: T;
 };
-
 
 export type permissionTypeList = {
   [key: string]: any,
@@ -15,3 +13,29 @@ export type permissionTypeList = {
 }[];
 
 export type permissionHierarchy = Hash<any>;
+
+export type permissionExplaination = {
+  type: string;
+  reason: string;
+  access: boolean;
+};
+
+export type pluginOptions = {
+  verbose?: boolean;
+  permissionTypes?: permissionTypeList;
+};
+
+export type schemaGraclConfigObject = {
+  permissions?: {
+    thisCollectionOnly?: boolean;
+    include?: string[];
+    exclude?: string[];
+  };
+  types?: ('string' | 'resource')[];
+}
+
+
+export type TyrSchemaGraphObjects = {
+  links: Tyr.Field[];
+  parents: Tyr.CollectionInstance[];
+};

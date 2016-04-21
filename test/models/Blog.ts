@@ -5,16 +5,22 @@ export const BlogBaseCollection = new Tyr.Collection({
   id: 'b00',
   name: 'blog',
   dbName: 'blogs',
+  // graclConfig: {
+  //   permissions: {
+  //     thisCollectionOnly: true
+  //   }
+  // },
   fields: {
     _id: { is: 'mongoid' },
     name: { is: 'string' },
     organizationId: {
       link: 'organization',
       relate: 'ownedBy',
-      graclType: 'resource'
+      graclTypes: [ 'resource' ]
     }
   }
 });
+
 
 export class Blog extends (<Tyr.CollectionInstance> BlogBaseCollection) {
   static async addPost(text: string, blog: Tyr.Document) {

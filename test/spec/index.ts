@@ -44,6 +44,7 @@ const checkStringEq = (got: string[], want: string[], message = '') => {
 };
 
 
+
 async function giveBenAccessToChoppedPosts(perm = 'view') {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
@@ -55,6 +56,7 @@ async function giveBenAccessToChoppedPosts(perm = 'view') {
 
   return updatedChopped;
 }
+
 
 
 test.before(async () => {
@@ -82,26 +84,33 @@ test.before(async () => {
 });
 
 
+
 test.beforeEach(createTestData);
+
+
 
 test.serial('should correctly find links using getCollectionLinksSorted', () => {
   const Chart = Tyr.byName['chart'],
         options = { direction: 'outgoing' },
-        links = tyranidGracl.getCollectionLinksSorted(Chart, options);
+        links = secure.getCollectionLinksSorted(Chart, options);
 
   expect(links, 'should produce sorted links')
     .to.deep.equal(_.sortBy(Chart.links(options), field => field.link.def.name));
 });
 
+
+
 test.serial('should find specific link using findLinkInCollection', () => {
   const Chart     = Tyr.byName['chart'],
         User      = Tyr.byName['user'],
-        linkField = tyranidGracl.findLinkInCollection(Chart, User);
+        linkField = secure.findLinkInCollection(Chart, User);
 
   expect(linkField).to.exist;
   expect(linkField.link.def.name).to.equal('user');
   expect(linkField.spath).to.equal('userIds');
 });
+
+
 
 
 test.serial('should correctly create formatted queries using createInQueries', async () => {
@@ -119,7 +128,7 @@ test.serial('should correctly create formatted queries using createInQueries', a
     [ 'chart', new Set(chartIds) ]
   ]);
 
-  const query = tyranidGracl.createInQueries(queryAgainstChartMap, Tyr.byName['chart'], '$in');
+  const query = secure.createInQueries(queryAgainstChartMap, Tyr.byName['chart'], '$in');
 
   const _idRestriction = _.find(query['$or'], v => _.contains(_.keys(v), '_id')),
         blogIdRestriction = _.find(query['$or'], v => _.contains(_.keys(v), 'blogId')),
@@ -130,12 +139,13 @@ test.serial('should correctly create formatted queries using createInQueries', a
   checkStringEq(userIdsRestriction['userIds']['$in'], userIds, 'should find correct property');
 
   const createQueryNoLink = () => {
-    tyranidGracl.createInQueries(queryAgainstChartMap, Tyr.byName['organization'], '$in');
+    secure.createInQueries(queryAgainstChartMap, Tyr.byName['organization'], '$in');
   };
 
   expect(createQueryNoLink, 'creating query for collection with no outgoing link to mapped collection')
     .to.throw(/No outgoing link/);
 });
+
 
 
 test.serial('should return correct ids after calling stepThroughCollectionPath', async () => {
@@ -145,20 +155,22 @@ test.serial('should return correct ids after calling stepThroughCollectionPath',
         chipotlePosts = await Tyr.byName['post'].findAll({ blogId: { $in: blogIds } }),
         postIds = <string[]> _.map(chipotlePosts, '_id');
 
-  const steppedPostIds = await tyranidGracl.stepThroughCollectionPath(
+  const steppedPostIds = await secure.stepThroughCollectionPath(
     blogIds, Tyr.byName['blog'], Tyr.byName['post']
   );
 
   checkStringEq(steppedPostIds, postIds, 'ids after stepping should be all relevant ids');
 
   await expectAsyncToThrow(
-    () => tyranidGracl.stepThroughCollectionPath(
+    () => secure.stepThroughCollectionPath(
       blogIds, Tyr.byName['blog'], Tyr.byName['user']
     ),
     /cannot step through collection path, as no link to collection/,
     'stepping to a collection with no connection to previous col should throw'
   );
 });
+
+
 
 test.serial('should correctly produce paths between collections', () => {
   for (const a in expectedLinkPaths) {
@@ -168,6 +180,7 @@ test.serial('should correctly produce paths between collections', () => {
     }
   }
 });
+
 
 
 test.serial('should add permissions methods to documents', async () => {
@@ -180,10 +193,12 @@ test.serial('should add permissions methods to documents', async () => {
 });
 
 
+
 test.serial('should create subject and resource classes for collections without links in or out', () => {
   expect(secure.graclHierarchy.resources.has('usagelog')).to.equal(true);
   expect(secure.graclHierarchy.subjects.has('usagelog')).to.equal(true);
 });
+
 
 
 test.serial('should return all relevant permissions on GraclPlugin.getAllPermissionTypes()', () => {
@@ -202,6 +217,7 @@ test.serial('should return all relevant permissions on GraclPlugin.getAllPermiss
 });
 
 
+
 test.serial('should return correct parent permissions on GraclPlugin.getPermissionParents(perm)', () => {
   const view_blog_parents = secure.getPermissionParents('view-blog');
   expect(view_blog_parents, 'view-blog should have two parent permissions').to.have.lengthOf(2);
@@ -213,6 +229,7 @@ test.serial('should return correct parent permissions on GraclPlugin.getPermissi
 });
 
 
+
 test.serial('should return correct permission children on GraclPlugin.getPermissionChildren(perm)', () => {
   const edit_post_children = secure.getPermissionChildren('edit-post');
   const edit_children = secure.getPermissionChildren('edit');
@@ -220,6 +237,7 @@ test.serial('should return correct permission children on GraclPlugin.getPermiss
   expect(edit_post_children, 'should include specifically set abstract child').to.contain('abstract_view_chart');
   expect(edit_post_children, 'should include collection specific crud child').to.contain('view-post');
 });
+
 
 
 test.serial('should successfully add permissions', async () => {
@@ -237,6 +255,7 @@ test.serial('should successfully add permissions', async () => {
 });
 
 
+
 test.serial('should respect subject / resource hierarchy', async () => {
   await giveBenAccessToChoppedPosts();
 
@@ -252,6 +271,8 @@ test.serial('should respect subject / resource hierarchy', async () => {
   ).to.equal(true);
 });
 
+
+
 test.serial('should respect permissions hierarchy', async () => {
   await giveBenAccessToChoppedPosts('edit');
 
@@ -266,6 +287,7 @@ test.serial('should respect permissions hierarchy', async () => {
     'ben should have \'view\' access to choppedBlog through \'edit\' access to chopped org'
   ).to.equal(true);
 });
+
 
 
 test.serial('should correctly respect combined permission/subject/resource hierarchy', async () => {
@@ -290,6 +312,7 @@ test.serial('should correctly respect combined permission/subject/resource hiera
 });
 
 
+
 test.serial('should validate permissions', async () => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chipotleCorporateBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' });
@@ -304,6 +327,7 @@ test.serial('should validate permissions', async () => {
 });
 
 
+
 test.serial('should successfully find permission when multiple permissions parents', async () => {
   await giveBenAccessToChoppedPosts();
 
@@ -313,6 +337,7 @@ test.serial('should successfully find permission when multiple permissions paren
   const access = await chopped['$isAllowed']('abstract_view_chart', ben);
   expect(access).to.equal(true);
 });
+
 
 
 test.serial('should skip a link in the hierarchy chain when no immediate parent ids present', async () => {
@@ -326,6 +351,7 @@ test.serial('should skip a link in the hierarchy chain when no immediate parent 
   expect(access, 'noTeamUser should have access even without teams linking to org')
     .to.equal(true);
 });
+
 
 
 test.serial('should skip multiple links in the hierarchy chain when no immediate parent ids present', async () => {
@@ -360,6 +386,7 @@ test.serial('should modify existing permissions instead of creating new ones', a
 
   expect(allPermissions, 'there should be one permission in the database').to.have.lengthOf(1);
 });
+
 
 
 test.serial('should successfully remove all permissions after secure.deletePermissions()', async () => {
@@ -457,6 +484,7 @@ test.serial('should successfully remove all permissions after secure.deletePermi
 });
 
 
+
 test.serial('should work if passing uid instead of document', async () => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
@@ -472,6 +500,7 @@ test.serial('should work if passing uid instead of document', async () => {
   expect(blogExplaination.type, 'blogExplaination.type').to.equal('view-blog');
   expect(postAccess, 'postAccess').to.equal(true);
 });
+
 
 
 test.serial('should correctly explain permissions', async () => {
@@ -512,6 +541,7 @@ test.serial('should remove permissions when using $removePermissionAsSubject', a
 });
 
 
+
 test.serial('should remove permissions when using $removePermissionAsResource', async () => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
@@ -533,6 +563,7 @@ test.serial('should remove permissions when using $removePermissionAsResource', 
   expect(accessAfterRemove.type).to.equal('view-post');
 
 });
+
 
 
 test.serial('should remove permissions for specific access when using $removePermissionAsResource', async () => {
@@ -574,6 +605,7 @@ test.serial('should remove permissions for specific access when using $removePer
 });
 
 
+
 test.serial('should correctly check abstract parent of collection-specific permission', async () => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
@@ -582,6 +614,8 @@ test.serial('should correctly check abstract parent of collection-specific permi
   const access = await chopped['$isAllowed']('view-blog', ben);
   expect(access, 'should have access through abstract parent').to.equal(true);
 });
+
+
 
 test.serial('should correctly check normal crud hierarchy for crud permission with additional abstract permission', async () => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
@@ -593,12 +627,14 @@ test.serial('should correctly check normal crud hierarchy for crud permission wi
 });
 
 
+
 test.serial('should return false with no user', async () => {
   const Post = Tyr.byName['post'],
         query = await secure.query(Post, 'view');
 
   expect(query, 'query should be false').to.equal(false);
 });
+
 
 
 test.serial('should return false with no permissions', async () => {
@@ -608,6 +644,7 @@ test.serial('should return false with no permissions', async () => {
 
   expect(query, 'query should be false').to.equal(false);
 });
+
 
 
 test.serial('should return false with no permissions set for user for specific permission type', async () => {
@@ -621,6 +658,7 @@ test.serial('should return false with no permissions set for user for specific p
 });
 
 
+
 test.serial('should return empty object for collection with no permissions hierarchy node', async () => {
   const Chart = Tyr.byName['chart'],
         ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
@@ -628,6 +666,7 @@ test.serial('should return empty object for collection with no permissions hiera
 
   expect(query, 'query should be {}').to.deep.equal({});
 });
+
 
 
 test.serial('should produce query restriction based on permissions', async () => {
@@ -695,6 +734,8 @@ test.serial('should produce $and clause with excluded and included ids', async (
 
 });
 
+
+
 test.serial('Should return all relevant entities on doc.$entitiesWithPermission(perm)', async() => {
   const ted = await Tyr.byName['user'].findOne({ name: 'ted' }),
         ben = await Tyr.byName['user'].findOne({ name: 'ben' });
@@ -716,6 +757,7 @@ test.serial('Should return all relevant entities on doc.$entitiesWithPermission(
   expect(entities).to.contain(cava['$uid']);
   expect(entities).to.contain(chipotleBlogs[0]['$uid']);
 });
+
 
 
 test.serial('should correctly respect combined permission/subject/resource hierarchy in query()', async () => {
@@ -754,6 +796,7 @@ test.serial('should correctly respect combined permission/subject/resource hiera
 });
 
 
+
 test.serial('should be appropriately filtered based on permissions', async () => {
   await giveBenAccessToChoppedPosts();
 
@@ -784,6 +827,8 @@ test.serial('should be appropriately filtered based on permissions', async () =>
 
 });
 
+
+
 test.serial('should filter based on abstract parent access of collection-specific permission', async () => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         blogs = await Tyr.byName['blog'].findAll({ }),
@@ -798,6 +843,7 @@ test.serial('should filter based on abstract parent access of collection-specifi
   expect(blogsBenCanSee).to.have.lengthOf(1);
   expect(blogsBenCanSee[0]['organizationId'].toString()).to.equal(chopped.$id.toString());
 });
+
 
 
 test.serial('should filter based on abstract parent access of collection-specific permission', async () => {
@@ -821,6 +867,7 @@ test.serial('should filter based on abstract parent access of collection-specifi
 });
 
 
+
 test.serial('should get view access to parent when parent can view itself', async () => {
    const ben = await Tyr.byName['user'].findOne({ name: 'ben' });
    const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
@@ -828,6 +875,7 @@ test.serial('should get view access to parent when parent can view itself', asyn
    const access = await chipotle['$isAllowed']('view-organization', ben);
    expect(access, 'ben should have access through parent').to.equal(true);
 });
+
 
 
 test.serial('should default to lowest hierarchy permission', async () => {
@@ -853,6 +901,42 @@ test.serial('should default to lowest hierarchy permission', async () => {
 });
 
 
+
+test.serial('Should restrict permission to include set in graclConfig schema option', () => {
+  const allowed = secure.getAllowedPermissionsForCollection('comment');
+  expect(allowed.sort()).to.deep.equal(
+    [ 'view-post', 'view-blog', 'view-comment' ].sort()
+  );
+});
+
+
+
+test.serial('Should throw error if attempting to use permission not allowed for collection', async () => {
+  const post = await Tyr.byName['post'].findOne({}),
+        ben  = await Tyr.byName['user'].findOne({ name: 'ben' });
+
+  await expectAsyncToThrow(
+    () => post['$allow']('view-user', ben),
+    /tyranid-gracl: Tried to use permission "view-user" with collection "post"/,
+    'Should throw when not using a post-specific permission.'
+  );
+});
+
+
+
+test.serial('Should return correct allowed permissions for given collection', () => {
+  const allowed = secure.getAllowedPermissionsForCollection('post'),
+        blogAllowed = secure.getAllowedPermissionsForCollection('blog');
+  allowed.sort();
+  blogAllowed.sort();
+  expect(blogAllowed).to.deep.equal(
+    [...secure.setOfAllPermissions].sort()
+  );
+  expect(allowed).to.deep.equal([ 'delete-post', 'edit-post', 'view-post' ]);
+});
+
+
+
 test.serial('Should handle lots of concurrent permissions updates', async () => {
   const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
         ben          = await Tyr.byName['user'].findOne({ name: 'ben' });
@@ -873,16 +957,16 @@ test.serial('Should handle lots of concurrent permissions updates', async () => 
     p['$allow']('view-post', ben),
     p['$allow']('edit-post', ben),
     p['$allow']('delete-post', ben),
-    p['$allow']('view-blog', ben),
-    p['$allow']('view-team', ben),
-    p['$allow']('view-user', ben),
-    p['$allow']('edit-blog', ben),
+    p['$allow']('view-post', ben),
+    p['$allow']('view-post', ben),
+    p['$allow']('view-post', ben),
+    p['$allow']('edit-post', ben),
     p['$allow']('view-post', ben),
     p['$allow']('edit-post', ben),
     p['$allow']('delete-post', ben),
-    p['$allow']('view-blog', ben),
-    p['$allow']('view-team', ben),
-    p['$allow']('view-user', ben),
-    p['$allow']('edit-blog', ben)
+    p['$allow']('view-post', ben),
+    p['$allow']('view-post', ben),
+    p['$allow']('view-post', ben),
+    p['$allow']('edit-post', ben)
   ])));
 });
