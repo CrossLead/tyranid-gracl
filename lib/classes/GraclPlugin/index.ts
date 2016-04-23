@@ -31,6 +31,34 @@ import * as methods from './methods/';
 
 
 
+/**
+ *  Security plugin for tyranid
+
+  Example:
+
+  ```js
+  import Tyr from 'tyranid';
+  import pmongo from 'promised-mongo';
+
+  // import plugin class
+  import { GraclPlugin } from 'tyranid-gracl';
+
+  // instantiate
+  const secure = new GraclPlugin();
+
+  const db = pmongo('mongodb://127.0.0.1:27017/tyranid_gracl_test');
+
+  Tyr.config({
+    db: db,
+    validate: [
+      { dir: root + '/test/models', fileMatch: '[a-z].js' }
+    ],
+    // add to tyranid config...
+    secure: secure
+  })
+  ```
+
+ */
 @(function (pluginClass: typeof GraclPlugin) {
   Object.assign(pluginClass.prototype, methods);
   return pluginClass;
