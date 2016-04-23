@@ -9,7 +9,7 @@
     "build": "bash -c \"rm -rf ./dist-es6/ ./dist-node4/\" && npm run typings && npm run lint && npm run tscompile && npm run babel",
     "copy-typings": "bash -c \"cp -r ./typings ./dist-es6 && cp -r ./typings ./dist-node4\"",
     "pretest": "npm run build",
-    "prepublish": "npm test && npm run gh-pages",
+    "prepublish": "npm test",
     "test": "bash -c \"./node_modules/.bin/ava\"",
     "tscompile": "bash -c \"./node_modules/typescript/bin/tsc -d -p ./\"",
     "typings": "./node_modules/.bin/typings install",
