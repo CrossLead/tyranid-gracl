@@ -5,7 +5,20 @@ import { GraclPlugin } from '../';
 import { PermissionsModel } from '../../../models/PermissionsModel';
 import { Hash } from '../../../interfaces';
 
+/**
+ *  Create a schema node for consumption by gracl.buildResourceHierarchy() or gracl.buildSubjectHierarchy()
 
+  Example:
+
+  ```js
+  const resources = new Map<string, SchemaNode>();
+
+  // given (node: Tyr.Field) and (name: string) ....
+  resources.set(name, plugin.createSchemaNode(node.collection, graclType, node));
+
+  const resourceHiearchy = Graph.buildResourceHierarchy(Array.from(resources.values()));
+  ```
+ */
 export function createSchemaNode(collection: Tyr.CollectionInstance, type: string, node?: Tyr.Field): SchemaNode {
   const plugin = <GraclPlugin> this;
 
