@@ -7,7 +7,6 @@
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "removeComments": false,
-    "experimentalDecorators": true,
     "noLib": false,
     "outDir": "./dist-es6/",
     "inlineSourceMap": true
