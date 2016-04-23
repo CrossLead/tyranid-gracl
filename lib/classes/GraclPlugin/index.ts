@@ -27,7 +27,7 @@ import {
 
 
 // methods to mixin
-import * as m from './methods/';
+import * as methods from './methods/';
 
 
 
@@ -131,47 +131,74 @@ export class GraclPlugin {
 
 
   // method mixin typings
-  buildLinkGraph: typeof m.buildLinkGraph = m.buildLinkGraph;
-  compareCollectionWithField: typeof m.compareCollectionWithField = m.compareCollectionWithField;
-  constructPermissionHierarchy: typeof m.constructPermissionHierarchy = m.constructPermissionHierarchy;
-
-  createGraclHierarchy: typeof m.createGraclHierarchy = m.createGraclHierarchy;
-  createInQueries: typeof m.createInQueries = m.createInQueries;
-  createResource: typeof m.createResource = m.createResource;
-  createSubject: typeof m.createSubject = m.createSubject;
-  createSchemaNode: typeof m.createSchemaNode = m.createSchemaNode;
-
-  error: typeof m.error = m.error;
-  extractIdAndModel: typeof m.extractIdAndModel = m.extractIdAndModel;
-  findLinkInCollection: typeof m.findLinkInCollection = m.findLinkInCollection;
-  formatPermissionType: typeof m.formatPermissionType = m.formatPermissionType;
-
-  getAllowedPermissionsForCollection: typeof m.getAllowedPermissionsForCollection = m.getAllowedPermissionsForCollection;
-  getAllPossiblePermissionTypes: typeof m.getAllPossiblePermissionTypes = m.getAllPossiblePermissionTypes;
-  getCollectionLinksSorted: typeof m.getCollectionLinksSorted = m.getCollectionLinksSorted;
-  getGraclClasses: typeof m.getGraclClasses = m.getGraclClasses;
-  getObjectHierarchy: typeof m.getObjectHierarchy = m.getObjectHierarchy;
-  getPermissionChildren: typeof m.getPermissionChildren = m.getPermissionChildren;
-  getPermissionObject: typeof m.getPermissionObject = m.getPermissionObject;
-  getPermissionParents: typeof m.getPermissionParents = m.getPermissionParents;
-  getShortestPath: typeof m.getShortestPath = m.getShortestPath;
-
-  isCrudPermission: typeof m.isCrudPermission = m.isCrudPermission;
-
-  log: typeof m.log = m.log;
-  logHierarchy: typeof m.logHierarchy = m.logHierarchy;
-
-  makeRepository: typeof m.makeRepository = m.makeRepository;
-  mixInDocumentMethods: typeof m.mixInDocumentMethods = m.mixInDocumentMethods;
-  nextPermissions: typeof m.nextPermissions = m.nextPermissions;
-  parsePermissionString: typeof m.parsePermissionString = m.parsePermissionString;
-  query: typeof m.query = m.query;
-  registerAllowedPermissionsForCollections: typeof m.registerAllowedPermissionsForCollections = m.registerAllowedPermissionsForCollections;
-  stepThroughCollectionPath: typeof m.stepThroughCollectionPath = m.stepThroughCollectionPath;
-
-  validateAsResource: typeof m.validateAsResource = m.validateAsResource;
-  validatePermissionExists: typeof m.validatePermissionExists = m.validatePermissionExists;
-  validatePermissionForResource: typeof m.validatePermissionForResource = m.validatePermissionForResource;
-
-
+  buildLinkGraph: typeof methods.buildLinkGraph;
+  compareCollectionWithField: typeof methods.compareCollectionWithField;
+  constructPermissionHierarchy: typeof methods.constructPermissionHierarchy;
+  createGraclHierarchy: typeof methods.createGraclHierarchy;
+  createInQueries: typeof methods.createInQueries;
+  createResource: typeof methods.createResource;
+  createSubject: typeof methods.createSubject;
+  createSchemaNode: typeof methods.createSchemaNode;
+  error: typeof methods.error;
+  extractIdAndModel: typeof methods.extractIdAndModel;
+  findLinkInCollection: typeof methods.findLinkInCollection;
+  formatPermissionType: typeof methods.formatPermissionType;
+  getAllowedPermissionsForCollection: typeof methods.getAllowedPermissionsForCollection;
+  getAllPossiblePermissionTypes: typeof methods.getAllPossiblePermissionTypes;
+  getCollectionLinksSorted: typeof methods.getCollectionLinksSorted;
+  getGraclClasses: typeof methods.getGraclClasses;
+  getObjectHierarchy: typeof methods.getObjectHierarchy;
+  getPermissionChildren: typeof methods.getPermissionChildren;
+  getPermissionObject: typeof methods.getPermissionObject;
+  getPermissionParents: typeof methods.getPermissionParents;
+  getShortestPath: typeof methods.getShortestPath;
+  isCrudPermission: typeof methods.isCrudPermission;
+  log: typeof methods.log;
+  logHierarchy: typeof methods.logHierarchy;
+  makeRepository: typeof methods.makeRepository;
+  mixInDocumentMethods: typeof methods.mixInDocumentMethods;
+  nextPermissions: typeof methods.nextPermissions;
+  parsePermissionString: typeof methods.parsePermissionString;
+  query: typeof methods.query;
+  registerAllowedPermissionsForCollections: typeof methods.registerAllowedPermissionsForCollections;
+  stepThroughCollectionPath: typeof methods.stepThroughCollectionPath;
+  validateAsResource: typeof methods.validateAsResource;
+  validatePermissionExists: typeof methods.validatePermissionExists;
+  validatePermissionForResource: typeof methods.validatePermissionForResource;
 }
+
+
+GraclPlugin.prototype.buildLinkGraph = methods.buildLinkGraph;
+GraclPlugin.prototype.compareCollectionWithField = methods.compareCollectionWithField;
+GraclPlugin.prototype.constructPermissionHierarchy = methods.constructPermissionHierarchy;
+GraclPlugin.prototype.createGraclHierarchy = methods.createGraclHierarchy;
+GraclPlugin.prototype.createInQueries = methods.createInQueries;
+GraclPlugin.prototype.createResource = methods.createResource;
+GraclPlugin.prototype.createSubject = methods.createSubject;
+GraclPlugin.prototype.createSchemaNode = methods.createSchemaNode;
+GraclPlugin.prototype.error = methods.error;
+GraclPlugin.prototype.extractIdAndModel = methods.extractIdAndModel;
+GraclPlugin.prototype.findLinkInCollection = methods.findLinkInCollection;
+GraclPlugin.prototype.formatPermissionType = methods.formatPermissionType;
+GraclPlugin.prototype.getAllowedPermissionsForCollection = methods.getAllowedPermissionsForCollection;
+GraclPlugin.prototype.getAllPossiblePermissionTypes = methods.getAllPossiblePermissionTypes;
+GraclPlugin.prototype.getCollectionLinksSorted = methods.getCollectionLinksSorted;
+GraclPlugin.prototype.getGraclClasses = methods.getGraclClasses;
+GraclPlugin.prototype.getObjectHierarchy = methods.getObjectHierarchy;
+GraclPlugin.prototype.getPermissionChildren = methods.getPermissionChildren;
+GraclPlugin.prototype.getPermissionObject = methods.getPermissionObject;
+GraclPlugin.prototype.getPermissionParents = methods.getPermissionParents;
+GraclPlugin.prototype.getShortestPath = methods.getShortestPath;
+GraclPlugin.prototype.isCrudPermission = methods.isCrudPermission;
+GraclPlugin.prototype.log = methods.log;
+GraclPlugin.prototype.logHierarchy = methods.logHierarchy;
+GraclPlugin.prototype.makeRepository = methods.makeRepository;
+GraclPlugin.prototype.mixInDocumentMethods = methods.mixInDocumentMethods;
+GraclPlugin.prototype.nextPermissions = methods.nextPermissions;
+GraclPlugin.prototype.parsePermissionString = methods.parsePermissionString;
+GraclPlugin.prototype.query = methods.query;
+GraclPlugin.prototype.registerAllowedPermissionsForCollections = methods.registerAllowedPermissionsForCollections;
+GraclPlugin.prototype.stepThroughCollectionPath = methods.stepThroughCollectionPath;
+GraclPlugin.prototype.validateAsResource = methods.validateAsResource;
+GraclPlugin.prototype.validatePermissionExists = methods.validatePermissionExists;
+GraclPlugin.prototype.validatePermissionForResource = methods.validatePermissionForResource;
