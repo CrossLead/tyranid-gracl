@@ -481,10 +481,10 @@
 								<p>Example:</p>
 								<pre><code class="lang-js"><span class="hljs-keyword">const</span> resources = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Map</span>&lt;string, SchemaNode&gt;();
 
-<span class="hljs-comment">// given node is a Tyr.Link and name is a collection name....</span>
+<span class="hljs-comment">// given (node: Tyr.Field) and (name: string) ....</span>
 resources.set(name, plugin.createSchemaNode(node.collection, graclType, node));
 
-<span class="hljs-keyword">const</span> resourceHiearchy = Graph.buildResourceHierarchy(resources);
+<span class="hljs-keyword">const</span> resourceHiearchy = Graph.buildResourceHierarchy(<span class="hljs-built_in">Array</span>.from(resources.values()));
 </code></pre>
 							</div>
 							<h4 class="tsd-parameters-title">Parameters</h4>
