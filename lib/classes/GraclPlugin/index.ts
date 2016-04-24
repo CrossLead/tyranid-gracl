@@ -59,6 +59,10 @@ import * as methods from './methods/';
   ```
 
  */
+@((plugin: typeof GraclPlugin) => {
+  Object.assign(plugin.prototype, methods);
+  return plugin;
+})
 export class GraclPlugin {
 
 
@@ -166,39 +170,3 @@ export class GraclPlugin {
   validatePermissionExists: typeof methods.validatePermissionExists;
   validatePermissionForResource: typeof methods.validatePermissionForResource;
 }
-
-
-GraclPlugin.prototype.buildLinkGraph = methods.buildLinkGraph;
-GraclPlugin.prototype.compareCollectionWithField = methods.compareCollectionWithField;
-GraclPlugin.prototype.constructPermissionHierarchy = methods.constructPermissionHierarchy;
-GraclPlugin.prototype.createGraclHierarchy = methods.createGraclHierarchy;
-GraclPlugin.prototype.createInQueries = methods.createInQueries;
-GraclPlugin.prototype.createResource = methods.createResource;
-GraclPlugin.prototype.createSubject = methods.createSubject;
-GraclPlugin.prototype.createSchemaNode = methods.createSchemaNode;
-GraclPlugin.prototype.error = methods.error;
-GraclPlugin.prototype.extractIdAndModel = methods.extractIdAndModel;
-GraclPlugin.prototype.findLinkInCollection = methods.findLinkInCollection;
-GraclPlugin.prototype.formatPermissionType = methods.formatPermissionType;
-GraclPlugin.prototype.getAllowedPermissionsForCollection = methods.getAllowedPermissionsForCollection;
-GraclPlugin.prototype.getAllPossiblePermissionTypes = methods.getAllPossiblePermissionTypes;
-GraclPlugin.prototype.getCollectionLinksSorted = methods.getCollectionLinksSorted;
-GraclPlugin.prototype.getGraclClasses = methods.getGraclClasses;
-GraclPlugin.prototype.getObjectHierarchy = methods.getObjectHierarchy;
-GraclPlugin.prototype.getPermissionChildren = methods.getPermissionChildren;
-GraclPlugin.prototype.getPermissionObject = methods.getPermissionObject;
-GraclPlugin.prototype.getPermissionParents = methods.getPermissionParents;
-GraclPlugin.prototype.getShortestPath = methods.getShortestPath;
-GraclPlugin.prototype.isCrudPermission = methods.isCrudPermission;
-GraclPlugin.prototype.log = methods.log;
-GraclPlugin.prototype.logHierarchy = methods.logHierarchy;
-GraclPlugin.prototype.makeRepository = methods.makeRepository;
-GraclPlugin.prototype.mixInDocumentMethods = methods.mixInDocumentMethods;
-GraclPlugin.prototype.nextPermissions = methods.nextPermissions;
-GraclPlugin.prototype.parsePermissionString = methods.parsePermissionString;
-GraclPlugin.prototype.query = methods.query;
-GraclPlugin.prototype.registerAllowedPermissionsForCollections = methods.registerAllowedPermissionsForCollections;
-GraclPlugin.prototype.stepThroughCollectionPath = methods.stepThroughCollectionPath;
-GraclPlugin.prototype.validateAsResource = methods.validateAsResource;
-GraclPlugin.prototype.validatePermissionExists = methods.validatePermissionExists;
-GraclPlugin.prototype.validatePermissionForResource = methods.validatePermissionForResource;
