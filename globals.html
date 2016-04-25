@@ -82,6 +82,7 @@
 								<li class="tsd-kind-type-alias"><a href="globals.html#tyrschemagraphobjects" class="tsd-kind-icon">Tyr<wbr>Schema<wbr>Graph<wbr>Objects</a></li>
 								<li class="tsd-kind-type-alias"><a href="globals.html#permissionexplaination" class="tsd-kind-icon">permission<wbr>Explaination</a></li>
 								<li class="tsd-kind-type-alias"><a href="globals.html#permissionhierarchy" class="tsd-kind-icon">permission<wbr>Hierarchy</a></li>
+								<li class="tsd-kind-type-alias"><a href="globals.html#permissiontype" class="tsd-kind-icon">permission<wbr>Type</a></li>
 								<li class="tsd-kind-type-alias"><a href="globals.html#permissiontypelist" class="tsd-kind-icon">permission<wbr>Type<wbr>List</a></li>
 								<li class="tsd-kind-type-alias"><a href="globals.html#pluginoptions" class="tsd-kind-icon">plugin<wbr>Options</a></li>
 								<li class="tsd-kind-type-alias"><a href="globals.html#schemagraclconfigobject" class="tsd-kind-icon">schema<wbr>Gracl<wbr>Config<wbr>Object</a></li>
@@ -167,7 +168,7 @@
 					<div class="tsd-signature tsd-kind-icon">Tyr<wbr>Schema<wbr>Graph<wbr>Objects<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L38">interfaces.ts:38</a></li>
+							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L41">interfaces.ts:41</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -188,7 +189,7 @@
 					<div class="tsd-signature tsd-kind-icon">permission<wbr>Explaination<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L17">interfaces.ts:17</a></li>
+							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L20">interfaces.ts:20</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -212,25 +213,22 @@
 					<div class="tsd-signature tsd-kind-icon">permission<wbr>Hierarchy<span class="tsd-signature-symbol">:</span> <a href="globals.html#hash" class="tsd-signature-type">Hash</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L15">interfaces.ts:15</a></li>
+							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L18">interfaces.ts:18</a></li>
 						</ul>
 					</aside>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-type-alias">
-					<a name="permissiontypelist" class="tsd-anchor"></a>
-					<h3>permission<wbr>Type<wbr>List</h3>
-					<div class="tsd-signature tsd-kind-icon">permission<wbr>Type<wbr>List<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">[]</span></div>
+					<a name="permissiontype" class="tsd-anchor"></a>
+					<h3>permission<wbr>Type</h3>
+					<div class="tsd-signature tsd-kind-icon">permission<wbr>Type<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L7">interfaces.ts:7</a></li>
+							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L9">interfaces.ts:9</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
 						<h4>Type declaration</h4>
 						<ul class="tsd-parameters">
-							<li class="tsd-parameter-index-signature">
-								<h5><span class="tsd-signature-symbol">[</span>key: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">]: </span><span class="tsd-signature-type">any</span></h5>
-							</li>
 							<li class="tsd-parameter">
 								<h5><span class="tsd-flag ts-flagOptional">Optional</span> abstract<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
 							</li>
@@ -238,7 +236,13 @@
 								<h5><span class="tsd-flag ts-flagOptional">Optional</span> collection<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
 							</li>
 							<li class="tsd-parameter">
+								<h5><span class="tsd-flag ts-flagOptional">Optional</span> collection_<wbr>parents<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
+							</li>
+							<li class="tsd-parameter">
 								<h5>name<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span></h5>
+							</li>
+							<li class="tsd-parameter">
+								<h5><span class="tsd-flag ts-flagOptional">Optional</span> parent<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span></h5>
 							</li>
 							<li class="tsd-parameter">
 								<h5><span class="tsd-flag ts-flagOptional">Optional</span> parents<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
@@ -247,12 +251,22 @@
 					</div>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-type-alias">
+					<a name="permissiontypelist" class="tsd-anchor"></a>
+					<h3>permission<wbr>Type<wbr>List</h3>
+					<div class="tsd-signature tsd-kind-icon">permission<wbr>Type<wbr>List<span class="tsd-signature-symbol">:</span> <a href="globals.html#permissiontype" class="tsd-signature-type">permissionType</a><span class="tsd-signature-symbol">[]</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L7">interfaces.ts:7</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias">
 					<a name="pluginoptions" class="tsd-anchor"></a>
 					<h3>plugin<wbr>Options</h3>
 					<div class="tsd-signature tsd-kind-icon">plugin<wbr>Options<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L23">interfaces.ts:23</a></li>
+							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L26">interfaces.ts:26</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -273,7 +287,7 @@
 					<div class="tsd-signature tsd-kind-icon">schema<wbr>Gracl<wbr>Config<wbr>Object<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L28">interfaces.ts:28</a></li>
+							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L31">interfaces.ts:31</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -1109,7 +1123,7 @@ resources.set(name, plugin.createSchemaNode(node.collection, graclType, node));
 					<a name="stepthroughcollectionpath" class="tsd-anchor"></a>
 					<h3>step<wbr>Through<wbr>Collection<wbr>Path</h3>
 					<ul class="tsd-signatures tsd-kind-function">
-						<li class="tsd-signature tsd-kind-icon">step<wbr>Through<wbr>Collection<wbr>Path<span class="tsd-signature-symbol">(</span>ids<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span>, previousCollection<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CollectionInstance</span>, nextCollection<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CollectionInstance</span>, secure<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Array</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></li>
+						<li class="tsd-signature tsd-kind-icon">step<wbr>Through<wbr>Collection<wbr>Path<span class="tsd-signature-symbol">(</span>ids<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span>, previousCollection<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CollectionInstance</span>, nextCollection<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">CollectionInstance</span>, secure<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Array</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
@@ -1133,7 +1147,7 @@ resources.set(name, plugin.createSchemaNode(node.collection, graclType, node));
 									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> secure: <span class="tsd-signature-type">boolean</span><span class="tsd-signature-symbol"> =&nbsp;false</span></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Array</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Array</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">any</span><span class="tsd-signature-symbol">&gt;</span><span class="tsd-signature-symbol">&gt;</span></h4>
 						</li>
 					</ul>
 				</section>
@@ -1816,6 +1830,9 @@ resources.set(name, plugin.createSchemaNode(node.collection, graclType, node));
 					</li>
 					<li class=" tsd-kind-type-alias">
 						<a href="globals.html#permissionhierarchy" class="tsd-kind-icon">permission<wbr>Hierarchy</a>
+					</li>
+					<li class=" tsd-kind-type-alias">
+						<a href="globals.html#permissiontype" class="tsd-kind-icon">permission<wbr>Type</a>
 					</li>
 					<li class=" tsd-kind-type-alias">
 						<a href="globals.html#permissiontypelist" class="tsd-kind-icon">permission<wbr>Type<wbr>List</a>
