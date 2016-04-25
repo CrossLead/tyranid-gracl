@@ -188,7 +188,7 @@ test.serial('should add permissions methods to documents', async () => {
   const methods = Object.keys(tyranidGracl.documentMethods);
 
   for (const method of methods) {
-    expect(ben, `should have method: ${method}`).to.have.property(method);
+    method && expect(ben, `should have method: ${method}`).to.have.property(method);
   }
 });
 

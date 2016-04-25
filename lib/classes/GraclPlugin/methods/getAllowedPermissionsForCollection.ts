@@ -2,8 +2,10 @@ import { GraclPlugin } from '../';
 
 export function getAllowedPermissionsForCollection(collectionName: string) {
   const plugin = <GraclPlugin> this;
-  if (plugin.permissionRestrictions.has(collectionName)) {
-    return [...plugin.permissionRestrictions.get(collectionName)];
+  const restriction = plugin.permissionRestrictions.get(collectionName);
+  if (restriction) {
+    return [...restriction];
+  } else {
+    return [...plugin.setOfAllPermissions];
   }
-  return [...plugin.setOfAllPermissions];
 }

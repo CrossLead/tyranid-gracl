@@ -16,11 +16,16 @@ export function createInQueries(
 
   const conditions: Hash<Hash<string[]>>[] = [];
 
-  for (const [col, idSet] of map.entries()) {
+  map.forEach((idSet, col) => {
     // if the collection is the same as the one being queried, use the primary id field
     let prop: string;
     if (col === queriedCollection.def.name) {
-      prop = queriedCollection.def.primaryKey.field;
+      const primaryKey = queriedCollection.def.primaryKey;
+      if (!primaryKey) {
+        plugin.error(`No primary key for collection ${queriedCollection.def.name}`);
+      } else {
+        prop = primaryKey.field;
+      }
     } else {
       const link = plugin.findLinkInCollection(queriedCollection, Tyr.byName[col]);
 
@@ -33,8 +38,9 @@ export function createInQueries(
       prop = link.spath;
     }
 
-    conditions.push({ [<string> prop]: { [<string> key]: [...idSet] } });
-  }
+    conditions.push({ [<string> prop]: { [<string> key]: Array.from(idSet) } });
+  });
+
 
   return { [key === '$in' ? '$or' : '$and']: conditions };
 }

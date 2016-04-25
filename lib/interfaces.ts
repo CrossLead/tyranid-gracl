@@ -4,13 +4,16 @@ export type Hash<T> = {
   [key: string]: T;
 };
 
-export type permissionTypeList = {
-  [key: string]: any,
-  abstract?: boolean,
-  collection?: boolean,
-  name: string,
-  parents?: string[]
-}[];
+export type permissionTypeList = permissionType[];
+
+export type permissionType = {
+  abstract?: boolean;
+  collection?: boolean;
+  name: string;
+  parents?: string[];
+  parent?: string;
+  collection_parents?: string[];
+};
 
 export type permissionHierarchy = Hash<any>;
 

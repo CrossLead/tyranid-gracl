@@ -18,11 +18,15 @@ export function registerAllowedPermissionsForCollections() {
 
     if (config.permissions) {
 
-      let allowedSet: Set<string>;
+      let allowedSet = new Set<string>();
 
       if (config.permissions.exclude) {
         const excludeSet = new Set(config.permissions.exclude);
-        allowedSet = new Set([...plugin.setOfAllPermissions].filter(p => !excludeSet.has(p)));
+        for (const p of plugin.setOfAllPermissions) {
+          if (p && !excludeSet.has(p)) {
+            allowedSet.add(p)
+          }
+        }
       }
 
       if (config.permissions.include) {
@@ -32,12 +36,16 @@ export function registerAllowedPermissionsForCollections() {
       // if flagged as this collection only,
       // add all crud permissions with this collection to allowed mapping
       if (config.permissions.thisCollectionOnly) {
-        allowedSet = new Set(_.map([...plugin.crudPermissionSet.values()], action => {
-          return plugin.formatPermissionType({
-            action: action,
-            collection: col.def.name
-          });
-        }));
+        allowedSet = new Set(_.chain([...plugin.crudPermissionSet.values()]).map(action => {
+          if (!action) {
+            return ''; // TODO: strictNullCheck hack
+          } else {
+            return plugin.formatPermissionType({
+              action: action,
+              collection: col.def.name
+            });
+          }
+        }).compact().value());
       }
 
 

@@ -27,13 +27,18 @@ export function nextPermissions(permissionString: string): string[] {
       // for inheritance
       const parentPermComponents = plugin.parsePermissionString(name);
 
-      return plugin.formatPermissionType({
-        action: parentPermComponents.action,
-        // if there was a specific collection attached to the parent permission
-        // use that, otherwise use the same collection as the last permission
-        collection: parentPermComponents.collection || components.collection
-      });
+      if (!parentPermComponents.action) {
+        return '';
+      } else {
+        return plugin.formatPermissionType({
+          action: parentPermComponents.action,
+          // if there was a specific collection attached to the parent permission
+          // use that, otherwise use the same collection as the last permission
+          collection: parentPermComponents.collection || components.collection || ''
+        });
+      }
     })
+    .compact()
     .unique()
     .value();
 }

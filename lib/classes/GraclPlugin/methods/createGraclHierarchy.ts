@@ -45,13 +45,13 @@ export function createGraclHierarchy() {
     }
 
     const [ field ] = linkFields;
-    const graclType = _.get(field, 'def.graclTypes', graclTypeAnnotation);
+    const graclType = _.get(field || {}, 'def.graclTypes', graclTypeAnnotation);
 
     // if no graclType property on this collection, skip the collection
     if (!(graclType && graclType.length)) return;
 
-    let currentType: string;
-    while (currentType = graclType.pop()) {
+    while (graclType.length) {
+      const currentType = graclType.pop();
       switch (currentType) {
         case 'subject':
           if (field) {
@@ -96,7 +96,7 @@ export function createGraclHierarchy() {
       graclType = 'resource';
     }
 
-    for (const node of tyrObjects.links) {
+    _.each(tyrObjects.links, node => {
       const name = node.collection.def.name,
             parentName = node.link.def.name,
             parentNamePath = node.collection.parsePath(node.path);
@@ -105,14 +105,14 @@ export function createGraclHierarchy() {
        * Create node in Gracl graph with a custom getParents() method
        */
       nodes.set(name, plugin.createSchemaNode(node.collection, graclType, node));
-    }
+    });
 
-    for (const parent of tyrObjects.parents) {
+    _.each(tyrObjects.parents, parent => {
       const name = parent.def.name;
       if (!nodes.has(name)) {
         nodes.set(name, plugin.createSchemaNode(parent, graclType));
       }
-    }
+    });
 
   }
 

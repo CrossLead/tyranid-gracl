@@ -11,7 +11,8 @@ export function getObjectHierarchy() {
   const build = (obj: any) => (node: typeof Node) => {
     const path = node.getHierarchyClassNames().reverse();
     let o = obj;
-    for (const name of path) {
+    for (let i = 0, l = path.length; i < l; i++) {
+      const name = path[i];
       o = o[name] = o[name] || {};
     }
   };

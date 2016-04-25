@@ -12,7 +12,8 @@ export function getAllPossiblePermissionTypes(): string[] {
   const allPermissions: string[] = [];
   const resourceCollections = Array.from(plugin.graclHierarchy.resources.keys());
 
-  for (const perm of permissionSchema) {
+  for (let i = 0, l = permissionSchema.length; i < l; i++) {
+    const perm = permissionSchema[i];
     if (perm.abstract || perm.collection) {
       allPermissions.push(perm.name);
     } else {

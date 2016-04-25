@@ -116,11 +116,12 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
     if (!access && nextPermissions) {
       for (const nextPermission of nextPermissions) {
+        if (nextPermission) {
+          const parentAccess = await PermissionsModel
+            .isAllowed(resourceDocument, nextPermission, subjectDocument);
 
-        const parentAccess = await PermissionsModel
-          .isAllowed(resourceDocument, nextPermission, subjectDocument);
-
-        if (parentAccess) return true;
+          if (parentAccess) return true;
+        }
       }
     }
 

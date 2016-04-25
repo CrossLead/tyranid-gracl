@@ -10,7 +10,7 @@ export function logHierarchy() {
   console.log(
     '  | \n  | ' +
     JSON
-      .stringify(plugin.getObjectHierarchy(), null, 4)
+      .stringify(plugin.getObjectHierarchy(), <any> null, 4) // TODO: strictNullChecks hack
       .replace(/[{},\":]/g, '')
       .replace(/^\s*\n/gm, '')
       .split('\n')

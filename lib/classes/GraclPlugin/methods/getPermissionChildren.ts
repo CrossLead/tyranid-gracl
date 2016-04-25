@@ -10,12 +10,14 @@ export function getPermissionChildren(perm: string): string[] {
 
   const { action, collection } = plugin.parsePermissionString(perm);
 
-  if (!plugin.permissionHierarchy[action]) {
+  if (!(action && plugin.permissionHierarchy[action])) {
     plugin.error(`Permission ${perm} does not exist!`);
   }
 
   const children: string[] = [];
-  for (const alt of plugin.permissionTypes) {
+  for (let i = 0, l = plugin.permissionTypes.length; i < l; i++) {
+    const alt = plugin.permissionTypes[i];
+
     const name = plugin.formatPermissionType({
       action: alt.name,
       collection: collection

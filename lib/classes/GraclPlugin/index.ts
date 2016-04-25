@@ -66,11 +66,12 @@ import * as methods from './methods/';
 export class GraclPlugin {
 
 
-  constructor(opts?: pluginOptions) {
-    opts = opts || {};
+  constructor(opts: pluginOptions = {}) {
     const plugin = this;
 
-    if (Array.isArray(opts.permissionTypes) && opts.permissionTypes.length) {
+    if (opts.permissionTypes &&
+        Array.isArray(opts.permissionTypes) &&
+        opts.permissionTypes.length) {
       plugin.permissionTypes = opts.permissionTypes;
     }
 
@@ -121,6 +122,7 @@ export class GraclPlugin {
   crudPermissionSet = new Set<string>();
   permissionsModel = PermissionsModel;
 
+  _NO_COLLECTION = 'TYRANID_GRACL_NO_COLLECTION_NAME_FOUND';
 
   permissionTypes: permissionTypeList = [
     { name: 'edit' },

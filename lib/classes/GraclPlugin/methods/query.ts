@@ -34,10 +34,15 @@ export async function query(
 
   const components = plugin.parsePermissionString(permissionType);
 
-  permissionType = plugin.formatPermissionType({
-    action: components.action,
-    collection: components.collection || queriedCollectionName
-  });
+  if (components.action) {
+    permissionType = plugin.formatPermissionType({
+      action: components.action,
+      collection: components.collection || queriedCollectionName
+    });
+  } else {
+    plugin.error(`no action for permission ${permissionType}`);
+  }
+
 
   // if no subjectDocument, no restriction...
   if (!subjectDocument) {
@@ -67,11 +72,10 @@ export async function query(
   const getAccess = (permission: Permission) => {
     let perm: boolean;
     for (const type of permissionTypes) {
-
-      if (permission.access[type] === true) {
+      if (permission.access && type && permission.access[type] === true) {
         // short circuit on true
         return true;
-      } else if (permission.access[type] === false) {
+      } else if (permission.access && type && permission.access[type] === false) {
         // continue on false, as superior permissions may be true
         perm = false;
       }
@@ -123,20 +127,23 @@ export async function query(
     collection: Tyr.CollectionInstance
   };
 
-  const resourceMap = permissions.reduce((map, perm) => {
-    const resourceCollectionName = <string> perm['resourceType'],
-          resourceId = <string> perm['resourceId'];
+  const resourceMap = (<Permission[]> (<any> permissions))
+    .reduce((map: Map<string, resourceMapEntries>, perm: Permission) => {
+      const resourceCollectionName = <string> perm.resourceType,
+            resourceId = <string> perm.resourceId;
 
-    if (!map.has(resourceCollectionName)) {
-      map.set(resourceCollectionName, {
+      const perms = map.get(resourceCollectionName) || {
         collection: Tyr.byName[resourceCollectionName],
         permissions: new Map()
-      });
-    }
+      };
 
-    map.get(resourceCollectionName).permissions.set(resourceId, perm);
-    return map;
-  }, new Map<string, resourceMapEntries>());
+      if (!map.has(resourceCollectionName)) {
+        map.set(resourceCollectionName, perms);
+      }
+
+      perms.permissions.set(resourceId, perm);
+      return map;
+    }, new Map<string, resourceMapEntries>());
 
 
   // loop through all the fields in the collection that we are
@@ -144,7 +151,7 @@ export async function query(
   // and storing them in a map of (linkFieldCollection => Field)
   const queriedCollectionLinkFields = plugin.getCollectionLinksSorted(queriedCollection)
     .reduce((map, field) => {
-      map.set(field.def.link, field);
+      if (field.def.link) map.set(field.def.link, field);
       return map;
     }, new Map<string, Tyr.Field>());
 
@@ -165,7 +172,9 @@ export async function query(
   const alreadySet = new Set<string>();
 
   // extract all collections that have a relevant permission set for the requested resource
-  for (const { collection, permissions } of resourceArray) {
+  for (let i = 0, l = resourceArray.length; i < l; i++) {
+    const { collection, permissions } = resourceArray[i];
+
     const collectionName = collection.def.name;
 
     let queryRestrictionSet = false;
@@ -185,10 +194,11 @@ export async function query(
               alreadySet.add(permission.resourceId);
             }
             const key = (access ? 'positive' : 'negative');
+            const accessSet = queryMaps[key].get(collectionName) || new Set();
             if (!queryMaps[key].has(collectionName)) {
-              queryMaps[key].set(collectionName, new Set());
+              queryMaps[key].set(collectionName, accessSet);
             }
-            queryMaps[key].get(collectionName).add(Tyr.parseUid(permission.resourceId).id);
+            accessSet.add(Tyr.parseUid(permission.resourceId).id);
             break;
         }
         queryRestrictionSet = true;
@@ -237,7 +247,7 @@ export async function query(
       }
 
       // remove end of path (which should equal the collection of interest on the permission)
-      const pathEndCollectionName = path.pop();
+      const pathEndCollectionName = path.pop() || plugin._NO_COLLECTION;
 
       if (collectionName !== pathEndCollectionName) {
         plugin.error(
@@ -277,11 +287,11 @@ export async function query(
       // the remaining path collection is equal to the collection we are trying to query,
       // we don't need to do another link in the path, as the current path collection
       // has a link that exists on the queried collection
-      let pathCollectionName: string,
-          nextCollectionName: string;
+      let pathCollectionName = pathEndCollectionName;
+
       while (path.length > 2) {
-        const pathCollection = Tyr.byName[pathCollectionName = path.pop()],
-              nextCollection = Tyr.byName[nextCollectionName = _.last(path)];
+        const pathCollection = Tyr.byName[pathCollectionName = (path.pop() || plugin._NO_COLLECTION)],
+              nextCollection = Tyr.byName[_.last(path)];
 
         if (!pathCollection) {
           plugin.error(
@@ -314,15 +324,17 @@ export async function query(
           alreadySet.add(resourceUid);
         }
 
+        const accessSet = queryMaps[accessString].get(linkedCollectionName) || new Set();
         if (!queryMaps[accessString].has(linkedCollectionName)) {
-          queryMaps[accessString].set(linkedCollectionName, new Set());
+          queryMaps[accessString].set(linkedCollectionName, accessSet);
         }
 
         // if the id was set previously, by a lower level link,
         // dont override the lower level
-        if (!queryMaps[altAccessString].has(linkedCollectionName) ||
-            !queryMaps[altAccessString].get(linkedCollectionName).has(id)) {
-          queryMaps[accessString].get(linkedCollectionName).add(id);
+        const map = queryMaps[altAccessString].get(linkedCollectionName);
+
+        if (!map || !map.has(id)) {
+          accessSet.add(id);
         }
       };
 

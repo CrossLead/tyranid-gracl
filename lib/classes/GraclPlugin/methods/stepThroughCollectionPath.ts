@@ -22,16 +22,22 @@ export async function stepThroughCollectionPath(
     );
   }
 
-  const nextCollectionId = nextCollection.def.primaryKey.field;
+  const primaryKey = nextCollection.def.primaryKey;
+  if (!primaryKey) {
+    plugin.error(`No primary key for collection ${nextCollection.def.name}`);
+    return []; // TODO: remove when compiler is bumped
+  } else {
+    const nextCollectionId = primaryKey.field;
 
-  // get the objects in the second to last collection of the path using
-  // the ids of the last collection in the path
-  const nextCollectionDocs = await nextCollection.findAll(
-    { [nextCollectionLinkField.spath]: { $in: ids } },
-    { _id: 1, [nextCollectionId]: 1 },
-    { tyranid: { secure } }
-  );
+    // get the objects in the second to last collection of the path using
+    // the ids of the last collection in the path
+    const nextCollectionDocs = await nextCollection.findAll(
+      { [nextCollectionLinkField.spath]: { $in: ids } },
+      { _id: 1, [nextCollectionId]: 1 },
+      { tyranid: { secure } }
+    );
 
-  // extract their primary ids using the primary field
-  return <string[]> _.map(nextCollectionDocs, nextCollectionId);
+    // extract their primary ids using the primary field
+    return <string[]> _.map(nextCollectionDocs, nextCollectionId);
+  }
 }
