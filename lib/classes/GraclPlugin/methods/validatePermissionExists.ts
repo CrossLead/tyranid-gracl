@@ -7,7 +7,7 @@ export function validatePermissionExists(perm: string) {
 
   const components = plugin.parsePermissionString(perm);
 
-  if (!plugin.permissionHierarchy[components.action]) {
+  if (!(components.action && plugin.permissionHierarchy[components.action])) {
     plugin.error(`Invalid permission type: ${components.action}`);
   }
 
