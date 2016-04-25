@@ -3,7 +3,7 @@ import { Repository, Node } from 'gracl';
 import { GraclPlugin } from '../';
 
 export function makeRepository(collection: Tyr.CollectionInstance, graclType: string): Repository {
-  const plugin = this;
+  const plugin = <GraclPlugin> this;
   if (graclType !== 'resource' && graclType !== 'subject') {
     plugin.error(`graclType must be subject or resource, given ${graclType}`);
   }

@@ -2,7 +2,7 @@ import { GraclPlugin } from '../';
 
 
 export function validatePermissionExists(perm: string) {
-  const plugin = this;
+  const plugin = <GraclPlugin> this;
   if (!perm) plugin.error('no permission given!');
 
   const components = plugin.parsePermissionString(perm);
