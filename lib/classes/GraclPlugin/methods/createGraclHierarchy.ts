@@ -71,6 +71,7 @@ export function createGraclHierarchy() {
           break;
         default:
           plugin.error(`Invalid gracl node type set on collection ${collectionName}, type = ${graclType}`);
+          break;
       }
     }
 
