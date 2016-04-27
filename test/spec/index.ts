@@ -950,6 +950,50 @@ test.serial('Should throw when trying to set raw crud permission', async() => {
 
 
 
+test.serial('Should allow inclusion / exclusion of all permissions for a given collection', () => {
+  const inventoryAllowed = secure.getAllowedPermissionsForCollection('inventory'),
+        teamAllowed = secure.getAllowedPermissionsForCollection('team');
+  expect(inventoryAllowed).to.deep.equal([
+    'edit-usagelog',
+    'edit-organization',
+    'edit-comment',
+    'edit-team',
+    'edit-inventory',
+    'view-usagelog',
+    'view-organization',
+    'view-comment',
+    'view-team',
+    'view-inventory',
+    'delete-usagelog',
+    'delete-organization',
+    'delete-comment',
+    'delete-team',
+    'delete-inventory',
+    'abstract_view_chart',
+    'view_alignment_triangle_private'
+  ]);
+  expect(teamAllowed).to.deep.equal([
+    'abstract_view_chart',
+    'delete-team',
+    'edit-team',
+    'view-team',
+    'delete-user',
+    'edit-user',
+    'view-user',
+    'delete-chart',
+    'edit-chart',
+    'view-chart',
+    'delete-post',
+    'edit-post',
+    'view-post',
+    'delete-blog',
+    'edit-blog',
+    'view-blog'
+  ]);
+});
+
+
+
 test.serial('Should handle lots of concurrent permissions updates', async () => {
   const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
         ben          = await Tyr.byName['user'].findOne({ name: 'ben' });

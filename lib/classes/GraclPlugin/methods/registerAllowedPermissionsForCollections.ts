@@ -13,6 +13,8 @@ export function registerAllowedPermissionsForCollections() {
     );
   }
 
+  const crudPermissions = [...plugin.crudPermissionSet];
+
   Tyr.collections.forEach(col => {
     const config = <schemaGraclConfigObject> _.get(col, 'def.graclConfig', {});
 
@@ -29,14 +31,48 @@ export function registerAllowedPermissionsForCollections() {
         }
       }
 
+      if (config.permissions.excludeCollections) {
+        const excludeSet = new Set(
+          _.chain(config.permissions.excludeCollections)
+            .map(collection => _.map(crudPermissions,
+              action => action && plugin.formatPermissionType({
+                action,
+                collection
+              })
+            ))
+            .flatten()
+            .compact()
+            .value()
+        )
+        for (const p of plugin.setOfAllPermissions) {
+          if (p && !excludeSet.has(p)) {
+            allowedSet.add(p)
+          }
+        }
+      }
+
       if (config.permissions.include) {
         allowedSet = new Set(config.permissions.include);
+      }
+
+      if (config.permissions.includeCollections) {
+        _.chain(config.permissions.includeCollections)
+          .map(collection => _.map(crudPermissions,
+            action => action && plugin.formatPermissionType({
+              action,
+              collection
+            })
+          ))
+          .flatten()
+          .compact()
+          .forEach(allowedSet.add.bind(allowedSet))
+          .value();
       }
 
       // if flagged as this collection only,
       // add all crud permissions with this collection to allowed mapping
       if (config.permissions.thisCollectionOnly) {
-        allowedSet = new Set(_.chain([...plugin.crudPermissionSet.values()]).map(action => {
+        allowedSet = new Set(_.chain(crudPermissions).map(action => {
           if (!action) {
             return ''; // TODO: strictNullCheck hack
           } else {

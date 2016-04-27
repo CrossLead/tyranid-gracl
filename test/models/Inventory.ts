@@ -4,6 +4,13 @@ export const InventoryBaseCollection = <Tyr.CollectionInstance> (new Tyr.Collect
   id: 'i00',
   name: 'inventory',
   dbName: 'inventories',
+  graclConfig: {
+    permissions: {
+      excludeCollections: [
+        'user', 'blog', 'post'
+      ]
+    }
+  },
   fields: {
     _id: { is: 'mongoid' },
     name: { is: 'string' },

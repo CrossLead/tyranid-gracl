@@ -31,6 +31,8 @@ export type pluginOptions = {
 export type schemaGraclConfigObject = {
   permissions?: {
     thisCollectionOnly?: boolean;
+    excludeCollections?: string[];
+    includeCollections?: string[];
     include?: string[];
     exclude?: string[];
   };
