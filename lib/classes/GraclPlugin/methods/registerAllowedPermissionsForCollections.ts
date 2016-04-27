@@ -22,8 +22,9 @@ export function registerAllowedPermissionsForCollections() {
 
       let allowedSet = new Set<string>();
 
+      let excludeSet = new Set();
       if (config.permissions.exclude) {
-        const excludeSet = new Set(config.permissions.exclude);
+        excludeSet = new Set(config.permissions.exclude);
         for (const p of plugin.setOfAllPermissions) {
           if (p && !excludeSet.has(p)) {
             allowedSet.add(p)
@@ -32,18 +33,17 @@ export function registerAllowedPermissionsForCollections() {
       }
 
       if (config.permissions.excludeCollections) {
-        const excludeSet = new Set(
-          _.chain(config.permissions.excludeCollections)
-            .map(collection => _.map(crudPermissions,
-              action => action && plugin.formatPermissionType({
-                action,
-                collection
-              })
-            ))
-            .flatten()
-            .compact()
-            .value()
-        )
+        _.chain(config.permissions.excludeCollections)
+          .map(collection => _.map(crudPermissions,
+            action => action && plugin.formatPermissionType({
+              action,
+              collection
+            })
+          ))
+          .flatten()
+          .compact()
+          .forEach(excludeSet.add.bind(excludeSet))
+          .value()
         for (const p of plugin.setOfAllPermissions) {
           if (p && !excludeSet.has(p)) {
             allowedSet.add(p)

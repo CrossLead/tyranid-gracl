@@ -50,7 +50,7 @@
     "ts-node": "^0.5.5",
     "tslint": "^3.5.0",
     "typedoc": "sierrasoftworks/typedoc#v1.8.10",
-    "typescript": "^1.9.0-dev.20160424",
+    "typescript": "1.8.10",
     "typings": "^0.7.9",
     "uglifyjs": "^2.4.10"
   },
