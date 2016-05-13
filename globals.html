@@ -168,7 +168,7 @@
 					<div class="tsd-signature tsd-kind-icon">Tyr<wbr>Schema<wbr>Graph<wbr>Objects<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">object</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L41">interfaces.ts:41</a></li>
+							<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/interfaces.ts#L43">interfaces.ts:43</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-type-declaration">
@@ -300,7 +300,13 @@
 										<h5><span class="tsd-flag ts-flagOptional">Optional</span> exclude<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
 									</li>
 									<li class="tsd-parameter">
+										<h5><span class="tsd-flag ts-flagOptional">Optional</span> exclude<wbr>Collections<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
+									</li>
+									<li class="tsd-parameter">
 										<h5><span class="tsd-flag ts-flagOptional">Optional</span> include<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
+									</li>
+									<li class="tsd-parameter">
+										<h5><span class="tsd-flag ts-flagOptional">Optional</span> include<wbr>Collections<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
 									</li>
 									<li class="tsd-parameter">
 										<h5><span class="tsd-flag ts-flagOptional">Optional</span> this<wbr>Collection<wbr>Only<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">boolean</span></h5>
@@ -1251,18 +1257,18 @@ resources.set(name, plugin.createSchemaNode(node.collection, graclType, node));
 						<a name="documentmethods._allow" class="tsd-anchor"></a>
 						<h3>$allow</h3>
 						<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-object-literal">
-							<li class="tsd-signature tsd-kind-icon">$allow<span class="tsd-signature-symbol">(</span>permissionType<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, subjectDocument<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol">&gt;</span></li>
+							<li class="tsd-signature tsd-kind-icon">$allow<span class="tsd-signature-symbol">(</span>permissionType<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span>, subjectDocument<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol">&gt;</span></li>
 						</ul>
 						<ul class="tsd-descriptions">
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L382">documentMethods.ts:382</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L384">documentMethods.ts:384</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
 									<div class="lead">
-										<p>Allow a subject access for a specific permission to this resource</p>
+										<p>Allow a subject access for a specific permission(s) to this resource</p>
 									</div>
 									<p>Example:</p>
 									<pre><code class="lang-js"><span class="hljs-keyword">const</span> user = <span class="hljs-keyword">await</span> Tyr.byName.user.findOne({ name: <span class="hljs-string">'ben'</span> });
@@ -1275,7 +1281,7 @@ resources.set(name, plugin.createSchemaNode(node.collection, graclType, node));
 								<h4 class="tsd-parameters-title">Parameters</h4>
 								<ul class="tsd-parameters">
 									<li>
-										<h5>permissionType: <span class="tsd-signature-type">string</span></h5>
+										<h5>permissionType: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
 									</li>
 									<li>
 										<h5><span class="tsd-flag ts-flagDefault value">Default value</span> subjectDocument: <span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> =&nbsp;Tyr.local.user</span></h5>
@@ -1289,18 +1295,18 @@ resources.set(name, plugin.createSchemaNode(node.collection, graclType, node));
 						<a name="documentmethods._allowforthis" class="tsd-anchor"></a>
 						<h3>$allow<wbr>For<wbr>This</h3>
 						<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-object-literal">
-							<li class="tsd-signature tsd-kind-icon">$allow<wbr>For<wbr>This<span class="tsd-signature-symbol">(</span>permissionAction<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, subjectDocument<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol">&gt;</span></li>
+							<li class="tsd-signature tsd-kind-icon">$allow<wbr>For<wbr>This<span class="tsd-signature-symbol">(</span>permissionAction<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span>, subjectDocument<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol">&gt;</span></li>
 						</ul>
 						<ul class="tsd-descriptions">
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L442">documentMethods.ts:442</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L462">documentMethods.ts:462</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
 									<div class="lead">
-										<p>Allow a subject access for a specific permission, using the resource
+										<p>Allow a subject access for a specific permission(s), using the resource
 										collection to determine the permission collection, to this resource</p>
 									</div>
 									<p>Example:</p>
@@ -1314,7 +1320,7 @@ resources.set(name, plugin.createSchemaNode(node.collection, graclType, node));
 								<h4 class="tsd-parameters-title">Parameters</h4>
 								<ul class="tsd-parameters">
 									<li>
-										<h5>permissionAction: <span class="tsd-signature-type">string</span></h5>
+										<h5>permissionAction: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
 									</li>
 									<li>
 										<h5><span class="tsd-flag ts-flagDefault value">Default value</span> subjectDocument: <span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> =&nbsp;Tyr.local.user</span></h5>
@@ -1328,18 +1334,18 @@ resources.set(name, plugin.createSchemaNode(node.collection, graclType, node));
 						<a name="documentmethods._deny" class="tsd-anchor"></a>
 						<h3>$deny</h3>
 						<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-object-literal">
-							<li class="tsd-signature tsd-kind-icon">$deny<span class="tsd-signature-symbol">(</span>permissionType<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, subjectDocument<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol">&gt;</span></li>
+							<li class="tsd-signature tsd-kind-icon">$deny<span class="tsd-signature-symbol">(</span>permissionType<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span>, subjectDocument<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol">&gt;</span></li>
 						</ul>
 						<ul class="tsd-descriptions">
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L411">documentMethods.ts:411</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L422">documentMethods.ts:422</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
 									<div class="lead">
-										<p>Deny a subject access for a specific permission to this resource</p>
+										<p>Deny a subject access for a specific permission(s) to this resource</p>
 									</div>
 									<p>Example:</p>
 									<pre><code class="lang-js"><span class="hljs-keyword">const</span> user = <span class="hljs-keyword">await</span> Tyr.byName.user.findOne({ name: <span class="hljs-string">'ben'</span> });
@@ -1352,7 +1358,7 @@ resources.set(name, plugin.createSchemaNode(node.collection, graclType, node));
 								<h4 class="tsd-parameters-title">Parameters</h4>
 								<ul class="tsd-parameters">
 									<li>
-										<h5>permissionType: <span class="tsd-signature-type">string</span></h5>
+										<h5>permissionType: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
 									</li>
 									<li>
 										<h5><span class="tsd-flag ts-flagDefault value">Default value</span> subjectDocument: <span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> =&nbsp;Tyr.local.user</span></h5>
@@ -1366,18 +1372,18 @@ resources.set(name, plugin.createSchemaNode(node.collection, graclType, node));
 						<a name="documentmethods._denyforthis" class="tsd-anchor"></a>
 						<h3>$deny<wbr>For<wbr>This</h3>
 						<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-object-literal">
-							<li class="tsd-signature tsd-kind-icon">$deny<wbr>For<wbr>This<span class="tsd-signature-symbol">(</span>permissionAction<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, subjectDocument<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol">&gt;</span></li>
+							<li class="tsd-signature tsd-kind-icon">$deny<wbr>For<wbr>This<span class="tsd-signature-symbol">(</span>permissionAction<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span>, subjectDocument<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol">&gt;</span></li>
 						</ul>
 						<ul class="tsd-descriptions">
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L475">documentMethods.ts:475</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L500">documentMethods.ts:500</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
 									<div class="lead">
-										<p>Deny a subject access for a specific permission, using the resource
+										<p>Deny a subject access for a specific permission(s), using the resource
 										collection to determine the permission collection, to this resource</p>
 									</div>
 									<p>Example:</p>
@@ -1391,13 +1397,58 @@ resources.set(name, plugin.createSchemaNode(node.collection, graclType, node));
 								<h4 class="tsd-parameters-title">Parameters</h4>
 								<ul class="tsd-parameters">
 									<li>
-										<h5>permissionAction: <span class="tsd-signature-type">string</span></h5>
+										<h5>permissionAction: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
 									</li>
 									<li>
 										<h5><span class="tsd-flag ts-flagDefault value">Default value</span> subjectDocument: <span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> =&nbsp;Tyr.local.user</span></h5>
 									</li>
 								</ul>
 								<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							</li>
+						</ul>
+					</section>
+					<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-object-literal">
+						<a name="documentmethods._determineaccesstoallpermissionsforresources" class="tsd-anchor"></a>
+						<h3>$determine<wbr>Access<wbr>ToAll<wbr>Permissions<wbr>For<wbr>Resources</h3>
+						<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-object-literal">
+							<li class="tsd-signature tsd-kind-icon">$determine<wbr>Access<wbr>ToAll<wbr>Permissions<wbr>For<wbr>Resources<span class="tsd-signature-symbol">(</span>permissionsToCheck<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span>, resourceUidList<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">&gt;</span></li>
+						</ul>
+						<ul class="tsd-descriptions">
+							<li class="tsd-description">
+								<aside class="tsd-sources">
+									<ul>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L583">documentMethods.ts:583</a></li>
+									</ul>
+								</aside>
+								<div class="tsd-comment tsd-typography">
+									<div class="lead">
+										<p>Given a list of permissions and a list of uids,
+											return an object that maps the uids -&gt; permission -&gt; boolean.
+										Example:</p>
+									</div>
+									<pre><code class="lang-js"><span class="hljs-keyword">const</span> chopped = <span class="hljs-keyword">await</span> giveBenAccessToChoppedPosts();
+<span class="hljs-keyword">const</span> ben = <span class="hljs-keyword">await</span> Tyr.byName[<span class="hljs-string">'user'</span>].findOne({ name: <span class="hljs-string">'ben'</span> });
+<span class="hljs-keyword">const</span> posts = <span class="hljs-keyword">await</span> Tyr.byName[<span class="hljs-string">'post'</span>].findAll({ });
+
+<span class="hljs-keyword">const</span> permissions = [<span class="hljs-string">'view'</span>, <span class="hljs-string">'edit'</span>, <span class="hljs-string">'delete'</span>];
+<span class="hljs-keyword">const</span> uids = _.map(posts, <span class="hljs-string">'$uid'</span>);
+
+<span class="hljs-keyword">const</span> accessObj = <span class="hljs-keyword">await</span> ben.$determineAccessToAllPermissionsForResources(permissions, uids);
+
+<span class="hljs-comment">// check if ben has view access to document p0057365273edce8e452bee9cfa</span>
+<span class="hljs-built_in">console</span>.log(accessObj.p0057365273edce8e452bee9cfa.view)
+</code></pre>
+								</div>
+								<h4 class="tsd-parameters-title">Parameters</h4>
+								<ul class="tsd-parameters">
+									<li>
+										<h5>permissionsToCheck: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
+									</li>
+									<li>
+										<h5>resourceUidList: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol">[]</span></h5>
+									</li>
+								</ul>
+								<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">object</span><span class="tsd-signature-symbol">&gt;</span></h4>
 							</li>
 						</ul>
 					</section>
@@ -1450,7 +1501,7 @@ resources.set(name, plugin.createSchemaNode(node.collection, graclType, node));
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L519">documentMethods.ts:519</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L548">documentMethods.ts:548</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -1498,7 +1549,7 @@ resources.set(name, plugin.createSchemaNode(node.collection, graclType, node));
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L319">documentMethods.ts:319</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L321">documentMethods.ts:321</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -1538,7 +1589,7 @@ resources.set(name, plugin.createSchemaNode(node.collection, graclType, node));
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L350">documentMethods.ts:350</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L352">documentMethods.ts:352</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
@@ -1758,39 +1809,39 @@ resources.set(name, plugin.createSchemaNode(node.collection, graclType, node));
 						</ul>
 					</section>
 					<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-object-literal">
-						<a name="documentmethods._setpermissionaccess" class="tsd-anchor"></a>
-						<h3>$set<wbr>Permission<wbr>Access</h3>
+						<a name="documentmethods._updatepermissions" class="tsd-anchor"></a>
+						<h3>$update<wbr>Permissions</h3>
 						<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-object-literal">
-							<li class="tsd-signature tsd-kind-icon">$set<wbr>Permission<wbr>Access<span class="tsd-signature-symbol">(</span>permissionType<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span>, access<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">boolean</span>, subjectDocument<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol">&gt;</span></li>
+							<li class="tsd-signature tsd-kind-icon">$update<wbr>Permissions<span class="tsd-signature-symbol">(</span>permissionChanges<span class="tsd-signature-symbol">: </span><a href="globals.html#hash" class="tsd-signature-type">Hash</a>, subjectDocument<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol">&gt;</span></li>
 						</ul>
 						<ul class="tsd-descriptions">
 							<li class="tsd-description">
 								<aside class="tsd-sources">
 									<ul>
-										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L288">documentMethods.ts:288</a></li>
+										<li>Defined in <a href="https://github.com/CrossLead/tyranid-gracl/blob/master/lib/documentMethods.ts#L291">documentMethods.ts:291</a></li>
 									</ul>
 								</aside>
 								<div class="tsd-comment tsd-typography">
 									<div class="lead">
-										<p>Set access to a specific permission for a subject</p>
+										<p>Set access to a specific permissions for a subject</p>
 									</div>
 									<p>Example:</p>
 									<pre><code class="lang-js"><span class="hljs-keyword">const</span> user = <span class="hljs-keyword">await</span> Tyr.byName.user.findOne({ name: <span class="hljs-string">'ben'</span> });
 <span class="hljs-keyword">const</span> blog = <span class="hljs-keyword">await</span> Tyr.byName.blog.findOne({ name: <span class="hljs-string">'Chipotle Blog'</span>});
 
 <span class="hljs-comment">//</span>
-<span class="hljs-comment">// check if user is allowed to view blog</span>
+<span class="hljs-comment">// set access to multiple permissions</span>
 <span class="hljs-comment">//</span>
-<span class="hljs-keyword">await</span> blog.$isAllowed(<span class="hljs-string">'view-blog'</span>, user);
+<span class="hljs-keyword">await</span> blog.$updatePermissions({
+<span class="hljs-string">'view-blog'</span>: <span class="hljs-literal">true</span>
+<span class="hljs-string">'edit-user'</span>: <span class="hljs-literal">false</span>
+}, user);
 </code></pre>
 								</div>
 								<h4 class="tsd-parameters-title">Parameters</h4>
 								<ul class="tsd-parameters">
 									<li>
-										<h5>permissionType: <span class="tsd-signature-type">string</span></h5>
-									</li>
-									<li>
-										<h5>access: <span class="tsd-signature-type">boolean</span></h5>
+										<h5>permissionChanges: <a href="globals.html#hash" class="tsd-signature-type">Hash</a></h5>
 									</li>
 									<li>
 										<h5><span class="tsd-flag ts-flagDefault value">Default value</span> subjectDocument: <span class="tsd-signature-type">Document</span><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> =&nbsp;Tyr.local.user</span></h5>
