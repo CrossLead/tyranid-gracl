@@ -2,7 +2,7 @@ import Tyr from 'tyranid';
 import * as _ from 'lodash';
 import { PermissionsModel } from './models/PermissionsModel';
 import { permissionExplaination } from './interfaces';
-
+import { Hash } from './interfaces';
 
 
 /**
@@ -270,7 +270,7 @@ await user.$removeEntityPermission('resource', 'view-user', 'deny');
 
   /**
 
-  Set access to a specific permission for a subject
+  Set access to a specific permissions for a subject
 
   Example:
 
@@ -279,23 +279,25 @@ const user = await Tyr.byName.user.findOne({ name: 'ben' });
 const blog = await Tyr.byName.blog.findOne({ name: 'Chipotle Blog'});
 
 //
-// check if user is allowed to view blog
+// set access to multiple permissions
 //
-await blog.$isAllowed('view-blog', user);
+await blog.$updatePermissions({
+  'view-blog': true
+  'edit-user': false
+}, user);
 ```
 
   */
-  $setPermissionAccess(
-    permissionType: string,
-    access: boolean,
+  $updatePermissions(
+    permissionChanges: Hash<boolean>,
     subjectDocument: Tyr.Document | string = Tyr.local.user
   ): Promise<Tyr.Document> {
-    const plugin = PermissionsModel.getGraclPlugin();
-    plugin.validatePermissionExists(permissionType);
     const context = <any> this,
-          doc = <Tyr.Document> context;
+          doc = <Tyr.Document> context,
+          plugin = PermissionsModel.getGraclPlugin();
 
-    return PermissionsModel.setPermissionAccess(doc, permissionType, access, subjectDocument);
+    _.each(permissionChanges, (_, p) => plugin.validatePermissionForResource(p, doc.$model));
+    return PermissionsModel.updatePermissions(doc, permissionChanges, subjectDocument);
   },
 
 
@@ -366,7 +368,7 @@ const userHasAccessToBlog = await blog.$isAllowedForThis('view', user);
 
   /**
 
-  Allow a subject access for a specific permission to this resource
+  Allow a subject access for a specific permission(s) to this resource
 
   Example:
 
@@ -380,22 +382,31 @@ await blog.$allow('view-blog', user);
 
   */
   $allow(
-    permissionType: string,
+    permissionType: string | string[],
     subjectDocument: Tyr.Document | string = Tyr.local.user
   ): Promise<Tyr.Document> {
     const context = <any> this,
           doc = <Tyr.Document> context,
-          plugin = PermissionsModel.getGraclPlugin();
+          plugin = PermissionsModel.getGraclPlugin(),
+          permissionUpdates: Hash<boolean> = {};
 
-    plugin.validatePermissionForResource(permissionType, doc.$model);
-    return <Promise<Tyr.Document>> this.$setPermissionAccess(permissionType, true, subjectDocument);
+    if (typeof permissionType === 'string') {
+      permissionUpdates[permissionType] = true;
+    } else {
+      _.each(permissionType, p => permissionUpdates[p] = true);
+    }
+
+    return <Promise<Tyr.Document>> this.$updatePermissions(
+      permissionUpdates,
+      subjectDocument
+    );
   },
 
 
 
   /**
 
-  Deny a subject access for a specific permission to this resource
+  Deny a subject access for a specific permission(s) to this resource
 
   Example:
 
@@ -409,15 +420,24 @@ await blog.$deny('view-blog', user);
 
   */
   $deny(
-    permissionType: string,
+    permissionType: string | string[],
     subjectDocument: Tyr.Document | string = Tyr.local.user
   ): Promise<Tyr.Document> {
     const context = <any> this,
           doc = <Tyr.Document> context,
-          plugin = PermissionsModel.getGraclPlugin();
+          plugin = PermissionsModel.getGraclPlugin(),
+          permissionUpdates: Hash<boolean> = {};
 
-    plugin.validatePermissionForResource(permissionType, doc.$model);
-    return <Promise<Tyr.Document>> this.$setPermissionAccess(permissionType, false, subjectDocument);
+    if (typeof permissionType === 'string') {
+      permissionUpdates[permissionType] = false;
+    } else {
+      _.each(permissionType, p => permissionUpdates[p] = false);
+    }
+
+    return <Promise<Tyr.Document>> this.$updatePermissions(
+      permissionUpdates,
+      subjectDocument
+    );
   },
 
 
@@ -425,7 +445,7 @@ await blog.$deny('view-blog', user);
 
   /**
 
-  Allow a subject access for a specific permission, using the resource
+  Allow a subject access for a specific permission(s), using the resource
   collection to determine the permission collection, to this resource
 
   Example:
@@ -440,17 +460,22 @@ await blog.$allowForThis('view', user);
 
   */
   $allowForThis(
-    permissionAction: string,
+    permissionAction: string | string[],
     subjectDocument: Tyr.Document | string = Tyr.local.user
   ): Promise<Tyr.Document> {
     const context = <any> this,
           doc = <Tyr.Document> context,
-          plugin = PermissionsModel.getGraclPlugin(),
-          permissionType = plugin.formatPermissionType({
-            action: permissionAction,
-            collection: doc.$model.def.name
-          });
-    plugin.validatePermissionForResource(permissionType, doc.$model);
+          plugin = PermissionsModel.getGraclPlugin()
+
+    const permissionType =
+      _.map(
+        typeof permissionAction === 'string'
+          ? [permissionAction]
+          : permissionAction,
+        p => plugin.formatPermissionType({
+          action: p,
+          collection: doc.$model.def.name
+        }));
     return <Promise<Tyr.Document>> context.$allow(permissionType, subjectDocument);
   },
 
@@ -458,7 +483,7 @@ await blog.$allowForThis('view', user);
 
   /**
 
-  Deny a subject access for a specific permission, using the resource
+  Deny a subject access for a specific permission(s), using the resource
   collection to determine the permission collection, to this resource
 
   Example:
@@ -473,18 +498,22 @@ await blog.$denyForThis('view', user);
 
   */
   $denyForThis(
-    permissionAction: string,
+    permissionAction: string | string[],
     subjectDocument: Tyr.Document | string = Tyr.local.user
   ): Promise<Tyr.Document> {
     const context = <any> this,
           doc = <Tyr.Document> context,
-          plugin = PermissionsModel.getGraclPlugin(),
-          permissionType = plugin.formatPermissionType({
-            action: permissionAction,
-            collection: doc.$model.def.name
-          });
+          plugin = PermissionsModel.getGraclPlugin()
 
-    plugin.validatePermissionForResource(permissionType, doc.$model);
+    const permissionType =
+      _.map(
+        typeof permissionAction === 'string'
+          ? [permissionAction]
+          : permissionAction,
+        p => plugin.formatPermissionType({
+          action: p,
+          collection: doc.$model.def.name
+        }));
     return <Promise<Tyr.Document>> context.$deny(permissionType, subjectDocument);
   },
 

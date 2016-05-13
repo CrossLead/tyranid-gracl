@@ -151,18 +151,24 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   }
 
 
-  static async setPermissionAccess(
+
+  static async updatePermissions(
     resourceDocument: Tyr.Document | string,
-    permissionType: string,
-    access: boolean,
+    permissionChanges: { [key: string]: boolean },
     subjectDocument: Tyr.Document | string,
     attempt = 0
-  ): Promise<Tyr.Document> {
+  ) {
     const plugin = PermissionsModel.getGraclPlugin();
-    plugin.validatePermissionExists(permissionType);
 
-    if (!resourceDocument) throw new TypeError(`no resource given to setPermissionAccess`);
-    if (!subjectDocument) throw new TypeError(`no subject given to setPermissionAccess`);
+    const $set: { [key: string]: boolean } = {};
+
+    _.each(permissionChanges, (access, permissionType) => {
+      plugin.validatePermissionExists(permissionType);
+      $set[`access.${permissionType}`] = access;
+    });
+
+    if (!resourceDocument) throw new TypeError(`no resource given to updatePermissions`);
+    if (!subjectDocument) throw new TypeError(`no subject given to updatePermissions`);
 
     const resourceComponents = plugin.extractIdAndModel(resourceDocument),
           subjectComponents = plugin.extractIdAndModel(subjectDocument);
@@ -183,9 +189,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
             subjectType: subjectComponents.$model.def.name,
             resourceType: resourceComponents.$model.def.name
           },
-          $set: {
-            [`access.${permissionType}`]: access
-          }
+          $set
         },
         { upsert: true }
       );
@@ -194,15 +198,15 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       if (attempt < 10 && /E11000 duplicate key error/.test(error.message)) {
         return <Tyr.Document> (await new Promise((resolve, reject) => {
           setTimeout(() => {
-            PermissionsModel.setPermissionAccess(
-              resourceDocument,
-              permissionType,
-              access,
-              subjectDocument,
-              attempt++
-            )
-            .then(resolve)
-            .catch(reject);
+            PermissionsModel
+              .updatePermissions(
+                resourceDocument,
+                permissionChanges,
+                subjectDocument,
+                attempt++
+              )
+              .then(resolve)
+              .catch(reject);
           }, 100);
         }));
       } else if (/E11000 duplicate key error/.test(error.message)) {
@@ -215,12 +219,12 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
 
     if (typeof resourceDocument === 'string') {
-      const doc = await Tyr.byUid(resourceDocument);
-      return doc;
+      return Tyr.byUid(resourceDocument);
     } else {
       return resourceDocument;
     }
   }
+
 
 
   /**

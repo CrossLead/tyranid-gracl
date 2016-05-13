@@ -52,7 +52,9 @@ async function giveBenAccessToChoppedPosts(perm = 'view') {
   expect(ben, 'ben should exist').to.exist;
   expect(chopped, 'chopped should exist').to.exist;
 
-  const updatedChopped = secure.permissionsModel.setPermissionAccess(chopped, `${perm}-post`, true, ben);
+  const updatedChopped = secure.permissionsModel.updatePermissions(
+    chopped, { [`${perm}-post`]: true }, ben
+  );
 
   return updatedChopped;
 }
