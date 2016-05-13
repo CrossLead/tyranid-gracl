@@ -11,6 +11,7 @@ within tyranid simply by adding a few schema annotations.
 
 - [Generated Documentation](http://crosslead.github.io/tyranid-gracl)
 - [Github Repository](https://github.com/CrossLead/tyranid-gracl)
+- [A few slides](http://slides.com/bensouthgate/graph-based-permissions#/) that explain the basical algorithm and motivation of this project.
 
 ## Setup
 
