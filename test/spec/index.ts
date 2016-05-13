@@ -952,6 +952,26 @@ test.serial('Should throw when trying to set raw crud permission', async() => {
 
 
 
+test.serial('Should return object relating uids to access level for multiple permissions when using $determineAccessToAllPermissionsForResources()', async() => {
+  const chopped = await giveBenAccessToChoppedPosts(),
+        ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+        posts = await Tyr.byName['post'].findAll({ });
+
+  const accessObj = await ben['$determineAccessToAllPermissionsForResources'](
+    ['view', 'edit', 'delete'],
+    _.map(posts, '$uid')
+  );
+
+  for (const post of posts) {
+    for (const perm in accessObj[post.$uid]) {
+      expect(accessObj[post.$uid][perm])
+        .to.equal(await post['$isAllowedForThis'](perm, ben));
+    }
+  }
+});
+
+
+
 test.serial('Should allow inclusion / exclusion of all permissions for a given collection', () => {
   const inventoryAllowed = secure.getAllowedPermissionsForCollection('inventory'),
         teamAllowed = secure.getAllowedPermissionsForCollection('team');

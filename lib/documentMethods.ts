@@ -555,7 +555,88 @@ console.log(explaination.type)
 
     plugin.validatePermissionForResource(permissionType, doc.$model);
     return PermissionsModel.explainPermission(doc, permissionType, subjectDocument);
+  },
+
+
+
+  /**
+
+  Given a list of permissions and a list of uids,
+  return an object that maps the uids -> permission -> boolean.
+  Example:
+
+```js
+const chopped = await giveBenAccessToChoppedPosts();
+const ben = await Tyr.byName['user'].findOne({ name: 'ben' });
+const posts = await Tyr.byName['post'].findAll({ });
+
+const permissions = ['view', 'edit', 'delete'];
+const uids = _.map(posts, '$uid');
+
+const accessObj = await ben.$determineAccessToAllPermissionsForResources(permissions, uids);
+
+// check if ben has view access to document p0057365273edce8e452bee9cfa
+console.log(accessObj.p0057365273edce8e452bee9cfa.view)
+```
+
+  */
+  async $determineAccessToAllPermissionsForResources(
+    permissionsToCheck: string[],
+    resourceUidList: string[] | Tyr.Document[]
+  ) {
+    const context = <any> this,
+          doc = <Tyr.Document> context,
+          plugin = PermissionsModel.getGraclPlugin(),
+          accessMap: Hash<Hash<boolean>> = {};
+
+
+    const uidsToCheck: string[] =
+      typeof resourceUidList[0] === 'string'
+        ? <string[]> resourceUidList
+        : <string[]> _.map(<Tyr.Document[]> resourceUidList, '$uid');
+
+    if (!plugin.graclHierarchy.subjects.has(doc.$model.def.name)) {
+      plugin.error(
+        `can only call $determineAccessToAllPermissions on a valid subject, ` +
+        `${doc.$model.def.name} is not a subject.`
+      );
+    }
+
+    const retrievedDocumentsPromise = Promise.all(
+      _.map(permissionsToCheck, perm => {
+        const tyranidOpts = {
+          auth: doc,
+          perm: perm,
+          fields: { _id: 1 }
+        };
+
+        return Tyr.byUids(uidsToCheck, tyranidOpts);
+      })
+    )
+
+    // Hacky double cast for promise.all weirdness
+    const retrievedDocumentMatrix = <Tyr.Document[][]> (<any> (await retrievedDocumentsPromise));
+
+    const permissionSetHash = _.reduce(
+      retrievedDocumentMatrix,
+      (out, documentList, index) => {
+        const permission = permissionsToCheck[index];
+        out[permission] = new Set(<string[]> _.map(documentList, '$uid'));
+        return out;
+      },
+      <Hash<Set<string>>> {}
+    );
+
+    _.each(uidsToCheck, uid => {
+      accessMap[uid] = {};
+      _.each(permissionsToCheck, perm => {
+        accessMap[uid][perm] = permissionSetHash[perm].has(uid);
+      });
+    });
+
+    return accessMap;
   }
+
 
 
 
