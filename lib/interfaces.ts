@@ -8,6 +8,7 @@ export type permissionTypeList = permissionType[];
 
 export type permissionType = {
   abstract?: boolean;
+  format?: string | ((action: string, collection?: string) => string);
   collection?: boolean;
   name: string;
   parents?: string[];

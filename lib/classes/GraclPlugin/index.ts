@@ -149,6 +149,7 @@ export class GraclPlugin {
   extractIdAndModel: typeof methods.extractIdAndModel;
   findLinkInCollection: typeof methods.findLinkInCollection;
   formatPermissionType: typeof methods.formatPermissionType;
+  formatPermissionLabel: typeof methods.formatPermissionLabel;
   getAllowedPermissionsForCollection: typeof methods.getAllowedPermissionsForCollection;
   getAllPossiblePermissionTypes: typeof methods.getAllPossiblePermissionTypes;
   getCollectionLinksSorted: typeof methods.getCollectionLinksSorted;

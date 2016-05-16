@@ -17,8 +17,11 @@ type GraclPlugin = tyranidGracl.GraclPlugin;
 const VERBOSE_LOGGING = false;
 
 const permissionTypes = [
-  { name: 'edit', abstract: false },
-  { name: 'view', parent: 'edit', abstract: false },
+  { name: 'edit', format: 'TEST_LABEL', abstract: false },
+  { name: 'view',
+    format: (act: string, col?: string) => `Allowed to view ${_.capitalize(col)}`,
+    parent: 'edit',
+    abstract: false },
   { name: 'delete', abstract: false },
   { name: 'abstract_view_chart', abstract: true, parents: [
     'view-user',
@@ -89,6 +92,17 @@ test.before(async () => {
 
 test.beforeEach(createTestData);
 
+
+test.serial('Should produce correctly formatted labels', () => {
+  expect(secure.formatPermissionLabel('view-blog'))
+    .to.equal(`Allowed to view Blog`);
+
+  expect(secure.formatPermissionLabel('view_alignment_triangle_private'))
+    .to.equal('View Alignment Triangle Private');
+
+  expect(secure.formatPermissionLabel('edit-user'))
+    .to.equal('TEST_LABEL');
+});
 
 
 test.serial('should correctly find links using getCollectionLinksSorted', () => {

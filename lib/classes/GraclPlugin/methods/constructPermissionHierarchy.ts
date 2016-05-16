@@ -111,6 +111,7 @@ export function constructPermissionHierarchy() {
       name,
       abstract: abstract,
       collection: collection,
+      format: node.format,
       // need to add parents, that may be non-abstract nodes that don't directly exist in hierarchy
       parents: _.map(parents, (p: string) => {
         const hierarchyParent = hierarchy[p];

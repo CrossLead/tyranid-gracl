@@ -11,6 +11,8 @@ export * from './createSchemaNode';
 export * from './error';
 export * from './extractIdAndModel';
 export * from './findLinkInCollection';
+
+export * from './formatPermissionLabel';
 export * from './formatPermissionType';
 
 export * from './getAllowedPermissionsForCollection';
