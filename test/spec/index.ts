@@ -355,6 +355,36 @@ test.serial('should successfully find permission when multiple permissions paren
 });
 
 
+test.serial('should throw error when passing invalid uid', async () => {
+  const chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
+
+  await expectAsyncToThrow(
+    () => chopped['$allow']('abstract_view_chart', { $uid: 'u00undefined', $model: Tyr.byName['user'] }),
+    /Invalid resource id/g,
+    'invalid uid should throw (allow, string)'
+  );
+
+  await expectAsyncToThrow(
+    () => chopped['$allow']('abstract_view_chart', 'u00undefined'),
+    /Invalid resource id/g,
+    'invalid uid should throw (allow, doc)'
+  );
+
+  await expectAsyncToThrow(
+    () => chopped['$isAllowed']('abstract_view_chart', 'u00undefined'),
+    /Invalid resource id/g,
+    'invalid uid should throw (isAllowed, string)'
+  );
+
+  await expectAsyncToThrow(
+    () => chopped['$isAllowed']('abstract_view_chart', { $uid: 'u00undefined', $model: Tyr.byName['user'] }),
+    /Invalid resource id/g,
+    'invalid uid should throw (isAllowed, doc)'
+  );
+});
+
+
+
 
 test.serial('should skip a link in the hierarchy chain when no immediate parent ids present', async () => {
   const noTeamUser = await Tyr.byName['user'].findOne({ name: 'noTeams' }),

@@ -16,5 +16,5 @@ export async function expectAsyncToThrow(
   }
 
   expect(threw, description).to.equal(true);
-  expect(message).to.match(expectedMessageRegex);
+  expect(message, description).to.match(expectedMessageRegex);
 };

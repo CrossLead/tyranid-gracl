@@ -98,6 +98,9 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
     const plugin = PermissionsModel.getGraclPlugin();
 
+    plugin.extractIdAndModel(resourceData);
+    plugin.extractIdAndModel(subjectData);
+
     let resourceDocument = typeof resourceData === 'string'
       ? await Tyr.byUid(resourceData)
       : resourceData;
@@ -136,6 +139,9 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   ): Promise<permissionExplaination> {
     const plugin = PermissionsModel.getGraclPlugin();
     plugin.validatePermissionExists(permissionType);
+
+    plugin.extractIdAndModel(resourceData);
+    plugin.extractIdAndModel(subjectData);
 
     let resourceDocument = typeof resourceData === 'string'
       ? await Tyr.byUid(resourceData)
