@@ -969,7 +969,6 @@ test.serial('Should throw error if attempting to use permission not allowed for 
 });
 
 
-
 test.serial('Should return correct allowed permissions for given collection', () => {
   const allowed = secure.getAllowedPermissionsForCollection('post'),
         blogAllowed = secure.getAllowedPermissionsForCollection('blog');
@@ -1019,6 +1018,7 @@ test.serial('Should return object relating uids to access level for multiple per
 test.serial('Should allow inclusion / exclusion of all permissions for a given collection', () => {
   const inventoryAllowed = secure.getAllowedPermissionsForCollection('inventory'),
         teamAllowed = secure.getAllowedPermissionsForCollection('team');
+
   expect(inventoryAllowed).to.deep.equal([
     'edit-usagelog',
     'edit-organization',
@@ -1035,8 +1035,7 @@ test.serial('Should allow inclusion / exclusion of all permissions for a given c
     'delete-comment',
     'delete-team',
     'delete-inventory',
-    'abstract_view_chart',
-    'view_alignment_triangle_private'
+    'abstract_view_chart'
   ]);
   expect(teamAllowed).to.deep.equal([
     'abstract_view_chart',

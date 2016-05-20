@@ -19,22 +19,29 @@ export function registerAllowedPermissionsForCollections() {
     const config = <schemaGraclConfigObject> _.get(col, 'def.graclConfig', {});
 
     if (config.permissions) {
+      const hasExcludeConfig = !!(
+        config.permissions.exclude ||
+        config.permissions.excludeCollections
+      );
 
-      let allowedSet = new Set<string>();
+      const hasIncludeConfig = !!(
+        config.permissions.include ||
+        config.permissions.includeCollections
+      )
 
-      let excludeSet = new Set();
-      if (config.permissions.exclude) {
-        excludeSet = new Set(config.permissions.exclude);
-        for (const p of plugin.setOfAllPermissions) {
-          if (p && !excludeSet.has(p)) {
-            allowedSet.add(p)
-          }
+      let allowedSet: Set<string>;
+
+      if (hasExcludeConfig && !hasIncludeConfig) {
+        let excludeSet = new Set();
+
+        if (config.permissions.exclude) {
+          excludeSet = new Set(config.permissions.exclude);
         }
-      }
 
-      if (config.permissions.excludeCollections) {
+        if (config.permissions.excludeCollections) {
         _.chain(config.permissions.excludeCollections)
-          .map(collection => _.map(crudPermissions,
+          .map(collection => _.map(
+            crudPermissions,
             action => action && plugin.formatPermissionType({
               action,
               collection
@@ -42,8 +49,11 @@ export function registerAllowedPermissionsForCollections() {
           ))
           .flatten()
           .compact()
-          .forEach(excludeSet.add.bind(excludeSet))
+          .each(excludeSet.add.bind(excludeSet))
           .value()
+        }
+
+        allowedSet = new Set<string>();
         for (const p of plugin.setOfAllPermissions) {
           if (p && !excludeSet.has(p)) {
             allowedSet.add(p)
@@ -51,23 +61,27 @@ export function registerAllowedPermissionsForCollections() {
         }
       }
 
-      if (config.permissions.include) {
-        allowedSet = new Set(config.permissions.include);
+      if (hasIncludeConfig) {
+        allowedSet = new Set<string>();
+        if (config.permissions.include) {
+          allowedSet = new Set(config.permissions.include);
+        }
+
+        if (config.permissions.includeCollections) {
+          _.chain(config.permissions.includeCollections)
+            .map(collection => _.map(crudPermissions,
+              action => action && plugin.formatPermissionType({
+                action,
+                collection
+              })
+            ))
+            .flatten()
+            .compact()
+            .each(allowedSet.add.bind(allowedSet))
+            .value();
+        }
       }
 
-      if (config.permissions.includeCollections) {
-        _.chain(config.permissions.includeCollections)
-          .map(collection => _.map(crudPermissions,
-            action => action && plugin.formatPermissionType({
-              action,
-              collection
-            })
-          ))
-          .flatten()
-          .compact()
-          .forEach(allowedSet.add.bind(allowedSet))
-          .value();
-      }
 
       // if flagged as this collection only,
       // add all crud permissions with this collection to allowed mapping
@@ -90,5 +104,4 @@ export function registerAllowedPermissionsForCollections() {
       }
     }
   });
-
 }

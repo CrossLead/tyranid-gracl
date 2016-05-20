@@ -8,6 +8,9 @@ export const InventoryBaseCollection = <Tyr.CollectionInstance> (new Tyr.Collect
     permissions: {
       excludeCollections: [
         'user', 'blog', 'post'
+      ],
+      exclude: [
+        'view_alignment_triangle_private'
       ]
     }
   },
