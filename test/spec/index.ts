@@ -1091,4 +1091,23 @@ test.serial('Should handle lots of concurrent permissions updates', async () => 
     p['$allow']('view-post', ben),
     p['$allow']('edit-post', ben)
   ])));
+
+
+  // 14,000 concurrent checks
+  await Promise.all(posts.map(p => Promise.all([
+    p['$isAllowed']('view-post', ben),
+    p['$isAllowed']('edit-post', ben),
+    p['$isAllowed']('delete-post', ben),
+    p['$isAllowed']('view-post', ben),
+    p['$isAllowed']('view-post', ben),
+    p['$isAllowed']('view-post', ben),
+    p['$isAllowed']('edit-post', ben),
+    p['$isAllowed']('view-post', ben),
+    p['$isAllowed']('edit-post', ben),
+    p['$isAllowed']('delete-post', ben),
+    p['$isAllowed']('view-post', ben),
+    p['$isAllowed']('view-post', ben),
+    p['$isAllowed']('view-post', ben),
+    p['$isAllowed']('edit-post', ben)
+  ])));
 });
