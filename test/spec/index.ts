@@ -1058,6 +1058,35 @@ test.serial('Should allow inclusion / exclusion of all permissions for a given c
 });
 
 
+test.serial('Should throw when *forThis methods are given non-crud permission', async () => {
+  const post = await Tyr.byName['post'].findOne({}),
+        ben  = await Tyr.byName['user'].findOne({ name: 'ben' });
+
+  await expectAsyncToThrow(
+    () => {
+    return post['$isAllowedForThis']('view_alignment_triangle_private', ben);
+    },
+    /with a crud action, given/,
+    '$isAllowedForThis'
+  );
+
+  await expectAsyncToThrow(
+    () => {
+    return post['$allowForThis']('view_alignment_triangle_private', ben);
+    },
+    /with a crud action, given/,
+    '$allowForThis'
+  );
+
+  await expectAsyncToThrow(
+    () => {
+    return post['$denyForThis']('view_alignment_triangle_private', ben);
+    },
+    /with a crud action, given/,
+    '$denyForThis'
+  );
+});
+
 
 test.serial('Should handle lots of concurrent permissions updates', async () => {
   const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),

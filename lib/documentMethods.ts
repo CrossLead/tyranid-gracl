@@ -355,11 +355,17 @@ const userHasAccessToBlog = await blog.$isAllowedForThis('view', user);
   ): Promise<boolean> {
     const context = <any> this,
           doc = <Tyr.Document> context,
-          plugin = PermissionsModel.getGraclPlugin(),
-          permissionType = plugin.formatPermissionType({
-            action: permissionAction,
-            collection: doc.$model.def.name
-          });
+          plugin = PermissionsModel.getGraclPlugin();
+
+    if (!plugin.isCrudPermission(permissionAction)) {
+      plugin.error(`Can only use $isAllowedForThis with a crud action, given ${permissionAction}`);
+    }
+
+    const permissionType = plugin.formatPermissionType({
+      action: permissionAction,
+      collection: doc.$model.def.name
+    });
+
     plugin.validatePermissionForResource(permissionType, doc.$model);
     return this.$isAllowed(permissionType, subjectDocument);
   },
@@ -467,6 +473,14 @@ await blog.$allowForThis('view', user);
           doc = <Tyr.Document> context,
           plugin = PermissionsModel.getGraclPlugin()
 
+    const crud = typeof permissionAction === 'string'
+      ? plugin.isCrudPermission(permissionAction)
+      : permissionAction.every(p => plugin.isCrudPermission(p));
+
+    if (!crud) {
+      plugin.error(`Can only use $allowForThis with a crud action, given ${permissionAction}`);
+    }
+
     const permissionType =
       _.map(
         typeof permissionAction === 'string'
@@ -504,6 +518,14 @@ await blog.$denyForThis('view', user);
     const context = <any> this,
           doc = <Tyr.Document> context,
           plugin = PermissionsModel.getGraclPlugin()
+
+    const crud = typeof permissionAction === 'string'
+      ? plugin.isCrudPermission(permissionAction)
+      : permissionAction.every(p => plugin.isCrudPermission(p));
+
+    if (!crud) {
+      plugin.error(`Can only use $denyForThis with a crud action, given ${permissionAction}`);
+    }
 
     const permissionType =
       _.map(
