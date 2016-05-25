@@ -634,7 +634,7 @@ console.log(accessObj.p0057365273edce8e452bee9cfa.view)
 
         return Tyr.byUids(uidsToCheck, tyranidOpts);
       })
-    )
+    );
 
     // Hacky double cast for promise.all weirdness
     const retrievedDocumentMatrix = <Tyr.Document[][]> (<any> (await retrievedDocumentsPromise));

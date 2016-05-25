@@ -756,6 +756,7 @@ test.serial('should produce $and clause with excluded and included ids', async (
   ]);
 
   const query = await secure.query(Tyr.byName['post'], 'view', ted);
+
   const [ positive, negative ] = <any[]> _.get(query, '$and');
 
   const _idRestriction    = _.find(positive['$or'], v => _.contains(_.keys(v), '_id')),
@@ -765,17 +766,20 @@ test.serial('should produce $and clause with excluded and included ids', async (
 
   checkStringEq(
     <string[]> _.get(_idRestriction, '_id.$in'),
-    [ post.$id ]
+    [ post.$id ],
+    'postId should have one element'
   );
 
   checkStringEq(
     <string[]> _.get(blogIdRestriction, 'blogId.$in'),
-    cavaBlogs.map(b => b.$id)
+    cavaBlogs.map(b => b.$id),
+    'blog id in check'
   );
 
   checkStringEq(
     <string[]> _.get(blogIdNegative, 'blogId.$nin'),
-    chipotleBlogs.map(b => b.$id)
+    chipotleBlogs.map(b => b.$id).filter(id => id.toString() !== post['blogId'].toString()),
+    'blog id nin check'
   );
 
 });
@@ -1090,8 +1094,6 @@ test.serial('Should throw when *forThis methods are given non-crud permission', 
 
 
 test.serial('Should respect resource hierarchy for deny exception (linked parent deny, child allow)', async () => {
-    secure.verbose = true;
-
     const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
           ben          = await Tyr.byName['user'].findOne({ name: 'ben' }),
           posts        = await Tyr.byName['post'].findAll({ blogId: chipotleBlog.$id });
@@ -1101,7 +1103,6 @@ test.serial('Should respect resource hierarchy for deny exception (linked parent
 
     const access = await ben['$determineAccessToAllPermissionsForResources'](['view-post'], posts.map(p => p.$uid));
     expect(access[posts[0].$uid]['view-post'], 'should have access to first post').to.equal(true);
-    secure.verbose = false;
 });
 
 
