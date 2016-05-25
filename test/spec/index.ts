@@ -1088,6 +1088,40 @@ test.serial('Should throw when *forThis methods are given non-crud permission', 
 });
 
 
+
+test.serial('Should respect resource hierarchy for deny exception (linked parent deny, child allow)', async () => {
+    secure.verbose = true;
+
+    const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
+          ben          = await Tyr.byName['user'].findOne({ name: 'ben' }),
+          posts        = await Tyr.byName['post'].findAll({ blogId: chipotleBlog.$id });
+
+    await chipotleBlog['$deny']('view-post', ben);
+    await posts[0]['$allow']('view-post', ben);
+
+    const access = await ben['$determineAccessToAllPermissionsForResources'](['view-post'], posts.map(p => p.$uid));
+    expect(access[posts[0].$uid]['view-post'], 'should have access to first post').to.equal(true);
+    secure.verbose = false;
+});
+
+
+
+test.serial('Should respect resource hierarchy for deny exception (removed parent deny, child allow)', async () => {
+    const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
+          chipotleBlogs = await Tyr.byName['blog'].findAll({ organizationId: chipotle.$id }),
+          ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+          posts = await Tyr.byName['post'].findAll({ blogId: { $in: _.map(chipotleBlogs, '$id') } });
+
+    await chipotle['$deny']('view-post', ben);
+    await posts[0]['$allow']('view-post', ben);
+
+    const access = await ben['$determineAccessToAllPermissionsForResources'](['view-post'], posts.map(p => p.$uid));
+    expect(access[posts[0].$uid]['view-post'], 'should have access to first post').to.equal(true);
+});
+
+
+
+
 test.serial('Should handle lots of concurrent permissions updates', async () => {
   const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
         ben          = await Tyr.byName['user'].findOne({ name: 'ben' });

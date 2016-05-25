@@ -643,7 +643,7 @@ console.log(accessObj.p0057365273edce8e452bee9cfa.view)
       retrievedDocumentMatrix,
       (out, documentList, index) => {
         const permission = permissionsToCheck[index];
-        out[permission] = new Set(<string[]> _.map(documentList, '$uid'));
+        out[permission] = new Set(<string[]> _.chain(documentList).map('$uid').compact().value());
         return out;
       },
       <Hash<Set<string>>> {}
