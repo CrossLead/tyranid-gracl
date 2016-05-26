@@ -1,6 +1,6 @@
 {
   "name": "tyranid-gracl",
-  "version": "0.0.49",
+  "version": "0.0.50",
   "description": "tyranid.js plugin for gracl",
   "main": "./dist-node4/lib/tyranid-gracl.js",
   "typings": "./dist-es6/lib/tyranid-gracl.d.ts",
@@ -25,7 +25,7 @@
   "dependencies": {
     "gracl": "0.0.10",
     "lodash": "3.10.1",
-    "tyranid": "0.0.172"
+    "tyranid": "0.0.173"
   },
   "babel": {
     "presets": [
