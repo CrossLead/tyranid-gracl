@@ -776,12 +776,11 @@ test.serial('should produce $and clause with excluded and included ids', async (
     'blog id in check'
   );
 
-  // commented out until https://github.com/CrossLead/tyranid-gracl/issues/27 is resolved
-  // checkStringEq(
-  //   <string[]> _.get(blogIdNegative, 'blogId.$nin'),
-  //   chipotleBlogs.map(b => b.$id).filter(id => id.toString() !== post['blogId'].toString()),
-  //   'blog id nin check'
-  // );
+  checkStringEq(
+    <string[]> _.get(blogIdNegative, 'blogId.$nin'),
+    chipotleBlogs.map(b => b.$id).filter(id => id.toString() !== post['blogId'].toString()),
+    'blog id nin check'
+  );
 
 });
 
@@ -1093,33 +1092,31 @@ test.serial('Should throw when *forThis methods are given non-crud permission', 
 });
 
 
-// commented out until https://github.com/CrossLead/tyranid-gracl/issues/27
-// test.serial('Should respect resource hierarchy for deny exception (linked parent deny, child allow)', async () => {
-//     const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
-//           ben          = await Tyr.byName['user'].findOne({ name: 'ben' }),
-//           posts        = await Tyr.byName['post'].findAll({ blogId: chipotleBlog.$id });
+test.serial('Should respect resource hierarchy for deny exception (linked parent deny, child allow)', async () => {
+    const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
+          ben          = await Tyr.byName['user'].findOne({ name: 'ben' }),
+          posts        = await Tyr.byName['post'].findAll({ blogId: chipotleBlog.$id });
 
-//     await chipotleBlog['$deny']('view-post', ben);
-//     await posts[0]['$allow']('view-post', ben);
+    await chipotleBlog['$deny']('view-post', ben);
+    await posts[0]['$allow']('view-post', ben);
 
-//     const access = await ben['$determineAccessToAllPermissionsForResources'](['view-post'], posts.map(p => p.$uid));
-//     expect(access[posts[0].$uid]['view-post'], 'should have access to first post').to.equal(true);
-// });
+    const access = await ben['$determineAccessToAllPermissionsForResources'](['view-post'], posts.map(p => p.$uid));
+    expect(access[posts[0].$uid]['view-post'], 'should have access to first post').to.equal(true);
+});
 
 
-// commented out until https://github.com/CrossLead/tyranid-gracl/issues/27
-// test.serial('Should respect resource hierarchy for deny exception (removed parent deny, child allow)', async () => {
-//     const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
-//           chipotleBlogs = await Tyr.byName['blog'].findAll({ organizationId: chipotle.$id }),
-//           ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
-//           posts = await Tyr.byName['post'].findAll({ blogId: { $in: _.map(chipotleBlogs, '$id') } });
+test.serial('Should respect resource hierarchy for deny exception (removed parent deny, child allow)', async () => {
+    const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
+          chipotleBlogs = await Tyr.byName['blog'].findAll({ organizationId: chipotle.$id }),
+          ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+          posts = await Tyr.byName['post'].findAll({ blogId: { $in: _.map(chipotleBlogs, '$id') } });
 
-//     await chipotle['$deny']('view-post', ben);
-//     await posts[0]['$allow']('view-post', ben);
+    await chipotle['$deny']('view-post', ben);
+    await posts[0]['$allow']('view-post', ben);
 
-//     const access = await ben['$determineAccessToAllPermissionsForResources'](['view-post'], posts.map(p => p.$uid));
-//     expect(access[posts[0].$uid]['view-post'], 'should have access to first post').to.equal(true);
-// });
+    const access = await ben['$determineAccessToAllPermissionsForResources'](['view-post'], posts.map(p => p.$uid));
+    expect(access[posts[0].$uid]['view-post'], 'should have access to first post').to.equal(true);
+});
 
 
 
