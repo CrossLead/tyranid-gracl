@@ -170,7 +170,6 @@ export async function query(
 
   const alreadySet = new Set<string>();
 
-
   /**
    * We need to check if any child of each of <ids> was already added,
    * if it was, then we should specifically add all the children of the
@@ -185,7 +184,10 @@ export async function query(
     };
 
     const linkField = plugin.findLinkInCollection(queriedCollection, altCollection);
-    if (!linkField) return result;
+
+    // TODO: bypass this logic until performance issues in
+    // https://github.com/CrossLead/tyranid-gracl/issues/27 are resolved
+    if (true || !linkField || !linkField.spath || !(ids && ids.length)) return result;
 
     const queriedCollectionDocs = await queriedCollection.findAll({
       [linkField.spath]: {
