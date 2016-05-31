@@ -121,4 +121,19 @@ export function createGraclHierarchy() {
     subjects: Array.from(schemaMaps.subjects.values()),
     resources: Array.from(schemaMaps.resources.values())
   });
+
+  // find all the child resources of each resource
+  plugin.graclHierarchy.resources.forEach(resource => {
+    const childName = resource.displayName || resource.name;
+    if (!plugin.resourceChildren.has(childName)) {
+      plugin.resourceChildren.set(childName, new Set<string>());
+    }
+    _.each(resource.getHierarchyClassNames(), parentName => {
+      if (parentName === childName) return;
+      if (!plugin.resourceChildren.has(parentName)) {
+        plugin.resourceChildren.set(parentName, new Set<string>());
+      }
+      plugin.resourceChildren.get(parentName).add(childName);
+    });
+  });
 }

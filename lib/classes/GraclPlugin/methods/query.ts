@@ -354,25 +354,55 @@ export async function query(
     }
   }
 
-  const positiveRestriction = plugin.createInQueries(queryMaps['positive'], queriedCollection, '$in'),
-        negativeRestriction = plugin.createInQueries(queryMaps['negative'], queriedCollection, '$nin');
+  const resultingQuery = <Hash<any>> createHierarchicalQuery(plugin, queryMaps, queriedCollection);
 
-  const restricted: Hash<any> = {},
-        hasPositive = !!positiveRestriction['$or'].length,
-        hasNegative = !!negativeRestriction['$and'].length;
+  return resultingQuery;
+}
 
-  if (hasNegative && hasPositive) {
-    restricted['$and'] = [
-      positiveRestriction,
-      negativeRestriction
-    ];
-  } else if (hasNegative) {
-    Object.assign(restricted, negativeRestriction);
-  } else if (hasPositive) {
-    Object.assign(restricted, positiveRestriction);
+
+
+/**
+ * Convert a map of collections => { uids } into a mongo $in/$nin query
+ */
+function createInQueries(
+  plugin: GraclPlugin,
+  map: Map<string, Set<string>>,
+  queriedCollection: Tyr.CollectionInstance,
+  key: '$nin' | '$in'
+): Hash<Hash<Hash<string[]>>[]> {
+  if (!(key === '$in' || key === '$nin')) {
+    plugin.error(`key must be $nin or $in!`);
   }
 
-  return <Hash<any>> restricted;
+  const conditions: Hash<Hash<string[]>>[] = [];
+
+  map.forEach((idSet, col) => {
+    // if the collection is the same as the one being queried, use the primary id field
+    let prop: string;
+    if (col === queriedCollection.def.name) {
+      const primaryKey = queriedCollection.def.primaryKey;
+      if (!primaryKey) {
+        plugin.error(`No primary key for collection ${queriedCollection.def.name}`);
+      } else {
+        prop = primaryKey.field;
+      }
+    } else {
+      const link = plugin.findLinkInCollection(queriedCollection, Tyr.byName[col]);
+
+      if (!link) {
+        plugin.error(
+          `No outgoing link from ${queriedCollection.def.name} to ${col}, cannot create restricted ${key} clause!`
+        );
+      }
+
+      prop = link.spath;
+    }
+
+    conditions.push({ [<string> prop]: { [<string> key]: Array.from(idSet) } });
+  });
+
+
+  return { [key === '$in' ? '$or' : '$and']: conditions };
 }
 
 
@@ -401,35 +431,66 @@ export async function query(
  */
 function createHierarchicalQuery(
   plugin: GraclPlugin,
-  positiveUids: Map<string, Set<string>>,
-  negativeUids: Map<string, Set<string>>
+  queryMaps: Hash<Map<string, Set<string>>>,
+  queriedCollection: Tyr.CollectionInstance
 ) {
-  const resultingQuery = {},
-        // all collections that will be used in the query,
-        // sorted by their node depth
-        collectionNames = _.chain([
-          ...positiveUids.keys(),
-          ...negativeUids.keys()
-        ])
-        .unique()
-        .map((name: string) => {
-          const resource = plugin
-              .graclHierarchy
-              .getResource(name);
-          if (!resource) throw new TypeError(`No resource named ${name}`);
-          return {
-            name,
-            depth: resource.getNodeDepth()
-          }
-        })
-        .sortBy('depth')
-        .reverse()
-        .map('name')
-        .value();
+  const positiveUids = queryMaps['positive'],
+        negativeUids = queryMaps['negative'];
+
+  const positiveRestriction = createInQueries(plugin, queryMaps['positive'], queriedCollection, '$in'),
+        negativeRestriction = createInQueries(plugin, queryMaps['negative'], queriedCollection, '$nin');
+
+  const resultingQuery: Hash<any> = {},
+        hasPositive = !!positiveRestriction['$or'].length,
+        hasNegative = !!negativeRestriction['$and'].length;
+
+  /**
+   * For each collection with negative restrictions, we need to create an OR clause
+   * which excludes uids that are lower in the resource hierarchy and exist in the
+   * positive list all the OR clauses should be wrapped in an and clause
+   */
+  if (hasNegative && hasPositive) {
+    const negativeModifiedQuery: Hash<any> = {};
+    const $and: Hash<any>[] = negativeModifiedQuery['$and'] = [];
 
 
+    negativeUids.forEach((uids, collectionName) => {
+      if (!uids.size) return;
+      const $or: Hash<any>[] = [];
+      const childCollectionNames = plugin.resourceChildren.get(collectionName);
 
+      const excludeMap = new Map<string, Set<string>>();
+      excludeMap.set(collectionName, uids);
 
+      if (excludeMap.size) {
+        $or.push(createInQueries(plugin, excludeMap, queriedCollection, '$nin'));
+      }
+
+      const includeMap = new Map<string, Set<string>>();
+      childCollectionNames.forEach(name => {
+        if (positiveUids.has(name) && positiveUids.get(name).size) {
+          includeMap.set(name, positiveUids.get(name));
+        }
+      });
+
+      if (includeMap.size) {
+        $or.push(createInQueries(plugin, includeMap, queriedCollection, '$in'))
+      }
+
+      if ($or.length) {
+        $and.push({ $or });
+      }
+    });
+
+    resultingQuery['$and'] = [
+      positiveRestriction,
+      negativeModifiedQuery
+    ];
+  } else if (hasNegative) {
+    Object.assign(resultingQuery, negativeRestriction);
+  } else if (hasPositive) {
+    Object.assign(resultingQuery, positiveRestriction);
+  }
 
   return resultingQuery;
 }

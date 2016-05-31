@@ -121,6 +121,8 @@ export class GraclPlugin {
   setOfAllPermissions: Set<string>;
   crudPermissionSet = new Set<string>();
   permissionsModel = PermissionsModel;
+  resourceChildren = new Map<string, Set<string>>();
+
 
   _NO_COLLECTION = 'TYRANID_GRACL_NO_COLLECTION_NAME_FOUND';
 
@@ -141,7 +143,6 @@ export class GraclPlugin {
   compareCollectionWithField: typeof methods.compareCollectionWithField;
   constructPermissionHierarchy: typeof methods.constructPermissionHierarchy;
   createGraclHierarchy: typeof methods.createGraclHierarchy;
-  createInQueries: typeof methods.createInQueries;
   createResource: typeof methods.createResource;
   createSubject: typeof methods.createSubject;
   createSchemaNode: typeof methods.createSchemaNode;
