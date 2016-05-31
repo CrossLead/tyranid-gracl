@@ -3,7 +3,6 @@ export * from './compareCollectionWithField';
 export * from './constructPermissionHierarchy';
 
 export * from './createGraclHierarchy';
-export * from './createInQueries';
 export * from './createResource';
 export * from './createSubject';
 export * from './createSchemaNode';

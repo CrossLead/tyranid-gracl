@@ -6,7 +6,6 @@ import { PermissionsModel } from '../../../models/PermissionsModel';
 import { Hash } from '../../../interfaces';
 
 
-
 /**
  *  Method for creating a specific query based on a schema object
  */
@@ -170,45 +169,6 @@ export async function query(
 
   const alreadySet = new Set<string>();
 
-  /**
-   * We need to check if any child of each of <ids> was already added,
-   * if it was, then we should specifically add all the children of the
-   * relevant id in <ids>
-   */
-  const createLinkedMappings = async (altCollection: Tyr.CollectionInstance, ids: string[]) => {
-    const linkedToQueriedMapping: Hash<string[]> = {};
-    const useLinkedDocs = new Set<string>();
-    const result = {
-      linkedToQueriedMapping,
-      useLinkedDocs
-    };
-
-    const linkField = plugin.findLinkInCollection(queriedCollection, altCollection);
-
-    // TODO: bypass this logic until performance issues in
-    // https://github.com/CrossLead/tyranid-gracl/issues/27 are resolved
-    if (true || !linkField || !linkField.spath || !(ids && ids.length)) return result;
-
-    const queriedCollectionDocs = await queriedCollection.findAll({
-      [linkField.spath]: {
-        $in: ids
-      }
-    })
-
-    for (const doc of queriedCollectionDocs) {
-      const uid = altCollection.idToUid(linkField.namePath.get(doc));
-      if (alreadySet.has(doc.$uid)) {
-        useLinkedDocs.add(uid);
-      } else {
-        const linked = linkedToQueriedMapping[uid] = linkedToQueriedMapping[uid] || [];
-        linked.push(doc.$uid);
-      }
-    }
-
-    return result;
-  }
-
-
   // extract all collections that have a relevant permission set for the requested resource
   for (let i = 0, l = resourceArray.length; i < l; i++) {
     const { collection, permissions } = resourceArray[i];
@@ -221,14 +181,6 @@ export async function query(
 
       const permissionArray = [...permissions.values()];
 
-      const {
-        linkedToQueriedMapping,
-        useLinkedDocs
-      } = await createLinkedMappings(
-        collection,
-        _.map(permissionArray, p => Tyr.parseUid(p.resourceId).id)
-      );
-
 
       for (const permission of permissionArray) {
         const access = getAccess(permission);
@@ -238,29 +190,17 @@ export async function query(
           case false:
             const key = (access ? 'positive' : 'negative'),
                   uid = permission.resourceId;
-
-            if (useLinkedDocs.has(uid)) {
-              const accessSet = queryMaps[key].get(queriedCollectionName) || new Set();
-              if (!queryMaps[key].has(queriedCollectionName)) {
-                queryMaps[key].set(queriedCollectionName, accessSet);
-              }
-              _.each(linkedToQueriedMapping[uid], u => {
-                alreadySet.add(u);
-                accessSet.add(Tyr.parseUid(u).id);
-              });
+            // if a permission was set by a collection of higher depth, keep it...
+            if (alreadySet.has(uid)) {
+              continue;
             } else {
-              // if a permission was set by a collection of higher depth, keep it...
-              if (alreadySet.has(uid)) {
-                continue;
-              } else {
-                alreadySet.add(uid);
-              }
-              const accessSet = queryMaps[key].get(collectionName) || new Set();
-              if (!queryMaps[key].has(collectionName)) {
-                queryMaps[key].set(collectionName, accessSet);
-              }
-              accessSet.add(Tyr.parseUid(uid).id);
+              alreadySet.add(uid);
             }
+            const accessSet = queryMaps[key].get(collectionName) || new Set();
+            if (!queryMaps[key].has(collectionName)) {
+              queryMaps[key].set(collectionName, accessSet);
+            }
+            accessSet.add(Tyr.parseUid(uid).id);
             break;
         }
         queryRestrictionSet = true;
@@ -375,31 +315,10 @@ export async function query(
       // from <nextCollectionName>
       const linkedCollectionName = nextCollection.def.name;
 
-      const {
-        linkedToQueriedMapping,
-        useLinkedDocs
-      } = await createLinkedMappings(
-        nextCollection,
-        [...positiveIds, ...negativeIds]
-      );
-
-
       const addIdsToQueryMap = (access: boolean) => (id: string) => {
         const accessString    = access ? 'positive' : 'negative',
               altAccessString = access ? 'negative' : 'positive',
               resourceUid = Tyr.byName[linkedCollectionName].idToUid(id);
-
-        if (useLinkedDocs.has(resourceUid)) {
-          const accessSet = queryMaps[accessString].get(queriedCollectionName) || new Set();
-          if (!queryMaps[accessString].has(queriedCollectionName)) {
-            queryMaps[accessString].set(queriedCollectionName, accessSet);
-          }
-          _.each(linkedToQueriedMapping[resourceUid], u => {
-            alreadySet.add(u);
-            accessSet.add(Tyr.parseUid(u).id)
-          });
-          return;
-        }
 
         if (alreadySet.has(resourceUid)) {
           return;
@@ -435,23 +354,144 @@ export async function query(
     }
   }
 
-  const positiveRestriction = plugin.createInQueries(queryMaps['positive'], queriedCollection, '$in'),
-        negativeRestriction = plugin.createInQueries(queryMaps['negative'], queriedCollection, '$nin');
+  const resultingQuery = <Hash<any>> createHierarchicalQuery(plugin, queryMaps, queriedCollection);
 
-  const restricted: Hash<any> = {},
+  return resultingQuery;
+}
+
+
+
+/**
+ * Convert a map of collections => { uids } into a mongo $in/$nin query
+ */
+function createInQueries(
+  plugin: GraclPlugin,
+  map: Map<string, Set<string>>,
+  queriedCollection: Tyr.CollectionInstance,
+  key: '$nin' | '$in'
+): Hash<Hash<Hash<string[]>>[]> {
+  if (!(key === '$in' || key === '$nin')) {
+    plugin.error(`key must be $nin or $in!`);
+  }
+
+  const conditions: Hash<Hash<string[]>>[] = [];
+
+  map.forEach((idSet, col) => {
+    // if the collection is the same as the one being queried, use the primary id field
+    let prop: string;
+    if (col === queriedCollection.def.name) {
+      const primaryKey = queriedCollection.def.primaryKey;
+      if (!primaryKey) {
+        plugin.error(`No primary key for collection ${queriedCollection.def.name}`);
+      } else {
+        prop = primaryKey.field;
+      }
+    } else {
+      const link = plugin.findLinkInCollection(queriedCollection, Tyr.byName[col]);
+
+      if (!link) {
+        plugin.error(
+          `No outgoing link from ${queriedCollection.def.name} to ${col}, cannot create restricted ${key} clause!`
+        );
+      }
+
+      prop = link.spath;
+    }
+
+    conditions.push({ [<string> prop]: { [<string> key]: Array.from(idSet) } });
+  });
+
+
+  return { [key === '$in' ? '$or' : '$and']: conditions };
+}
+
+
+
+/**
+ *  Creates mongo query with boolean expression
+ *  that captures resource hierarchy constraints.
+ *
+ *  Basically, we want "lower" uids to supercede "higher" uids
+ *
+ *  say we have posts and blogs, and we want to allow a user to
+ *  access a specific post in a blog that is otherwise denied
+ *  we need the id of the post to supercede the deny implied
+ *  by the blog within a $not/$nin expression
+ *
+ *  For example, if we have specific posts P that we want to allow,
+ *  and Blogs B that we want to deny (but may contiain posts in P)
+ *  we would do
+ *
+ *  matched_posts = P AND ((NOT B) OR P)
+ *
+ *  which would still return posts in P that are in blogs in B
+ *
+ *  To produce a boolean expression like above, we need to sort all the collections
+ *  by their depth in the resource hierarchy
+ */
+function createHierarchicalQuery(
+  plugin: GraclPlugin,
+  queryMaps: Hash<Map<string, Set<string>>>,
+  queriedCollection: Tyr.CollectionInstance
+) {
+  const positiveUids = queryMaps['positive'],
+        negativeUids = queryMaps['negative'];
+
+  const positiveRestriction = createInQueries(plugin, queryMaps['positive'], queriedCollection, '$in'),
+        negativeRestriction = createInQueries(plugin, queryMaps['negative'], queriedCollection, '$nin');
+
+  const resultingQuery: Hash<any> = {},
         hasPositive = !!positiveRestriction['$or'].length,
         hasNegative = !!negativeRestriction['$and'].length;
 
+  /**
+   * For each collection with negative restrictions, we need to create an OR clause
+   * which excludes uids that are lower in the resource hierarchy and exist in the
+   * positive list all the OR clauses should be wrapped in an and clause
+   */
   if (hasNegative && hasPositive) {
-    restricted['$and'] = [
+    const negativeModifiedQuery: Hash<any> = {};
+    const $and: Hash<any>[] = negativeModifiedQuery['$and'] = [];
+
+
+    negativeUids.forEach((uids, collectionName) => {
+      if (!uids.size) return;
+      const $or: Hash<any>[] = [];
+      const childCollectionNames = plugin.resourceChildren.get(collectionName);
+
+      const excludeMap = new Map<string, Set<string>>();
+      excludeMap.set(collectionName, uids);
+
+      if (excludeMap.size) {
+        $or.push(createInQueries(plugin, excludeMap, queriedCollection, '$nin'));
+      }
+
+      const includeMap = new Map<string, Set<string>>();
+      childCollectionNames.forEach(name => {
+        if (positiveUids.has(name) && positiveUids.get(name).size) {
+          includeMap.set(name, positiveUids.get(name));
+        }
+      });
+
+      if (includeMap.size) {
+        $or.push(createInQueries(plugin, includeMap, queriedCollection, '$in'))
+      }
+
+      if ($or.length) {
+        $and.push({ $or });
+      }
+    });
+
+    resultingQuery['$and'] = [
       positiveRestriction,
-      negativeRestriction
+      negativeModifiedQuery
     ];
   } else if (hasNegative) {
-    Object.assign(restricted, negativeRestriction);
+    Object.assign(resultingQuery, negativeRestriction);
   } else if (hasPositive) {
-    Object.assign(restricted, positiveRestriction);
+    Object.assign(resultingQuery, positiveRestriction);
   }
 
-  return <Hash<any>> restricted;
+  return resultingQuery;
 }
+
