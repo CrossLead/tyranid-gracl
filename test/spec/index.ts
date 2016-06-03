@@ -1026,6 +1026,21 @@ test.serial('Should respect resource hierarchy for deny exception (removed paren
 
 
 
+test.serial('Should default to deny if conflicting parent access', async () => {
+  const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+        ted = await Tyr.byName['user'].findOne({ name: 'ted' }),
+        burritoMakers = await Tyr.byName['team'].findOne({ name: 'burritoMakers' }),
+        chipotleMarketing = await Tyr.byName['team'].findOne({ name: 'chipotleMarketing' });
+
+  await burritoMakers['$allow']('view-user', ted);
+  await chipotleMarketing['$deny']('view-user', ted);
+
+  expect(await ben['$isAllowed']('view-user', ted), 'Should not have access').to.equal(false);
+  const foundUsers = await Tyr.byName['user'].findAll({ query: { name: 'ben' }, auth: ted });
+  expect(foundUsers, 'authenticated query should return no users').to.have.lengthOf(0);
+});
+
+
 
 test.serial('Should handle lots of concurrent permissions updates', async () => {
   const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
