@@ -1,8 +1,20 @@
 import Tyr from 'tyranid';
-import { binaryIndexOf } from 'gracl';
+import { binaryIndexOf, baseCompare } from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { compareCollectionWithField } from '../util/compareCollectionWithField';
 import { getCollectionLinksSorted } from './getCollectionLinksSorted';
+
+
+function compareCollectionWithField(
+  aCol: Tyr.CollectionInstance,
+  bCol: Tyr.Field
+) {
+
+  const a = aCol.def.name,
+        b = bCol.link.def.name;
+
+  return baseCompare(a, b);
+}
+
 
 /**
  *  Function to find if <linkCollection> appears on an outgoing link field

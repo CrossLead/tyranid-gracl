@@ -4,7 +4,7 @@ import Tyr from 'tyranid';
 import * as mongodb from 'mongodb';
 import * as path from 'path';
 import * as _ from 'lodash';
-import * as tyranidGracl from '../../lib/tyranid-gracl';
+import * as tyranidGracl from '../../src/';
 import { expect } from 'chai';
 import { expectedLinkPaths } from '../helpers/expectedLinkPaths';
 import { createTestData } from '../helpers/createTestData';
@@ -12,12 +12,12 @@ import { expectAsyncToThrow } from '../helpers/expectAsyncToThrow';
 import test from 'ava';
 import { Blog } from '../models/Blog';
 
-import { findLinkInCollection } from '../../lib/graph/findLinkInCollection';
-import { getCollectionLinksSorted } from '../../lib/graph/getCollectionLinksSorted';
-import { stepThroughCollectionPath } from '../../lib/graph/stepThroughCollectionPath';
-import { getShortestPath } from '../../lib/graph/getShortestPath';
+import { findLinkInCollection } from '../../src/graph/findLinkInCollection';
+import { getCollectionLinksSorted } from '../../src/graph/getCollectionLinksSorted';
+import { stepThroughCollectionPath } from '../../src/graph/stepThroughCollectionPath';
+import { getShortestPath } from '../../src/graph/getShortestPath';
 
-import { documentMethods } from '../../lib/tyranid/documentMethods';
+import { documentMethods } from '../../src/tyranid/documentMethods';
 
 type GraclPlugin = tyranidGracl.GraclPlugin;
 
