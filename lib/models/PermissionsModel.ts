@@ -5,6 +5,17 @@ import * as gracl from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { permissionExplaination } from '../interfaces';
 
+import { createResource } from '../graph/createResource';
+import { createSubject } from '../graph/createSubject';
+import { getGraclClasses } from '../graph/getGraclClasses';
+import { validateAsResource } from '../graph/validateAsResource';
+
+import { validatePermissionExists } from '../permission/validatePermissionExists';
+import { parsePermissionString } from '../permission/parsePermissionString';
+import { nextPermissions } from '../permission/nextPermissions';
+
+import { extractIdAndModel } from '../tyranid/extractIdAndModel';
+
 
 export const PermissionsBaseCollection = <Tyr.CollectionInstance> new Tyr.Collection({
   id: '_gp',
@@ -46,7 +57,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   ) {
 
     const plugin = PermissionsModel.getGraclPlugin(),
-          resource = plugin.createResource(resourceDocument);
+          resource = createResource(plugin, resourceDocument);
 
     const query: { [key: string]: any } = {
       resourceId: (direct ? resourceDocument.$uid : {
@@ -71,7 +82,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     direct?: boolean
   ) {
     const plugin = PermissionsModel.getGraclPlugin(),
-          subject = plugin.createSubject(subjectDocument);
+          subject = createSubject(plugin, subjectDocument);
 
     const query: { [key: string]: any } = {
       subjectId: (direct ? subjectDocument.$uid : {
@@ -98,8 +109,8 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
     const plugin = PermissionsModel.getGraclPlugin();
 
-    plugin.extractIdAndModel(resourceData);
-    plugin.extractIdAndModel(subjectData);
+    extractIdAndModel(plugin, resourceData);
+    extractIdAndModel(plugin, subjectData);
 
     let resourceDocument = typeof resourceData === 'string'
       ? await Tyr.byUid(resourceData)
@@ -112,13 +123,13 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     const {
             subject,
             resource
-          } = plugin.getGraclClasses(resourceDocument, subjectDocument),
-          components = plugin.parsePermissionString(permissionType),
-          nextPermissions = plugin.nextPermissions(permissionType),
+          } = getGraclClasses(plugin, resourceDocument, subjectDocument),
+          components = parsePermissionString(plugin, permissionType),
+          nextPermissionTypes = nextPermissions(plugin, permissionType),
           access = await resource.isAllowed(subject, permissionType);
 
-    if (!access && nextPermissions) {
-      for (const nextPermission of nextPermissions) {
+    if (!access && nextPermissionTypes) {
+      for (const nextPermission of nextPermissionTypes) {
         if (nextPermission) {
           const parentAccess = await PermissionsModel
             .isAllowed(resourceDocument, nextPermission, subjectDocument);
@@ -138,10 +149,10 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     subjectData: Tyr.Document | string
   ): Promise<permissionExplaination> {
     const plugin = PermissionsModel.getGraclPlugin();
-    plugin.validatePermissionExists(permissionType);
+    validatePermissionExists(plugin, permissionType);
 
-    plugin.extractIdAndModel(resourceData);
-    plugin.extractIdAndModel(subjectData);
+    extractIdAndModel(plugin, resourceData);
+    extractIdAndModel(plugin, subjectData);
 
     let resourceDocument = typeof resourceData === 'string'
       ? await Tyr.byUid(resourceData)
@@ -151,7 +162,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       ? await Tyr.byUid(subjectData)
       : subjectData;
 
-    const { subject, resource } = plugin.getGraclClasses(resourceDocument, subjectDocument);
+    const { subject, resource } = getGraclClasses(plugin, resourceDocument, subjectDocument);
 
     return await resource.determineAccess(subject, permissionType);
   }
@@ -169,17 +180,17 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     const $set: { [key: string]: boolean } = {};
 
     _.each(permissionChanges, (access, permissionType) => {
-      plugin.validatePermissionExists(permissionType);
+      validatePermissionExists(plugin, permissionType);
       $set[`access.${permissionType}`] = access;
     });
 
     if (!resourceDocument) throw new TypeError(`no resource given to updatePermissions`);
     if (!subjectDocument) throw new TypeError(`no subject given to updatePermissions`);
 
-    const resourceComponents = plugin.extractIdAndModel(resourceDocument),
-          subjectComponents = plugin.extractIdAndModel(subjectDocument);
+    const resourceComponents = extractIdAndModel(plugin, resourceDocument),
+          subjectComponents = extractIdAndModel(plugin, subjectDocument);
 
-    plugin.validateAsResource(resourceComponents.$model);
+    validateAsResource(plugin, resourceComponents.$model);
 
     // set the permission
     try {

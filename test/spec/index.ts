@@ -12,6 +12,13 @@ import { expectAsyncToThrow } from '../helpers/expectAsyncToThrow';
 import test from 'ava';
 import { Blog } from '../models/Blog';
 
+import { findLinkInCollection } from '../../lib/graph/findLinkInCollection';
+import { getCollectionLinksSorted } from '../../lib/graph/getCollectionLinksSorted';
+import { stepThroughCollectionPath } from '../../lib/graph/stepThroughCollectionPath';
+import { getShortestPath } from '../../lib/graph/getShortestPath';
+
+import { documentMethods } from '../../lib/tyranid/documentMethods';
+
 type GraclPlugin = tyranidGracl.GraclPlugin;
 
 const VERBOSE_LOGGING = false;
@@ -108,7 +115,7 @@ test.serial('Should produce correctly formatted labels', () => {
 test.serial('should correctly find links using getCollectionLinksSorted', () => {
   const Chart = Tyr.byName['chart'],
         options = { direction: 'outgoing' },
-        links = secure.getCollectionLinksSorted(Chart, options);
+        links = getCollectionLinksSorted(secure, Chart, options);
 
   expect(links, 'should produce sorted links')
     .to.deep.equal(_.sortBy(Chart.links(options), field => field.link.def.name));
@@ -119,7 +126,7 @@ test.serial('should correctly find links using getCollectionLinksSorted', () => 
 test.serial('should find specific link using findLinkInCollection', () => {
   const Chart     = Tyr.byName['chart'],
         User      = Tyr.byName['user'],
-        linkField = secure.findLinkInCollection(Chart, User);
+        linkField = findLinkInCollection(secure, Chart, User);
 
   expect(linkField).to.exist;
   expect(linkField.link.def.name).to.equal('user');
@@ -134,14 +141,14 @@ test.serial('should return correct ids after calling stepThroughCollectionPath',
         chipotlePosts = await Tyr.byName['post'].findAll({ blogId: { $in: blogIds } }),
         postIds = <string[]> _.map(chipotlePosts, '_id');
 
-  const steppedPostIds = await secure.stepThroughCollectionPath(
+  const steppedPostIds = await stepThroughCollectionPath(secure,
     blogIds, Tyr.byName['blog'], Tyr.byName['post']
   );
 
   checkStringEq(steppedPostIds, postIds, 'ids after stepping should be all relevant ids');
 
   await expectAsyncToThrow(
-    () => secure.stepThroughCollectionPath(
+    () => stepThroughCollectionPath(secure,
       blogIds, Tyr.byName['blog'], Tyr.byName['user']
     ),
     /cannot step through collection path, as no link to collection/,
@@ -154,7 +161,7 @@ test.serial('should return correct ids after calling stepThroughCollectionPath',
 test.serial('should correctly produce paths between collections', () => {
   for (const a in expectedLinkPaths) {
     for (const b in expectedLinkPaths[a]) {
-      const path = secure.getShortestPath(Tyr.byName[a], Tyr.byName[b]);
+      const path = getShortestPath(secure, Tyr.byName[a], Tyr.byName[b]);
       expect(path, `Path from ${a} to ${b}`).to.deep.equal(expectedLinkPaths[a][b] || []);
     }
   }
@@ -164,7 +171,7 @@ test.serial('should correctly produce paths between collections', () => {
 
 test.serial('should add permissions methods to documents', async () => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' });
-  const methods = Object.keys(tyranidGracl.documentMethods);
+  const methods = Object.keys(documentMethods);
 
   for (const method of methods) {
     method && expect(ben, `should have method: ${method}`).to.have.property(method);
