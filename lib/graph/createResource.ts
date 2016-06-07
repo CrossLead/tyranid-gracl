@@ -1,0 +1,21 @@
+import Tyr from 'tyranid';
+import { Resource } from 'gracl';
+import { GraclPlugin } from '../classes/GraclPlugin';
+
+export function createResource(plugin: GraclPlugin, resourceDocument: Tyr.Document): Resource {
+  if (!(resourceDocument && resourceDocument.$uid)) {
+    plugin.error('No resource document provided (or Tyr.local.user is unavailable)!');
+  }
+
+  const resourceCollectionName  = resourceDocument.$model.def.name,
+        ResourceClass           = plugin.graclHierarchy.getResource(resourceCollectionName);
+
+  if (!ResourceClass) {
+    plugin.error(
+      `Attempted to set/get permission using ${resourceCollectionName} as resource, ` +
+      `no relevant resource class found in tyranid-gracl plugin!`
+    );
+  }
+
+  return new ResourceClass(resourceDocument);
+}
