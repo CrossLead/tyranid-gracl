@@ -1,6 +1,11 @@
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { parsePermissionString } from './parsePermissionString';
 
+
+/**
+ * Make sure that a formatted permission string like `view-user` actually
+ * exists in the permissions hierarchy
+ */
 export function validatePermissionExists(plugin: GraclPlugin, perm: string) {
   if (!perm) plugin.error('no permission given!');
 

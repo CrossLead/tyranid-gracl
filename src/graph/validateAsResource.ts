@@ -1,6 +1,10 @@
 import Tyr from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
 
+/**
+ * Ensure that a given collection has a corresponding
+ * Resource class in the gracl hierarchy.
+ */
 export function validateAsResource(plugin: GraclPlugin, collection: Tyr.CollectionInstance) {
   if (!collection) {
     plugin.error(`Attempted to validate undefined collection!`);

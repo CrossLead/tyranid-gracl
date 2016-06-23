@@ -5,7 +5,10 @@ import { formatPermissionType } from './formatPermissionType';
 import { getPermissionParents } from './getPermissionParents';
 
 /**
- *  Get all children of a permission
+ *  Get all children of a permission based on the permissions hierarchy.
+ *
+ *  For example, if edit is set as the parent of view in the configuration,
+ *  view-user will be returned as a child of edit-user.
  */
 export function getPermissionChildren(plugin: GraclPlugin, perm: string): string[] {
   if (plugin._permissionChildCache[perm]) return plugin._permissionChildCache[perm].slice();

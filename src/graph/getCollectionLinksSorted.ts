@@ -2,6 +2,10 @@ import Tyr from 'tyranid';
 import * as _ from 'lodash';
 import { GraclPlugin } from '../classes/GraclPlugin';
 
+/**
+ * Get a list of all links in a given collection schema,
+ * sorted by the name of the linked collection -- cached
+ */
 export function getCollectionLinksSorted(
   plugin: GraclPlugin,
   col: Tyr.CollectionInstance,

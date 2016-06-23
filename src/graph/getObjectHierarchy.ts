@@ -1,6 +1,8 @@
 import { Node } from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 
+// get the full gracl hierarhcy (mainly for display purposes)
+// this is used for logging the hierarchy on instantiation of the plugin
 export function getObjectHierarchy(plugin: GraclPlugin) {
   const hierarchy = {
           subjects: {},

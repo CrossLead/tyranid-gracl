@@ -16,6 +16,13 @@ import { stepThroughCollectionPath } from '../graph/stepThroughCollectionPath';
 
 /**
  *  Method for creating a specific query based on a schema object
+ *
+ * @example
+ * ```javascript
+ * // create a mongodb query object which filters queries to the user
+ * // collection to only users that `req.user` can view
+ * const restrictionQuery = await query(Tyr.secure, Tyr.byName.user, 'view', req.user);
+ * ```
  */
 export async function query(
   plugin: GraclPlugin,

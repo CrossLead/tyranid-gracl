@@ -3,7 +3,7 @@ import { GraclPlugin } from '../classes/GraclPlugin';
 import { formatPermissionType } from './formatPermissionType';
 
 /**
- *  Get a list of all possible permission strings
+ *  Get a list of all possible permission strings in the plugin
  */
 export function getAllPossiblePermissionTypes(plugin: GraclPlugin): string[] {
   if (plugin._allPossiblePermissionsCache) return plugin._allPossiblePermissionsCache.slice();

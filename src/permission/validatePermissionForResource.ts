@@ -6,7 +6,12 @@ import { formatPermissionType } from './formatPermissionType';
 import { validateAsResource } from '../graph/validateAsResource';
 import { validatePermissionExists } from './validatePermissionExists';
 
-
+/**
+ * Make sure that a permission can be used with a given collection,
+ * as there may be permissions that are excluded from use with a collection.
+ *
+ * See: getAllowedPermissionsForCollection.ts
+ */
 export function validatePermissionForResource(
   plugin: GraclPlugin,
   permissionString: string,

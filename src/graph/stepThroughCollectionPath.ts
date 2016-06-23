@@ -3,6 +3,11 @@ import * as _ from 'lodash';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { findLinkInCollection } from './findLinkInCollection';
 
+
+/**
+ * Given a list of ids, find all docs in (previousCollection) relating to those ids, and
+ * pluck all ids on those docs which are links to (nextCollection)
+ */
 export async function stepThroughCollectionPath(
   plugin: GraclPlugin,
   ids: string[],

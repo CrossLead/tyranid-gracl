@@ -2,6 +2,10 @@ import Tyr from 'tyranid';
 import { Subject } from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 
+
+/**
+ * Given a subject document, wrap it in a `gracl` Subject instance
+ */
 export function createSubject(plugin: GraclPlugin, subjectDocument: Tyr.Document): Subject {
   if (!(subjectDocument && subjectDocument.$uid)) {
     plugin.error('No subject document provided (or Tyr.local.user is unavailable)!');

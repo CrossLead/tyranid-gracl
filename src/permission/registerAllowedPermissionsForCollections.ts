@@ -4,7 +4,12 @@ import { GraclPlugin } from '../classes/GraclPlugin';
 import { schemaGraclConfigObject } from '../interfaces';
 import { formatPermissionType } from './formatPermissionType';
 
-
+/**
+ * Examine the schema definitions of all tyranid collections and look for
+ * configuration around what permissions should be used with the collection
+ *
+ * See: getAllowedPermissionsForCollection.ts
+ */
 export function registerAllowedPermissionsForCollections(plugin: GraclPlugin) {
   if (!plugin.permissionHierarchy) {
     plugin.error(

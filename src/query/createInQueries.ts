@@ -5,6 +5,8 @@ import { findLinkInCollection } from '../graph/findLinkInCollection';
 
 /**
  * Convert a map of collections => { uids } into a mongo $in/$nin query
+ *
+ * used in query.ts to create the larger query used to filter db calls
  */
 export function createInQueries(
   plugin: GraclPlugin,

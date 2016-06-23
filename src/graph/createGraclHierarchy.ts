@@ -11,6 +11,13 @@ import {
 import { getCollectionLinksSorted } from './getCollectionLinksSorted';
 import { createSchemaNode } from './createSchemaNode';
 
+
+/**
+ * Create full gracl hierarhcy of subject and resource instances
+ * based on the relations defined in the tyranid collection schema
+ *
+ * (see https://github.com/CrossLead/gracl/blob/master/lib/classes/Graph.ts)
+ */
 export function createGraclHierarchy(plugin: GraclPlugin) {
   const collections = Tyr.collections,
         nodeSet     = new Set<string>();

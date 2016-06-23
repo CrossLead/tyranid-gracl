@@ -3,7 +3,8 @@ import { GraclPlugin } from '../classes/GraclPlugin';
 import { nextPermissions } from './nextPermissions';
 
 /**
- *  Get all parent permissions of perm
+ *  Get all parent permissions of perm based on the "parent"
+ *  property set when instantiating the plugin.
  */
 export function getPermissionParents(plugin: GraclPlugin, perm: string): string[] {
   const parents: string[] = [];

@@ -4,6 +4,13 @@ import { Hash } from '../interfaces';
 import { parsePermissionString } from './parsePermissionString';
 import { formatPermissionType } from './formatPermissionType';
 
+/**
+ * Recurse up the permissions hierarhcy, by finding the direct parent permissions of
+ * a given permission string.
+ *
+ * For example, if edit and delete are parents of 'view',
+ * nextPermissions(plugin, 'view-user') === [ 'edit-user', 'delete-user' ];
+ */
 export function nextPermissions(plugin: GraclPlugin, permissionString: string): string[] {
   const components = parsePermissionString(plugin, permissionString),
         // get general permissions from action

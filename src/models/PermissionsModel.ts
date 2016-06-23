@@ -17,6 +17,9 @@ import { nextPermissions } from '../permission/nextPermissions';
 import { extractIdAndModel } from '../tyranid/extractIdAndModel';
 
 
+/**
+ * The main model for storing individual permission edges
+ */
 export const PermissionsBaseCollection = <Tyr.CollectionInstance> new Tyr.Collection({
   id: '_gp',
   name: 'graclPermission',
@@ -41,6 +44,7 @@ export const PermissionsBaseCollection = <Tyr.CollectionInstance> new Tyr.Collec
 export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseCollection) {
 
 
+  // error-checked method for retrieving the plugin instance attached to tyranid
   static getGraclPlugin(): GraclPlugin {
     const plugin = <GraclPlugin> Tyr.secure;
     if (!plugin) {
@@ -50,6 +54,11 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   }
 
 
+  /**
+   * For a given resource document, find all permission edges
+   * that have it as the resource. Optionally return only direct (non inherited)
+   * permission objects
+   */
   static async getPermissionsOfTypeForResource(
     resourceDocument: Tyr.Document,
     permissionType?: string,
@@ -75,7 +84,11 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   }
 
 
-
+  /**
+   * For a given subject document, find all permission edges
+   * that have it as the subject. Optionally return only direct (non inherited)
+   * permission objects
+   */
   static async getPermissionsOfTypeForSubject(
     subjectDocument: Tyr.Document,
     permissionType?: string,
@@ -100,7 +113,14 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   }
 
 
-
+  /**
+   * check if a subject document has positive access
+   * to a given resource document for a particular permission
+   *
+   * uses the methods within the separate `gracl` library's Resource class
+   * (see: https://github.com/CrossLead/gracl/blob/master/lib/classes/Resource.ts)
+   * and Subject class (https://github.com/CrossLead/gracl/blob/master/lib/classes/Subject.ts)
+   */
   static async isAllowed(
     resourceData: Tyr.Document | string,
     permissionType: string,
@@ -143,6 +163,14 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   }
 
 
+  /**
+   * Explain why a subject has or does not have access to a resource
+   * for a given permission
+   *
+   * uses the methods within the separate `gracl` library's Resource class
+   * (see: https://github.com/CrossLead/gracl/blob/master/lib/classes/Resource.ts)
+   * and Subject class (https://github.com/CrossLead/gracl/blob/master/lib/classes/Subject.ts)
+   */
   static async explainPermission(
     resourceData: Tyr.Document | string,
     permissionType: string,
@@ -168,7 +196,10 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   }
 
 
-
+  /**
+   * Create/update a permission edge document to
+   * set a permission between a given resource and subject
+   */
   static async updatePermissions(
     resourceDocument: Tyr.Document | string,
     permissionChanges: { [key: string]: boolean },
@@ -264,7 +295,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
   }
 
 
-
+  // create mongodb indexes for the permission edges
   static async createIndexes() {
     const plugin = PermissionsModel.getGraclPlugin();
 

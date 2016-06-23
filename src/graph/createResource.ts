@@ -2,6 +2,10 @@ import Tyr from 'tyranid';
 import { Resource } from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 
+
+/**
+ * Given a resource document, wrap it in a `gracl` Resource instance
+ */
 export function createResource(plugin: GraclPlugin, resourceDocument: Tyr.Document): Resource {
   if (!(resourceDocument && resourceDocument.$uid)) {
     plugin.error('No resource document provided (or Tyr.local.user is unavailable)!');
