@@ -589,6 +589,47 @@ console.log(explaination.type)
 
   /**
 
+  Return an object that provides an explaination of why a subject has access or does not
+  for a specific permission(s) relative to a specific resource.
+
+  Example:
+
+```js
+const user = await Tyr.byName.user.findOne({ name: 'ben' });
+const blog = await Tyr.byName.blog.findOne({ name: 'Chipotle Blog'});
+const results = await blog.$determineAccess(['view-blog', 'edit-user'], user);
+
+// log whether the user has view-blog
+console.log(results['view-blog'].access);
+
+// log a reason for why the user does or doesn't have access
+console.log(results['view-blog'].reason);
+
+// log the type of permission
+console.log(results['view-blog'].type)
+```
+
+  */
+  async $determineAccess(
+    permissionType: string | string[],
+    subjectDocument: Tyr.Document | string = Tyr.local.user
+  ) {
+    const context = <any> this,
+          doc = <Tyr.Document> context,
+          plugin = PermissionsModel.getGraclPlugin();
+
+    const permissions = typeof permissionType === 'string'
+      ? [ permissionType ]
+      : permissionType;
+
+    permissions.forEach(p => validatePermissionForResource(plugin, p, doc.$model));
+    return PermissionsModel.determineAccess(doc, permissions, subjectDocument);
+  },
+
+
+
+  /**
+
   Given a list of permissions and a list of uids,
   return an object that maps the uids -> permission -> boolean.
   Example:
@@ -621,15 +662,6 @@ console.log(accessObj.p0057365273edce8e452bee9cfa.view)
       typeof resourceUidList[0] === 'string'
         ? <string[]> resourceUidList
         : <string[]> _.map(<Tyr.Document[]> resourceUidList, '$uid');
-
-    // if only one uid, use faster method
-    if (resourceUidList.length === 1) {
-      const [ resource ] = resourceUidList;
-      const accessResults = await PermissionsModel.determineAccess(resource, permissionsToCheck, doc);
-      const uid = typeof resource === 'string' ? resource : resource.$uid;
-      accessMap[uid] = accessResults;
-      return accessMap;
-    }
 
     if (!plugin.graclHierarchy.subjects.has(doc.$model.def.name)) {
       plugin.error(
