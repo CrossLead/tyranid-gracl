@@ -587,7 +587,6 @@ console.log(explaination.type)
   },
 
 
-
   /**
 
   Given a list of permissions and a list of uids,
@@ -618,11 +617,19 @@ console.log(accessObj.p0057365273edce8e452bee9cfa.view)
           plugin = PermissionsModel.getGraclPlugin(),
           accessMap: Hash<Hash<boolean>> = {};
 
-
     const uidsToCheck: string[] =
       typeof resourceUidList[0] === 'string'
         ? <string[]> resourceUidList
         : <string[]> _.map(<Tyr.Document[]> resourceUidList, '$uid');
+
+    // if only one uid, use faster method
+    if (resourceUidList.length === 1) {
+      const [ resource ] = resourceUidList;
+      const accessResults = await PermissionsModel.determineAccess(resource, permissionsToCheck, doc);
+      const uid = typeof resource === 'string' ? resource : resource.$uid;
+      accessMap[uid] = accessResults;
+      return accessMap;
+    }
 
     if (!plugin.graclHierarchy.subjects.has(doc.$model.def.name)) {
       plugin.error(

@@ -298,7 +298,6 @@ test.serial('should correctly respect combined permission/subject/resource hiera
 });
 
 
-
 test.serial('should validate permissions', async () => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chipotleCorporateBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' });
@@ -1063,6 +1062,11 @@ test.serial('Should be able to query collection using perm with alternate collec
 
   expect(usersThatTedHasViewCommentAccessTo).to.have.lengthOf(2);
 });
+
+
+// test.serial('Should return correct permissions when utilizing PermissionsModel.determineAccess', async() => {
+
+// });
 
 
 

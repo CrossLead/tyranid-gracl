@@ -3,7 +3,7 @@ import * as _ from 'lodash';
 import Tyr from 'tyranid';
 import * as gracl from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { permissionExplaination } from '../interfaces';
+import { permissionExplaination, Hash } from '../interfaces';
 
 import { createResource } from '../graph/createResource';
 import { createSubject } from '../graph/createSubject';
@@ -13,6 +13,7 @@ import { validateAsResource } from '../graph/validateAsResource';
 import { validatePermissionExists } from '../permission/validatePermissionExists';
 import { parsePermissionString } from '../permission/parsePermissionString';
 import { nextPermissions } from '../permission/nextPermissions';
+import { getPermissionParents } from '../permission/getPermissionParents';
 
 import { extractIdAndModel } from '../tyranid/extractIdAndModel';
 
@@ -121,13 +122,30 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
    * (see: https://github.com/CrossLead/gracl/blob/master/lib/classes/Resource.ts)
    * and Subject class (https://github.com/CrossLead/gracl/blob/master/lib/classes/Subject.ts)
    */
-  static async isAllowed(
+  static isAllowed(
     resourceData: Tyr.Document | string,
     permissionType: string,
     subjectData: Tyr.Document | string
   ): Promise<boolean> {
+    return this.determineAccess(resourceData, permissionType, subjectData)
+      .then(result => result[permissionType]);
+  }
 
+
+
+  /**
+   * Determine access to multiple permissions simultaneously
+   */
+  static async determineAccess(
+    resourceData: Tyr.Document | string,
+    permissionsToCheck: string | string[],
+    subjectData: Tyr.Document | string
+  ): Promise<Hash<boolean>> {
+    const accessResults: Hash<boolean> = {};
     const plugin = PermissionsModel.getGraclPlugin();
+    const permissionTypes = typeof permissionsToCheck === 'string'
+      ? [ permissionsToCheck ]
+      : permissionsToCheck;
 
     extractIdAndModel(plugin, resourceData);
     extractIdAndModel(plugin, subjectData);
@@ -144,23 +162,30 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
             subject,
             resource
           } = getGraclClasses(plugin, resourceDocument, subjectDocument),
-          components = parsePermissionString(plugin, permissionType),
-          nextPermissionTypes = nextPermissions(plugin, permissionType),
-          access = await resource.isAllowed(subject, permissionType);
+          permHierarchyCache: Hash<string[]> = {};
 
-    if (!access && nextPermissionTypes) {
-      for (const nextPermission of nextPermissionTypes) {
-        if (nextPermission) {
-          const parentAccess = await PermissionsModel
-            .isAllowed(resourceDocument, nextPermission, subjectDocument);
+    const allPermsToCheck = <string[]> _.chain(permissionTypes)
+      .map(perm => {
+        return permHierarchyCache[perm] = [ perm, ...getPermissionParents(plugin, perm) ];
+      })
+      .flatten()
+      .unique()
+      .compact()
+      .value();
 
-          if (parentAccess) return true;
-        }
-      }
-    }
+    // recurse up subject / resource hierarchy checking all permissions
+    const permCheckResults = await resource.determineAccess(subject, allPermsToCheck);
 
-    return access;
+    _.each(permissionTypes, perm => {
+      accessResults[perm] = _.any(
+        permHierarchyCache[perm],
+        p => permCheckResults[p].access
+      );
+    });
+
+    return accessResults;
   }
+
 
 
   /**
@@ -192,7 +217,8 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
     const { subject, resource } = getGraclClasses(plugin, resourceDocument, subjectDocument);
 
-    return await resource.determineAccess(subject, permissionType);
+    const permObj = await resource.determineAccess(subject, permissionType);
+    return permObj[permissionType];
   }
 
 
