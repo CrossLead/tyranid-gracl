@@ -1049,6 +1049,23 @@ test.serial('Should default to deny if conflicting parent access', async () => {
 
 
 
+test.serial('Should be able to query collection using perm with alternate collection', async() => {
+  const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
+        ted = await Tyr.byName['user'].findOne({ name: 'ted' });
+
+  await chipotle['$allow']('edit-comment', ted);
+
+  const usersThatTedHasViewCommentAccessTo = await Tyr.byName['user'].findAll({
+    query: {},
+    perm: 'view-comment',
+    auth: ted
+  });
+
+  expect(usersThatTedHasViewCommentAccessTo).to.have.lengthOf(2);
+});
+
+
+
 test.serial('Should handle lots of concurrent permissions updates', async () => {
   const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
         ben          = await Tyr.byName['user'].findOne({ name: 'ben' });
