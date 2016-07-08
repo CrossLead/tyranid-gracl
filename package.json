@@ -24,8 +24,7 @@
   "license": "MIT",
   "dependencies": {
     "gracl": "0.0.13",
-    "lodash": "3.10.1",
-    "tyranid": "0.0.178"
+    "lodash": "3.10.1"
   },
   "babel": {
     "presets": [
@@ -34,6 +33,7 @@
     "sourceMaps": true
   },
   "devDependencies": {
+    "tyranid": "0.0.178",
     "ava": "^0.14.0",
     "babel-cli": "^6.5.1",
     "babel-core": "^6.5.2",
@@ -53,6 +53,9 @@
     "typescript": "1.8.10",
     "typings": "^0.7.9",
     "uglifyjs": "^2.4.10"
+  },
+  "peerDependencies": {
+    "tyranid": "^0.0.178"
   },
   "ava": {
     "files": [
