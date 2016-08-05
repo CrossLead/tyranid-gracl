@@ -1,5 +1,5 @@
 import { GraclPlugin } from '../classes/GraclPlugin';
-
+import { parsePermissionString } from './parsePermissionString';
 
 /**
  * Each database collection could have specific permissions
@@ -40,9 +40,23 @@ new Tyr.Collection({
  */
 export function getAllowedPermissionsForCollection(plugin: GraclPlugin, collectionName: string) {
   const restriction = plugin.permissionRestrictions.get(collectionName);
-  if (restriction) {
-    return [...restriction];
-  } else {
-    return [...plugin.setOfAllPermissions];
-  }
+
+  const childResources = new Set(
+    plugin
+      .graclHierarchy
+      .getChildResources(collectionName)
+      .map(r => r.displayName)
+  );
+
+  // add own name
+  childResources.add(collectionName);
+
+  const preFiltered = restriction ? [...restriction] : [...plugin.setOfAllPermissions];
+
+  // filter permissions, excluding collection specific perms that
+  // are not child resources of this collection
+  return preFiltered.filter(perm => {
+    const components = parsePermissionString(plugin, perm);
+    return !components.collection || childResources.has(components.collection);
+  });
 }

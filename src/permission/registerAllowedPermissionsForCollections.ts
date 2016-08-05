@@ -102,7 +102,6 @@ export function registerAllowedPermissionsForCollections(plugin: GraclPlugin) {
         }).compact().value());
       }
 
-
       if (allowedSet) {
         plugin.permissionRestrictions.set(col.def.name, allowedSet);
       }

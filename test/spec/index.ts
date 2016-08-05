@@ -867,7 +867,7 @@ test.serial('should default to lowest hierarchy permission', async () => {
 test.serial('Should restrict permission to include set in graclConfig schema option', () => {
   const allowed = secure.getAllowedPermissionsForCollection('comment');
   expect(allowed.sort()).to.deep.equal(
-    [ 'view-post', 'view-blog', 'view-comment' ].sort()
+    [ 'view-comment' ].sort()
   );
 });
 
@@ -890,8 +890,19 @@ test.serial('Should return correct allowed permissions for given collection', ()
         blogAllowed = secure.getAllowedPermissionsForCollection('blog');
   allowed.sort();
   blogAllowed.sort();
+
   expect(blogAllowed).to.deep.equal(
-    [...secure.setOfAllPermissions].sort()
+   [ 'abstract_view_chart',
+     'delete-blog',
+     'delete-comment',
+     'delete-post',
+     'edit-blog',
+     'edit-comment',
+     'edit-post',
+     'view-blog',
+     'view-comment',
+     'view-post',
+     'view_alignment_triangle_private' ]
   );
   expect(allowed).to.deep.equal([ 'delete-post', 'edit-post', 'view-post' ]);
 });
@@ -936,41 +947,21 @@ test.serial('Should allow inclusion / exclusion of all permissions for a given c
         teamAllowed = secure.getAllowedPermissionsForCollection('team');
 
   expect(inventoryAllowed).to.deep.equal([
-    'edit-usagelog',
-    'edit-organization',
-    'edit-comment',
-    'edit-team',
     'edit-inventory',
-    'view-usagelog',
-    'view-organization',
-    'view-comment',
-    'view-team',
     'view-inventory',
-    'delete-usagelog',
-    'delete-organization',
-    'delete-comment',
-    'delete-team',
     'delete-inventory',
-    'abstract_view_chart'
-  ]);
+    'abstract_view_chart' ]);
+
   expect(teamAllowed).to.deep.equal([
-    'abstract_view_chart',
-    'delete-team',
-    'edit-team',
-    'view-team',
-    'delete-user',
-    'edit-user',
-    'view-user',
-    'delete-chart',
-    'edit-chart',
-    'view-chart',
-    'delete-post',
-    'edit-post',
-    'view-post',
-    'delete-blog',
-    'edit-blog',
-    'view-blog'
+     'abstract_view_chart',
+     'delete-team',
+     'edit-team',
+     'view-team',
+     'delete-user',
+     'edit-user',
+     'view-user'
   ]);
+
 });
 
 
@@ -1064,9 +1055,93 @@ test.serial('Should be able to query collection using perm with alternate collec
 });
 
 
-// test.serial('Should return correct permissions when utilizing PermissionsModel.determineAccess', async() => {
 
-// });
+test.serial('Should return correct documents when using $canAccessThis', async () => {
+  const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
+      ted = await Tyr.byName['user'].findOne({ name: 'ted' }),
+      ben = await Tyr.byName['user'].findOne({ name: 'ben' });
+
+  await chipotleBlog['$allow']('view-blog', ben);
+  await chipotleBlog['$allow']('edit-blog', ted);
+
+  const canAccessView = _.map(await chipotleBlog['$canAccessThis'](), '$uid');
+  const canAccessEdit = _.map(await chipotleBlog['$canAccessThis']('edit'), '$uid');
+
+  expect(canAccessView, 'canAccessView should include ben').to.deep.include(ben.$uid);
+  expect(canAccessView, 'canAccessView should include ted').to.deep.include(ted.$uid);
+  expect(canAccessEdit, 'canAccessEdit should include ted').to.deep.include(ted.$uid);
+});
+
+
+
+test.serial('Should return correct inherited documents when using $canAccessThis', async () => {
+  const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
+    noTeamUser = await Tyr.byName['user'].findOne({ name: 'noTeams' }),
+    chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
+    ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+    ted = await Tyr.byName['user'].findOne({ name: 'ted' }),
+    chipotleMarketing = await Tyr.byName['team'].findOne({ name: 'chipotleMarketing' });
+
+
+  await chipotleBlog['$allow']('view-blog', chipotle);
+  await chipotleBlog['$allow']('edit-blog', ted);
+
+  const canAccessView = _.map(await chipotleBlog['$canAccessThis'](), '$uid');
+  const canAccessEdit = _.map(await chipotleBlog['$canAccessThis']('edit'), '$uid');
+
+  expect(canAccessView, 'canAccessView should include ben').to.include(ben.$uid);
+  expect(canAccessView, 'canAccessView should include ted').to.include(ted.$uid);
+  expect(canAccessView, 'canAccessView should include noTeamUser').to.include(noTeamUser.$uid);
+  expect(canAccessView, 'canAccessView should include chipotle').to.include(chipotle.$uid);
+  expect(canAccessView).to.include(chipotleMarketing.$uid);
+
+  expect(canAccessEdit, 'canAccessEdit should not include ben').to.not.include(ben.$uid);
+  expect(canAccessEdit, 'canAccessEdit should include ted').to.include(ted.$uid);
+});
+
+
+
+test.serial('Should not include explicitly denied documents for $canAccessThis', async () => {
+  const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
+    noTeamUser = await Tyr.byName['user'].findOne({ name: 'noTeams' }),
+    chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
+    ben = await Tyr.byName['user'].findOne({ name: 'ben' });
+
+  await chipotleBlog['$allow']('view-blog', chipotle);
+
+  await chipotleBlog['$deny']('view-blog', ben);
+
+  const canAccessView = _.map(await chipotleBlog['$canAccessThis'](), '$uid');
+
+  expect(canAccessView, 'canAccessView should not include ben').to.not.include(ben.$uid);
+  expect(canAccessView, 'canAccessView should include noTeamUser').to.include(noTeamUser.$uid);
+  expect(canAccessView, 'canAccessView should include chipotle').to.include(chipotle.$uid);
+});
+
+
+
+test.serial('Should only return documents that match all permissions provided', async() => {
+  const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
+    noTeamUser = await Tyr.byName['user'].findOne({ name: 'noTeams' }),
+    chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
+    ben = await Tyr.byName['user'].findOne({ name: 'ben' });
+
+  await chipotleBlog['$allow']('view-blog', chipotle);
+  await chipotleBlog['$allow']('abstract_view_chart', chipotle);
+  await chipotleBlog['$deny']('abstract_view_chart', ben);
+
+  const canAccessView = _.map(await chipotleBlog['$canAccessThis'](), '$uid');
+
+  expect(canAccessView, 'canAccessView should include ben').to.include(ben.$uid);
+  expect(canAccessView, 'canAccessView should include noTeamUser').to.include(noTeamUser.$uid);
+  expect(canAccessView, 'canAccessView should include chipotle').to.include(chipotle.$uid);
+
+  const canAccessViewAndAT = _.map(await chipotleBlog['$canAccessThis']('view', 'abstract_view_chart'), '$uid');
+
+  expect(canAccessViewAndAT, 'canAccessViewAndAT should not include ben').to.not.include(ben.$uid);
+  expect(canAccessViewAndAT, 'canAccessViewAndAT should include noTeamUser').to.include(noTeamUser.$uid);
+  expect(canAccessViewAndAT, 'canAccessViewAndAT should include chipotle').to.include(chipotle.$uid);
+});
 
 
 
