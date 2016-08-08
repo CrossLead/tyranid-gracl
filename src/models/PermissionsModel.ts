@@ -9,11 +9,15 @@ import { createResource } from '../graph/createResource';
 import { createSubject } from '../graph/createSubject';
 import { getGraclClasses } from '../graph/getGraclClasses';
 import { validateAsResource } from '../graph/validateAsResource';
+import { getObjectHierarchy } from '../graph/getObjectHierarchy';
+import { findLinkInCollection } from '../graph/findLinkInCollection';
 
 import { validatePermissionExists } from '../permission/validatePermissionExists';
 import { parsePermissionString } from '../permission/parsePermissionString';
 import { nextPermissions } from '../permission/nextPermissions';
 import { getPermissionParents } from '../permission/getPermissionParents';
+import { formatPermissionType } from '../permission/formatPermissionType';
+import { isCrudPermission } from '../permission/isCrudPermission';
 
 import { extractIdAndModel } from '../tyranid/extractIdAndModel';
 
@@ -343,6 +347,170 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
       { unique: false }
     );
 
+  }
+
+
+  static async findEntitiesWithPermissionAccessToResource(
+    accessType: 'allow' | 'deny',
+    permissions: string[],
+    doc: Tyr.Document
+  ) {
+    const plugin = PermissionsModel.getGraclPlugin();
+
+
+    validateAsResource(plugin, doc.$model);
+
+    const rawList = permissions;
+
+    if (!rawList.length) {
+      plugin.error(`No permissions provided to doc.$canAccessThis()!`);
+    }
+
+    const permList = rawList.map(p => {
+        const components = parsePermissionString(plugin, p);
+        return formatPermissionType(plugin, {
+          action: components.action,
+          collection: (
+            components.collection ||
+            (isCrudPermission(plugin, p) && doc.$model.def.name) ||
+            undefined
+          )
+        });
+      });
+
+
+    permList.forEach(p => validatePermissionExists(plugin, p));
+
+    const permHierarchy: string[][] = [];
+    _.each(permList, perm => {
+      permHierarchy.push([perm, ...getPermissionParents(plugin, perm)]);
+    });
+
+
+    const query = {
+      $and: <Tyr.MongoQuery[]> [
+        { resourceId: doc.$uid }
+      ]
+    };
+
+
+    const anyPerms: Tyr.MongoQuery[] = [];
+
+    _.each(permHierarchy, list => {
+      anyPerms.push({
+        $or: _.map(list, permission => {
+          return {
+            [`access.${permission}`]: { $exists: true }
+          }
+        })
+      });
+    });
+
+    query.$and.push({ $or: anyPerms });
+
+
+    const permissionsAsResource = await plugin.permissionsModel.findAll({ query });
+    const allPermissionsAsResource = await plugin.permissionsModel.findAll({ resourceId: doc.$uid });
+    const subjectDocuments = await Tyr.byUids(<string[]> _.map(permissionsAsResource, 'subjectId'));
+
+
+    const subjectsByCollection: Hash<Tyr.Document[]> = {};
+    _.each(subjectDocuments, subject => {
+      const colName = subject.$model.def.name;
+      if (!subjectsByCollection[colName]) subjectsByCollection[colName] = [];
+      subjectsByCollection[colName].push(subject);
+    });
+
+    const permsBySubjectId: Hash<Tyr.Document> = {};
+    _.each(permissionsAsResource, permObj => {
+      permsBySubjectId[permObj['subjectId']] = permObj;
+    });
+
+    // test if a given subject satisfies all required permissions
+    const accessCache: Hash<boolean> = {};
+    function filterAccess(subject: Tyr.Document, explicit = false) {
+      const uid = subject.$uid;
+      const hashKey = `${uid}-${explicit}`;
+
+      if (hashKey in accessCache) return accessCache[hashKey];
+
+      const perm = permsBySubjectId[uid] || { access: {} };
+
+      return accessCache[hashKey] = _.all(permHierarchy, list => {
+        // check for explicit denies
+        if (explicit) {
+          const access = (accessType === 'allow' ? false : true);
+          return _.all(list, p => (_.get(perm, `access.${p}`) !== access));
+        } else {
+          const access = (accessType === 'allow' ? true : false);
+          return _.any(list, p => (_.get(perm, `access.${p}`) === access));
+        }
+      });
+    }
+
+
+    async function traverse(hierarchy: any, parentCollectionNames: string[] = []) {
+      const collections = Object.keys(hierarchy);
+
+      await Promise.all(_.map(collections, async (collectionName) => {
+        const subjects = subjectsByCollection[collectionName]
+                       = _.filter(subjectsByCollection[collectionName], s => filterAccess(s));
+
+        const query: Tyr.MongoQuery = {
+          $and: [
+            { _id: { $nin: _.map(subjects, '$id') } }
+          ]
+        };
+
+        // get link from child collection to parent collection
+        if (parentCollectionNames.length) {
+          const $or: Tyr.MongoQuery[] = [];
+
+          for (const parentCollectionName of _.compact(parentCollectionNames)) {
+            const parentSubjects = subjectsByCollection[parentCollectionName],
+                  parentSubjectIds = _.map(parentSubjects, '$id');
+
+            const link = findLinkInCollection(
+              plugin,
+              Tyr.byName[collectionName],
+              Tyr.byName[parentCollectionName]
+            );
+
+            if (link) {
+              $or.push({
+                [link.spath]: {
+                  $in: parentSubjectIds
+                }
+              });
+            }
+          }
+
+          query['$and'].push({ $or });
+
+          // get all matching docs to query
+          const inheritedSubjects = await Tyr.byName[collectionName].findAll({ query });
+
+          // filter out subjects which have an explicit deny/allow on any
+          // of the required permissions
+          const filteredDeniedSubjects = _.filter(inheritedSubjects, subject => filterAccess(subject, true));
+
+          subjectsByCollection[collectionName].push(...filteredDeniedSubjects);
+        }
+
+        await traverse(hierarchy[collectionName], [collectionName, ...parentCollectionNames]);
+      }));
+    }
+
+    const subjectHierarchy = getObjectHierarchy(plugin).subjects;
+
+    await traverse(subjectHierarchy);
+
+    return <Tyr.Document[]> _(subjectsByCollection)
+      .values()
+      .flatten()
+      .unique('$uid')
+      .compact()
+      .value();
   }
 
 

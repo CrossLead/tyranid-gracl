@@ -1145,6 +1145,34 @@ test.serial('Should only return documents that match all permissions provided', 
 
 
 
+test.serial('Should only return documents that do not have access to resouce via denies', async () => {
+  const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
+    noTeamUser = await Tyr.byName['user'].findOne({ name: 'noTeams' }),
+    chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
+    ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+    chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
+
+  await chipotleBlog['$allow']('view-blog', chopped);
+  await chipotleBlog['$deny']('view-blog', chipotle);
+  await chipotleBlog['$deny']('abstract_view_chart', chipotle);
+  await chipotleBlog['$allow']('abstract_view_chart', ben);
+
+  const canNotAccessView = _.map(await chipotleBlog['$deniedAccessToThis'](), '$uid');
+
+  expect(canNotAccessView, 'canNotAccessView should include ben').to.include(ben.$uid);
+  expect(canNotAccessView, 'canNotAccessView should include noTeamUser').to.include(noTeamUser.$uid);
+  expect(canNotAccessView, 'canNotAccessView should include chipotle').to.include(chipotle.$uid);
+
+  const canNotAccessViewAndAT = _.map(await chipotleBlog['$deniedAccessToThis']('view', 'abstract_view_chart'), '$uid');
+
+  expect(canNotAccessViewAndAT, 'canNotAccessViewAndAT should not include ben').to.not.include(ben.$uid);
+  expect(canNotAccessViewAndAT, 'canNotAccessViewAndAT should include noTeamUser').to.include(noTeamUser.$uid);
+  expect(canNotAccessViewAndAT, 'canNotAccessViewAndAT should include chipotle').to.include(chipotle.$uid);
+});
+
+
+
+
 test.serial('Should handle lots of concurrent permissions updates', async () => {
   const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
         ben          = await Tyr.byName['user'].findOne({ name: 'ben' });
