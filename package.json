@@ -2,20 +2,31 @@
   "name": "tyranid-gracl",
   "version": "0.1.10",
   "description": "tyranid.js plugin for gracl",
+  "keywords": [
+    "graph",
+    "acl",
+    "permissions",
+    "permission",
+    "tyranid",
+    "gracl"
+  ],
   "main": "./dist-node4/src/index.js",
   "typings": "./dist-es6/src/index.d.ts",
   "scripts": {
-    "babel": "bash -c \"./node_modules/.bin/babel ./dist-es6 --out-dir ./dist-node4\"",
-    "build": "bash -c \"rm -rf ./dist-es6/ ./dist-node4/\" && npm run typings && npm run lint && npm run tsc && npm run babel",
-    "copy-typings": "bash -c \"cp -r ./typings ./dist-es6 && cp -r ./typings ./dist-node4\"",
+    "babel": "./node_modules/.bin/babel ./dist-es6 --out-dir ./dist-node4",
+    "build": "rm -rf ./dist-es6/ ./dist-node4/ && npm run typings && npm run lint && npm run tsc && npm run babel",
+    "copy-typings": "cp -r ./typings ./dist-es6 && cp -r ./typings ./dist-node4",
     "pretest": "npm run build",
-    "prepublish": "npm test",
-    "test": "bash -c \"./node_modules/.bin/ava\"",
-    "tsc": "bash -c \"./node_modules/typescript/bin/tsc -d --pretty\"",
+    "prepublish": "npm run ava",
+    "ava": "npm run build && ./node_modules/.bin/ava",
+    "test": "npm run ava",
+    "test-coverage": "npm run build && ./node_modules/.bin/nyc ./node_modules/.bin/ava",
+    "coverage": "./node_modules/.bin/nyc report --reporter=text-lcov > coverage.lcov && ./node_modules/.bin/codecov",
+    "tsc": "./node_modules/typescript/bin/tsc -d --pretty",
     "typings": "./node_modules/.bin/typings install",
-    "docs": "bash -c \"rm -rf ./docs/ && ./node_modules/typedoc/bin/typedoc --mode file --theme default --target es6 --out ./docs/ ./src/ && touch ./docs/.nojekyll\"",
+    "docs": "rm -rf ./docs/ && ./node_modules/typedoc/bin/typedoc --mode file --theme default --target es6 --out ./docs/ ./src/ && touch ./docs/.nojekyll",
     "gh-pages": "npm run docs && ./node_modules/gh-pages/bin/gh-pages --dotfiles true -d ./docs/",
-    "lint": "bash -c \"./node_modules/tslint/bin/tslint -c ./tslint.json ./{test,lib}/**/*.ts && echo '> \\033[0;32mlinter passed!\\033[0m'\""
+    "lint": "./node_modules/tslint/bin/tslint -c ./tslint.json ./{test,lib}/**/*.ts && echo '> \\033[0;32mlinter passed!\\033[0m'"
   },
   "engines": {
     "node": ">=4.3.0"
@@ -26,14 +37,7 @@
     "gracl": "0.0.14",
     "lodash": "3.10.1"
   },
-  "babel": {
-    "presets": [
-      "es2015-node4"
-    ],
-    "sourceMaps": true
-  },
   "devDependencies": {
-    "tyranid": "0.0.178",
     "ava": "^0.14.0",
     "babel-cli": "^6.5.1",
     "babel-core": "^6.5.2",
@@ -43,19 +47,28 @@
     "babelify": "^7.2.0",
     "browserify": "^13.0.0",
     "chai": "^3.5.0",
+    "codecov": "^1.0.1",
     "gh-pages": "^0.10.0",
     "gulp": "^3.9.1",
     "jasmine-core": "^2.4.1",
     "mongodb": "^2.1.14",
+    "nyc": "^7.1.0",
     "ts-node": "^0.5.5",
     "tslint": "^3.5.0",
     "typedoc": "^0.4.1",
     "typescript": "1.8.10",
     "typings": "^0.7.9",
+    "tyranid": "0.0.178",
     "uglifyjs": "^2.4.10"
   },
   "peerDependencies": {
     "tyranid": "^0.0.178"
+  },
+  "babel": {
+    "presets": [
+      "es2015-node4"
+    ],
+    "sourceMaps": "inline"
   },
   "ava": {
     "files": [
