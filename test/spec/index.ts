@@ -13,6 +13,8 @@ import { captureLogStream } from '../helpers/captureLogStream';
 import test from 'ava';
 import { Blog } from '../models/Blog';
 
+import { PermissionsModel } from '../../src/models/PermissionsModel';
+
 import { findLinkInCollection } from '../../src/graph/findLinkInCollection';
 import { getCollectionLinksSorted } from '../../src/graph/getCollectionLinksSorted';
 import { stepThroughCollectionPath } from '../../src/graph/stepThroughCollectionPath';
@@ -21,6 +23,7 @@ import { getShortestPath } from '../../src/graph/getShortestPath';
 import { documentMethods } from '../../src/tyranid/documentMethods';
 import { makeRepository } from '../../src/tyranid/makeRepository';
 import { mixInDocumentMethods } from '../../src/tyranid/mixInDocumentMethods';
+import { extractIdAndModel, validate as validateUid } from '../../src/tyranid/extractIdAndModel';
 
 type GraclPlugin = tyranidGracl.GraclPlugin;
 
@@ -77,6 +80,10 @@ let plugin: GraclPlugin;
 test.before(async () => {
   const db = await mongodb.MongoClient.connect('mongodb://127.0.0.1:27017/tyranid_gracl_test');
 
+  expect(() => {
+    PermissionsModel.getGraclPlugin();
+  }, 'should throw if requesting plugin before tyranid boot').to.throw();
+
   Tyr.config({
     db: db,
     validate: [
@@ -103,6 +110,16 @@ test.before(async () => {
 
 
 test.beforeEach(createTestData);
+
+
+test.serial('Should correctly validate uid', () => {
+  expect(() => {
+    validateUid(plugin, 'asdfasdfasdfasdf');
+  }).to.throw();
+  expect(() => {
+    validateUid(plugin, 'xxxf32caa57cb7dceac70ef8d0a');
+  }).to.throw(/No collection found for id "xxx"/);
+});
 
 
 test.serial('Should produce correctly formatted labels', () => {
@@ -419,13 +436,28 @@ test.serial('should skip a link in the hierarchy chain when no immediate parent 
 });
 
 
-
 test.serial('should skip multiple links in the hierarchy chain when no immediate parent ids present', async () => {
   const freeComment = await Tyr.byName['comment'].findOne({ text: 'TEST_COMMENT' }),
         ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
 
   await chipotle['$allow']('view-comment', ben);
+
+  const access = await freeComment['$isAllowed']('view-comment', ben);
+  expect(access, 'ben should have access through organization')
+    .to.equal(true);
+});
+
+
+test.serial('should skip multiple links in the hierarchy chain when no immediate parent ids present, passing uid, using model', async () => {
+  const freeComment = await Tyr.byName['comment'].findOne({ text: 'TEST_COMMENT' }),
+        ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+        chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
+
+
+  await PermissionsModel.updatePermissions(chipotle.$uid, {
+    'view-comment': true
+  }, ben.$uid);
 
   const access = await freeComment['$isAllowed']('view-comment', ben);
   expect(access, 'ben should have access through organization')
@@ -575,7 +607,11 @@ test.serial('should correctly explain permissions', async () => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
-  const access = await chopped['$explainPermission']('view-post', ben);
+  const access = await PermissionsModel.explainPermission(
+    chopped.$uid,
+    'view-post',
+    ben.$uid
+  );
 
   expect(access.reason).to.match(/Permission set on <Resource:organization/);
   expect(access.access).to.equal(true);
@@ -1222,6 +1258,14 @@ test.serial('Should only return documents that do not have access to resouce via
 });
 
 
+test.serial('Should throw if passing no permissions to PermissionsModel.findEntitiesWithPermissionAccessToResource', async () => {
+  const ben = await Tyr.byName['user'].findOne({ name: 'ben' });
+  await expectAsyncToThrow(() => {
+    return PermissionsModel.findEntitiesWithPermissionAccessToResource('allow', [], ben);
+  }, /No permissions provided to/);
+});
+
+
 
 test.serial('Should successfully deny multiple permissions when passing array to $deny', async () => {
   const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
@@ -1235,7 +1279,11 @@ test.serial('Should successfully deny multiple permissions when passing array to
   expect(_.all(permissions, p => accessResult[p]), 'ben should inherit all perms').to.equal(true);
 
   await chipotle['$deny'](['view-organization', 'view-comment'], ben);
-  const accessResult2 = await chipotle['$determineAccess'](permissions, ben);
+  const accessResult2 = await PermissionsModel.determineAccess(
+    chipotle.$uid,
+    permissions,
+    ben.$uid
+  );
 
   expect(accessResult2['view-organization'], 'should not have view-organization').to.equal(false);
   expect(accessResult2['view-comment'], 'should not have view-comment').to.equal(false);

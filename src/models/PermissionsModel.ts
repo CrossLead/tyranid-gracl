@@ -363,7 +363,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     const rawList = permissions;
 
     if (!rawList.length) {
-      plugin.error(`No permissions provided to doc.$canAccessThis()!`);
+      plugin.error(`No permissions provided to findEntitiesWithPermissionAccessToResource()!`);
     }
 
     const permList = rawList.map(p => {
