@@ -1,6 +1,7 @@
 # a [gracl](https://github.com/CrossLead/gracl) plugin for [tyranid](http://tyranid.org/)
 
 [![Build Status](https://travis-ci.org/CrossLead/tyranid-gracl.svg?branch=master)](https://travis-ci.org/CrossLead/tyranid-gracl)
+[![codecov](https://codecov.io/gh/CrossLead/tyranid-gracl/branch/master/graph/badge.svg)](https://codecov.io/gh/CrossLead/tyranid-gracl)
 [![npm version](https://badge.fury.io/js/tyranid-gracl.svg)](https://badge.fury.io/js/tyranid-gracl)
 
 This repository contains a plugin for `tyranid` that allows for graph-based acl permissions to be enforced / utilized
