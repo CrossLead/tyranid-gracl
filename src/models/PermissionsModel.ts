@@ -410,7 +410,6 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
 
     const permissionsAsResource = await plugin.permissionsModel.findAll({ query });
-    const allPermissionsAsResource = await plugin.permissionsModel.findAll({ resourceId: doc.$uid });
     const subjectDocuments = await Tyr.byUids(<string[]> _.map(permissionsAsResource, 'subjectId'));
 
 
