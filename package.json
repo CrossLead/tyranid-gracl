@@ -74,5 +74,10 @@
     "files": [
       "dist-node4/test/spec/**/*.js"
     ]
+  },
+  "nyc": {
+    "include": [
+      "dist-node4/src"
+    ]
   }
 }

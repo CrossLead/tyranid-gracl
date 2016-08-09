@@ -164,7 +164,7 @@ export class GraclPlugin {
 
   logHierarchy() {
     const plugin = this;
-    console.log(`created gracl permissions hierarchy based on tyranid schemas: `);
+    plugin.log(`created gracl permissions hierarchy based on tyranid schemas: `);
     console.log(
       '  | \n  | ' +
       JSON

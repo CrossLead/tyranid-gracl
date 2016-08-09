@@ -9,6 +9,7 @@ import { expect } from 'chai';
 import { expectedLinkPaths } from '../helpers/expectedLinkPaths';
 import { createTestData } from '../helpers/createTestData';
 import { expectAsyncToThrow } from '../helpers/expectAsyncToThrow';
+import { captureLogStream } from '../helpers/captureLogStream';
 import test from 'ava';
 import { Blog } from '../models/Blog';
 
@@ -18,6 +19,8 @@ import { stepThroughCollectionPath } from '../../src/graph/stepThroughCollection
 import { getShortestPath } from '../../src/graph/getShortestPath';
 
 import { documentMethods } from '../../src/tyranid/documentMethods';
+import { makeRepository } from '../../src/tyranid/makeRepository';
+import { mixInDocumentMethods } from '../../src/tyranid/mixInDocumentMethods';
 
 type GraclPlugin = tyranidGracl.GraclPlugin;
 
@@ -69,7 +72,7 @@ async function giveBenAccessToChoppedPosts(perm = 'view') {
   return updatedChopped;
 }
 
-
+let plugin: GraclPlugin;
 
 test.before(async () => {
   const db = await mongodb.MongoClient.connect('mongodb://127.0.0.1:27017/tyranid_gracl_test');
@@ -92,6 +95,8 @@ test.before(async () => {
 
   await secure.createIndexes();
 
+  plugin = <GraclPlugin> secure;
+
   await createTestData();
 });
 
@@ -110,6 +115,52 @@ test.serial('Should produce correctly formatted labels', () => {
   expect(secure.formatPermissionLabel('edit-user'))
     .to.equal('TEST_LABEL');
 });
+
+
+test.serial('Make repository should correctly create repo', async () => {
+  const repo = makeRepository(<GraclPlugin> Tyr.secure, Tyr.byName['user'], 'subject');
+
+  const benTyr = await Tyr.byName['user'].findOne({ name: 'ben' });
+  const ben = await repo.getEntity(benTyr.$id);
+  expect(ben).to.deep.equal(benTyr);
+
+  ben['__TEST_PROP'] = 1;
+  await repo.saveEntity(ben.$id, ben);
+  const benAfterEdit = await repo.getEntity(benTyr.$id);
+  expect(benAfterEdit['__TEST_PROP'], 'should set test prop').to.equal(1);
+
+  expect(() => {
+    makeRepository(<GraclPlugin> Tyr.secure, Tyr.byName['user'], 'foo');
+  }, 'invalid gracl type should throw').to.throw();
+});
+
+
+test.serial('mixInDocumentMethods should throw when called again', () => {
+  expect(() => {
+    mixInDocumentMethods(<GraclPlugin> Tyr.secure);
+  }).to.throw();
+});
+
+
+test.serial('Should log formatted log output', () => {
+  const hook = captureLogStream(process.stdout);
+  plugin.verbose = true;
+  plugin.log('TEST MESSAGE');
+  plugin.verbose = false;
+  hook.unhook();
+  expect(hook.captured()).to.match(/tyranid-gracl: TEST MESSAGE/);
+});
+
+
+test.serial('Should log hierarchy', () => {
+  const hook = captureLogStream(process.stdout);
+  plugin.verbose = true;
+  plugin.logHierarchy();
+  plugin.verbose = false;
+  hook.unhook();
+  expect(hook.captured()).to.match(/tyranid-gracl: created gracl permissions hierarchy based on tyranid schemas: /);
+});
+
 
 
 test.serial('should correctly find links using getCollectionLinksSorted', () => {
