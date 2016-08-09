@@ -305,7 +305,9 @@ await blog.$updatePermissions({
           doc = <Tyr.Document> context,
           plugin = PermissionsModel.getGraclPlugin();
 
-    _.each(permissionChanges, (_, p) => validatePermissionForResource(plugin, p, doc.$model));
+    _.each(permissionChanges, (_, p) => {
+      validatePermissionForResource(plugin, p, doc.$model);
+    });
     return PermissionsModel.updatePermissions(doc, permissionChanges, subjectDocument);
   },
 
@@ -408,7 +410,9 @@ await blog.$allow('view-blog', user);
     if (typeof permissionType === 'string') {
       permissionUpdates[permissionType] = true;
     } else {
-      _.each(permissionType, p => permissionUpdates[p] = true);
+      _.each(permissionType, p => {
+        permissionUpdates[p] = true;
+      });
     }
 
     return <Promise<Tyr.Document>> this.$updatePermissions(
@@ -446,8 +450,12 @@ await blog.$deny('view-blog', user);
     if (typeof permissionType === 'string') {
       permissionUpdates[permissionType] = false;
     } else {
-      _.each(permissionType, p => permissionUpdates[p] = false);
+      _.each(permissionType, p => {
+        permissionUpdates[p] = false;
+      });
     }
+
+
 
     return <Promise<Tyr.Document>> this.$updatePermissions(
       permissionUpdates,

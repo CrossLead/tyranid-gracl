@@ -1172,6 +1172,27 @@ test.serial('Should only return documents that do not have access to resouce via
 
 
 
+test.serial('Should successfully deny multiple permissions when passing array to $deny', async () => {
+  const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
+    ben = await Tyr.byName['user'].findOne({ name: 'ben' });
+
+  const permissions = ['view-organization', 'view_alignment_triangle_private', 'view-comment'];
+
+  await chipotle['$allow'](permissions, chipotle);
+
+  const accessResult = await chipotle['$determineAccess'](permissions, ben);
+  expect(_.all(permissions, p => accessResult[p]), 'ben should inherit all perms').to.equal(true);
+
+  await chipotle['$deny'](['view-organization', 'view-comment'], ben);
+  const accessResult2 = await chipotle['$determineAccess'](permissions, ben);
+
+  expect(accessResult2['view-organization'], 'should not have view-organization').to.equal(false);
+  expect(accessResult2['view-comment'], 'should not have view-comment').to.equal(false);
+  expect(accessResult2['view_alignment_triangle_private'], 'should have view_alignment_triangle_private').to.equal(true);
+});
+
+
+
 
 test.serial('Should handle lots of concurrent permissions updates', async () => {
   const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
