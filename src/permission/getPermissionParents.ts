@@ -17,5 +17,5 @@ export function getPermissionParents(plugin: GraclPlugin, perm: string): string[
       .flatten()
       .value();
   }
-  return _.unique(parents);
+  return _.uniq(parents);
 }

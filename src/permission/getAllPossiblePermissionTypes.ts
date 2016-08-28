@@ -27,5 +27,5 @@ export function getAllPossiblePermissionTypes(plugin: GraclPlugin): string[] {
     }
   }
 
-  return (plugin._allPossiblePermissionsCache = _.unique(allPermissions)).slice();
+  return (plugin._allPossiblePermissionsCache = _.uniq(allPermissions)).slice();
 }

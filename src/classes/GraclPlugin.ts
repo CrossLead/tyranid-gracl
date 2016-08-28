@@ -1,5 +1,4 @@
-/// <reference path='../../typings/main.d.ts' />
-import Tyr from 'tyranid';
+import { Tyr } from 'tyranid';
 import * as _ from 'lodash';
 import {
   Permission,
@@ -50,7 +49,7 @@ import { getAllowedPermissionsForCollection } from '../permission/getAllowedPerm
   Example:
 
   ```js
-  import Tyr from 'tyranid';
+  import { Tyr } from 'tyranid';
   import pmongo from 'promised-mongo';
 
   // import plugin class

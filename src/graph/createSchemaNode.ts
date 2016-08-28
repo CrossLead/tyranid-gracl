@@ -1,5 +1,6 @@
-import Tyr from 'tyranid';
+import { Tyr } from 'tyranid';
 import * as _ from 'lodash';
+import { ObjectID } from 'mongodb';
 import { SchemaNode, Permission, Node, Subject } from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { PermissionsModel } from '../models/PermissionsModel';
@@ -95,7 +96,7 @@ export function createSchemaNode(
 
               const idProp = linkField.namePath.get(doc) || [];
 
-              let ids: string[] = !idProp
+              let ids: ObjectID[] = !idProp
                 ? []
                 : (Array.isArray(idProp) ? idProp : [ idProp ]);
 
@@ -108,7 +109,7 @@ export function createSchemaNode(
                 nextCollection = Tyr.byName[path.shift() || plugin._NO_COLLECTION];
                 linkField = findLinkInCollection(plugin, currentCollection, nextCollection);
                 const nextDocuments = await currentCollection.byIds(ids);
-                ids = <string[]> _.chain(nextDocuments)
+                ids = <ObjectID[]> _.chain(nextDocuments)
                   .map((d: Tyr.Document) => linkField.namePath.get(d))
                   .flatten()
                   .compact()

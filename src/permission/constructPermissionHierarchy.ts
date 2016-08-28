@@ -72,7 +72,7 @@ export function constructPermissionHierarchy(plugin: GraclPlugin) {
           colParents.push(parent);
         }
       }
-      perm.collection_parents = _.unique(colParents);
+      perm.collection_parents = _.uniq(colParents);
     }
 
     return perm;

@@ -1,4 +1,4 @@
-import Tyr from 'tyranid';
+import { Tyr } from 'tyranid';
 import * as _ from 'lodash';
 import { PermissionsModel } from '../models/PermissionsModel';
 import { permissionExplaination, Hash } from '../interfaces';
@@ -226,7 +226,7 @@ await user.$removeEntityPermission('resource', 'view-user', 'deny');
       })
     }))
     .map(otherType)
-    .unique()
+    .uniq()
     .value();
   },
 

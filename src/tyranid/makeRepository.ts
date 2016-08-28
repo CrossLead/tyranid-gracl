@@ -1,4 +1,5 @@
-import Tyr from 'tyranid';
+import { Tyr } from 'tyranid';
+import { ObjectID } from 'mongodb';
 import { Repository, Node } from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 
@@ -21,11 +22,11 @@ export function makeRepository(
   }
   return {
 
-    getEntity(id: string, node: Node): Promise<Tyr.Document> {
+    getEntity(id: ObjectID, node: Node): Promise<Tyr.Document> {
       return collection.byId(id);
     },
 
-    saveEntity(id: string, doc: Tyr.Document, node: Node): Promise<Tyr.Document> {
+    saveEntity(id: ObjectID, doc: Tyr.Document, node: Node): Promise<Tyr.Document> {
       return doc.$save();
     }
 

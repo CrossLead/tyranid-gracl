@@ -1,4 +1,4 @@
-import Tyr from 'tyranid';
+import { Tyr } from 'tyranid';
 import { binaryIndexOf, baseCompare } from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { getCollectionLinksSorted } from './getCollectionLinksSorted';

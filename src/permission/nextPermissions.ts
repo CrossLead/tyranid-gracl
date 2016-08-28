@@ -29,7 +29,7 @@ export function nextPermissions(plugin: GraclPlugin, permissionString: string): 
   return _.chain(actionParents)
     .concat(permissionStringParents)
     .map('name')
-    .unique()
+    .uniq()
     .map((name: string) => {
       // we need to split the name, as it may include a specific collection
       // for inheritance
@@ -47,6 +47,6 @@ export function nextPermissions(plugin: GraclPlugin, permissionString: string): 
       }
     })
     .compact()
-    .unique()
+    .uniq()
     .value();
 }

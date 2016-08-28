@@ -33,6 +33,6 @@ export function getPermissionChildren(plugin: GraclPlugin, perm: string): string
       children.push(name);
     }
   }
-  plugin._permissionChildCache[perm] = _.unique(children);
+  plugin._permissionChildCache[perm] = _.uniq(children);
   return plugin._permissionChildCache[perm].slice();
 }

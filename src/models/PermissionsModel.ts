@@ -1,6 +1,5 @@
-/// <reference path='../../typings/main.d.ts' />
 import * as _ from 'lodash';
-import Tyr from 'tyranid';
+import { Tyr } from 'tyranid';
 import * as gracl from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { permissionExplaination, Hash } from '../interfaces';
@@ -173,7 +172,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
         return permHierarchyCache[perm] = [ perm, ...getPermissionParents(plugin, perm) ];
       })
       .flatten()
-      .unique()
+      .uniq()
       .compact()
       .value();
 
@@ -181,7 +180,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     const permCheckResults = await resource.determineAccess(subject, allPermsToCheck);
 
     _.each(permissionTypes, perm => {
-      accessResults[perm] = _.any(
+      accessResults[perm] = _.some(
         permHierarchyCache[perm],
         p => permCheckResults[p].access
       );
@@ -435,14 +434,14 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
 
       const perm = permsBySubjectId[uid] || { access: {} };
 
-      return accessCache[hashKey] = _.all(permHierarchy, list => {
+      return accessCache[hashKey] = _.every(permHierarchy, list => {
         // check for explicit denies
         if (explicit) {
           const access = (accessType === 'allow' ? false : true);
-          return _.all(list, p => (_.get(perm, `access.${p}`) !== access));
+          return _.every(list, p => (_.get(perm, `access.${p}`) !== access));
         } else {
           const access = (accessType === 'allow' ? true : false);
-          return _.any(list, p => (_.get(perm, `access.${p}`) === access));
+          return _.some(list, p => (_.get(perm, `access.${p}`) === access));
         }
       });
     }
@@ -507,7 +506,7 @@ export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseC
     return <Tyr.Document[]> _(subjectsByCollection)
       .values()
       .flatten()
-      .unique('$uid')
+      .uniqBy('$uid')
       .compact()
       .value();
   }

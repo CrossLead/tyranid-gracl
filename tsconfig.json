@@ -13,11 +13,10 @@
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true
   },
-  "exclude": [
-    "node_modules",
-    "scripts",
-    "typings",
-    "dist-es6",
-    "dist-node4"
+  "files": [
+    "./src/index.ts",
+    "./src/tyranid-extensions.d.ts",
+    "./test/spec/index.ts",
+    "./typings/index.d.ts"
   ]
 }

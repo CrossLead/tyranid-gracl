@@ -1,4 +1,4 @@
-import Tyr from 'tyranid';
+import { Tyr } from 'tyranid';
 import { Blog } from '../models/Blog';
 import { Post } from '../models/Post';
 import { User } from '../models/User';

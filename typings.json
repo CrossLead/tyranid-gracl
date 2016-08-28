@@ -1,11 +1,11 @@
 {
-  "ambientDependencies": {
-    "chai": "github:DefinitelyTyped/DefinitelyTyped/chai/chai.d.ts#1914a00b3c740348dae407ee0d2be89b0b58ad7f",
-    "express": "github:DefinitelyTyped/DefinitelyTyped/express/express.d.ts#dd638012d63e069f2c99d06ef4dcc9616a943ee4",
-    "lodash": "github:DefinitelyTyped/DefinitelyTyped/lodash/lodash-3.10.d.ts#3d572e1ee3e6492983ef01f8b7adf6150d345b11",
-    "mime": "github:DefinitelyTyped/DefinitelyTyped/mime/mime.d.ts#cb5206a8ac1c9a3ddfd126f5ecea6729b2361452",
-    "node": "github:DefinitelyTyped/DefinitelyTyped/node/node.d.ts#48c1e3c1d6baefa4f1a126f188c27c4fefd36bff",
-    "serve-static": "github:DefinitelyTyped/DefinitelyTyped/serve-static/serve-static.d.ts#0fa4e9e61385646ea6a4cba2aef357353d2ce77f",
-    "tyranid": "github:tyranid-org/tyranid-typings/tyranid/index.d.ts#1dce487e686134857d03acc6c977b620e5bc4008"
+  "dependencies": {
+    "chai": "registry:npm/chai#3.5.0+20160723033700",
+    "express": "registry:npm/express#4.14.0+20160815112707",
+    "lodash": "registry:npm/lodash#4.0.0+20160723033700",
+    "mongodb": "registry:npm/mongodb#2.1.0+20160721204323"
+  },
+  "globalDependencies": {
+    "node": "registry:dt/node#6.0.0+20160826120425"
   }
 }

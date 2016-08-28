@@ -1,4 +1,4 @@
-import Tyr from 'tyranid';
+import { Tyr } from 'tyranid';
 
 export const UsageLogBaseCollection = new Tyr.Collection({
   id: 'ul0',

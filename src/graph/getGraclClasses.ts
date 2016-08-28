@@ -1,4 +1,4 @@
-import Tyr from 'tyranid';
+import { Tyr } from 'tyranid';
 import { Subject, Resource } from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { createSubject } from './createSubject';

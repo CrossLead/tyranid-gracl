@@ -1,4 +1,4 @@
-import Tyr from 'tyranid';
+import { Tyr } from 'tyranid';
 import { createInQueries } from './createInQueries';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { Hash } from '../interfaces';

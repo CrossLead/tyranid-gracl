@@ -1,4 +1,4 @@
-import Tyr from 'tyranid';
+import { Tyr } from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
 
 const checkForHexRegExp = new RegExp('^[0-9a-fA-F]{24}$');

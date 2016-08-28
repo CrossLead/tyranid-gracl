@@ -1,4 +1,4 @@
-import Tyr from 'tyranid';
+import { Tyr } from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { isCrudPermission } from './isCrudPermission';
 import { parsePermissionString } from './parsePermissionString';

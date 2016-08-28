@@ -1,4 +1,4 @@
-import Tyr from 'tyranid';
+import { Tyr } from 'tyranid';
 import * as _ from 'lodash';
 import { SchemaNode, Graph } from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';

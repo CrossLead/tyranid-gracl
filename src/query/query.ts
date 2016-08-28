@@ -1,5 +1,6 @@
-import Tyr from 'tyranid';
+import { Tyr } from 'tyranid';
 import * as _ from 'lodash';
+import { ObjectID } from 'mongodb';
 import { Permission, baseCompare } from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { PermissionsModel } from '../models/PermissionsModel';
@@ -282,8 +283,8 @@ export async function query(
         );
       }
 
-      let positiveIds: string[] = [],
-          negativeIds: string[] = [];
+      let positiveIds: ObjectID[] = [],
+          negativeIds: ObjectID[] = [];
 
       for (const permission of permissions.values()) {
         // grab access boolean for given permissionType

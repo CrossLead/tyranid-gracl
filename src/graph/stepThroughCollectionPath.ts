@@ -1,5 +1,6 @@
-import Tyr from 'tyranid';
+import { Tyr } from 'tyranid';
 import * as _ from 'lodash';
+import { ObjectID } from 'mongodb';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { findLinkInCollection } from './findLinkInCollection';
 
@@ -10,7 +11,7 @@ import { findLinkInCollection } from './findLinkInCollection';
  */
 export async function stepThroughCollectionPath(
   plugin: GraclPlugin,
-  ids: string[],
+  ids: ObjectID[],
   previousCollection: Tyr.CollectionInstance,
   nextCollection: Tyr.CollectionInstance,
   secure: boolean = false

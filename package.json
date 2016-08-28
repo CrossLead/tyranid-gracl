@@ -32,8 +32,8 @@
   "author": "bsouthga@gmail.com",
   "license": "MIT",
   "dependencies": {
-    "gracl": "0.0.14",
-    "lodash": "3.10.1"
+    "gracl": "0.0.16",
+    "lodash": "^4.15.0"
   },
   "devDependencies": {
     "ava": "^0.14.0",
@@ -54,13 +54,13 @@
     "ts-node": "^0.5.5",
     "tslint": "^3.5.0",
     "typedoc": "^0.4.1",
-    "typescript": "1.8.10",
-    "typings": "^0.7.9",
-    "tyranid": "0.0.178",
-    "uglifyjs": "^2.4.10"
+    "typescript": "^1.8.10",
+    "tyranid": "^0.1.4",
+    "uglifyjs": "^2.4.10",
+    "typings": "^1.3.3"
   },
   "peerDependencies": {
-    "tyranid": "^0.0.178"
+    "tyranid": "^0.1.4"
   },
   "babel": {
     "presets": [

@@ -1,4 +1,4 @@
-import Tyr from 'tyranid';
+import { Tyr } from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { Hash } from '../interfaces';
 import { findLinkInCollection } from '../graph/findLinkInCollection';
