@@ -14,12 +14,13 @@
   "typings": "./dist-es6/src/index.d.ts",
   "scripts": {
     "babel": "./node_modules/.bin/babel ./dist-es6 --out-dir ./dist-node4",
-    "build": "rm -rf ./dist-es6/ ./dist-node4/ && npm run typings && npm run lint && npm run tsc && npm run babel",
+    "build": "rm -rf ./dist-es6/ ./dist-node4/ && npm run typings && npm run lint && npm run tsc && npm run babel && npm run compile-module-test",
     "copy-typings": "cp -r ./typings ./dist-es6 && cp -r ./typings ./dist-node4",
     "pretest": "npm run build",
     "prepublish": "npm run test",
     "test": "./node_modules/.bin/nyc ./node_modules/.bin/ava",
     "coverage": "./node_modules/.bin/nyc report --reporter=text-lcov > coverage.lcov && ./node_modules/.bin/codecov",
+    "compile-module-test": "cd ./test/tscompile && ../../node_modules/.bin/tsc --pretty",
     "tsc": "./node_modules/typescript/bin/tsc -d --pretty",
     "typings": "./node_modules/.bin/typings install",
     "docs": "rm -rf ./docs/ && ./node_modules/typedoc/bin/typedoc --mode file --theme default --target es6 --out ./docs/ ./src/ && touch ./docs/.nojekyll",
@@ -54,10 +55,10 @@
     "ts-node": "^0.5.5",
     "tslint": "^3.5.0",
     "typedoc": "^0.4.1",
-    "typescript": "^1.8.10",
+    "typescript": "^2.0.2",
+    "typings": "^1.3.3",
     "tyranid": "^0.1.4",
-    "uglifyjs": "^2.4.10",
-    "typings": "^1.3.3"
+    "uglifyjs": "^2.4.10"
   },
   "peerDependencies": {
     "tyranid": "^0.1.4"

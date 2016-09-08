@@ -45,7 +45,7 @@ export const PermissionsBaseCollection = <Tyr.CollectionInstance> new Tyr.Collec
 /**
   Collection to contain all permissions used by gracl
  */
-export class PermissionsModel extends (<Tyr.CollectionInstance> PermissionsBaseCollection) {
+export class PermissionsModel extends PermissionsBaseCollection {
 
 
   // error-checked method for retrieving the plugin instance attached to tyranid
