@@ -13,7 +13,6 @@ import {
   Repository
 } from 'gracl';
 
-
 import { PermissionsModel } from '../models/PermissionsModel';
 
 import {
@@ -32,6 +31,7 @@ import { mixInDocumentMethods } from '../tyranid/mixInDocumentMethods';
 import { buildLinkGraph } from '../graph/buildLinkGraph';
 import { createGraclHierarchy } from '../graph/createGraclHierarchy';
 import { getObjectHierarchy } from '../graph/getObjectHierarchy';
+import { tree, TreeNode } from '../graph/tree';
 
 import { constructPermissionHierarchy } from '../permission/constructPermissionHierarchy';
 import { registerAllowedPermissionsForCollections } from '../permission/registerAllowedPermissionsForCollections';
@@ -163,20 +163,22 @@ export class GraclPlugin {
 
   logHierarchy() {
     const plugin = this;
-    plugin.log(`created gracl permissions hierarchy based on tyranid schemas: `);
-    console.log(
-      '  | \n  | ' +
-      JSON
-        .stringify(getObjectHierarchy(plugin), <any> null, 4) // TODO: strictNullChecks hack
-        .replace(/[{},\":]/g, '')
-        .replace(/^\s*\n/gm, '')
-        .split('\n')
-        .join('\n  | ')
-        .replace(/\s+$/, '')
-        .replace(/resources/, '---- resources ----')
-        .replace(/subjects/, '---- subjects ----') +
-      '____'
-    );
+    const hierarchy = getObjectHierarchy(plugin);
+
+    type N = { [key: string]: N };
+    const visit = (obj: N): TreeNode[] => {
+      return Object.keys(obj).map(key => {
+        const children = visit(obj[key]);
+        const node = <TreeNode> { label: key };
+        if (children.length) node.nodes = children;
+        return node;
+      });
+    };
+
+    plugin.log(tree({
+      label: 'hierarchy',
+      nodes: visit(<any> hierarchy)
+    }));
   }
 
   error(message: string) {

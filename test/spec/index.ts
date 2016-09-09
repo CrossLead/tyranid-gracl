@@ -149,17 +149,6 @@ test.serial('Should log formatted log output', () => {
 });
 
 
-test.serial('Should log hierarchy', () => {
-  const hook = captureLogStream(process.stdout);
-  plugin.verbose = true;
-  plugin.logHierarchy();
-  plugin.verbose = false;
-  hook.unhook();
-  expect(hook.captured()).to.match(/tyranid-gracl: created gracl permissions hierarchy based on tyranid schemas: /);
-});
-
-
-
 test.serial('should correctly find links using getCollectionLinksSorted', () => {
   const Chart = Tyr.byName['chart'],
         options = { direction: 'outgoing' },
