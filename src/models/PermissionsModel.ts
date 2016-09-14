@@ -1,6 +1,5 @@
 import * as _ from 'lodash';
 import { Tyr } from 'tyranid';
-import * as gracl from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { permissionExplaination, Hash } from '../interfaces';
 
@@ -13,7 +12,6 @@ import { findLinkInCollection } from '../graph/findLinkInCollection';
 
 import { validatePermissionExists } from '../permission/validatePermissionExists';
 import { parsePermissionString } from '../permission/parsePermissionString';
-import { nextPermissions } from '../permission/nextPermissions';
 import { getPermissionParents } from '../permission/getPermissionParents';
 import { formatPermissionType } from '../permission/formatPermissionType';
 import { isCrudPermission } from '../permission/isCrudPermission';
@@ -50,9 +48,11 @@ export class PermissionsModel extends PermissionsBaseCollection {
 
   // error-checked method for retrieving the plugin instance attached to tyranid
   static getGraclPlugin(): GraclPlugin {
-    const plugin = <GraclPlugin> Tyr.secure;
+    const plugin = <GraclPlugin | undefined> Tyr.secure;
     if (!plugin) {
-      plugin.error(`No gracl plugin available, must instantiate GraclPlugin and pass to Tyr.config()!`);
+      return GraclPlugin.prototype.error(
+        `No gracl plugin available, must instantiate GraclPlugin and pass to Tyr.config()!`
+      );
     }
     return plugin;
   }
@@ -240,8 +240,10 @@ export class PermissionsModel extends PermissionsBaseCollection {
     const $set: { [key: string]: boolean } = {};
 
     _.each(permissionChanges, (access, permissionType) => {
-      validatePermissionExists(plugin, permissionType);
-      $set[`access.${permissionType}`] = access;
+      if (permissionType) {
+        validatePermissionExists(plugin, permissionType);
+        $set[`access.${permissionType}`] = access;
+      }
     });
 
     if (!resourceDocument) throw new TypeError(`no resource given to updatePermissions`);

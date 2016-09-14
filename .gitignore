@@ -7,3 +7,4 @@ dist-node4/*
 dist-es6/*
 coverage
 .nyc_output
+test/tscompile/index.js*

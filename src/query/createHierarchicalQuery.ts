@@ -54,6 +54,10 @@ export function createHierarchicalQuery(
       const $or: Hash<any>[] = [];
       const childCollectionNames = plugin.resourceChildren.get(collectionName);
 
+      if (!childCollectionNames) {
+        return plugin.error(`No childCollectionNames found for ${collectionName}`);
+      }
+
       const excludeMap = new Map<string, Set<string>>();
       excludeMap.set(collectionName, uids);
 
@@ -63,8 +67,9 @@ export function createHierarchicalQuery(
 
       const includeMap = new Map<string, Set<string>>();
       childCollectionNames.forEach(name => {
-        if (positiveUids.has(name) && positiveUids.get(name).size) {
-          includeMap.set(name, positiveUids.get(name));
+        const uids = positiveUids.get(name);
+        if (uids && uids.size) {
+          includeMap.set(name, uids);
         }
       });
 

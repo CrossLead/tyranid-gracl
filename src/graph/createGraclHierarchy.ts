@@ -3,7 +3,6 @@ import * as _ from 'lodash';
 import { SchemaNode, Graph } from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import {
-  Hash,
   schemaGraclConfigObject,
   TyrSchemaGraphObjects
 } from '../interfaces';
@@ -19,8 +18,7 @@ import { createSchemaNode } from './createSchemaNode';
  * (see https://github.com/CrossLead/gracl/blob/master/lib/classes/Graph.ts)
  */
 export function createGraclHierarchy(plugin: GraclPlugin) {
-  const collections = Tyr.collections,
-        nodeSet     = new Set<string>();
+  const collections = Tyr.collections;
 
   const graclGraphNodes = {
     subjects: <TyrSchemaGraphObjects> {
@@ -106,10 +104,7 @@ export function createGraclHierarchy(plugin: GraclPlugin) {
     }
 
     _.each(tyrObjects.links, node => {
-      const name = node.collection.def.name,
-            parentName = node.link.def.name,
-            parentNamePath = node.collection.parsePath(node.path);
-
+      const name = node.collection.def.name;
       /**
        * Create node in Gracl graph with a custom getParents() method
        */
@@ -141,7 +136,8 @@ export function createGraclHierarchy(plugin: GraclPlugin) {
       if (!plugin.resourceChildren.has(parentName)) {
         plugin.resourceChildren.set(parentName, new Set<string>());
       }
-      plugin.resourceChildren.get(parentName).add(childName);
+      const parent = plugin.resourceChildren.get(parentName);
+      if (parent) parent.add(childName);
     });
   });
 }

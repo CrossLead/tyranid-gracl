@@ -33,7 +33,7 @@ export function registerAllowedPermissionsForCollections(plugin: GraclPlugin) {
         config.permissions.includeCollections
       );
 
-      let allowedSet: Set<string>;
+      let allowedSet: Set<string> | undefined;
 
       if (hasExcludeConfig && !hasIncludeConfig) {
         let excludeSet = new Set();

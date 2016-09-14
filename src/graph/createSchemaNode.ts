@@ -4,7 +4,6 @@ import { ObjectID } from 'mongodb';
 import { SchemaNode, Permission, Node, Subject } from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { PermissionsModel } from '../models/PermissionsModel';
-import { Hash } from '../interfaces';
 import { makeRepository } from '../tyranid/makeRepository';
 import { getShortestPath } from './getShortestPath';
 import { findLinkInCollection } from './findLinkInCollection';
@@ -37,10 +36,9 @@ export function createSchemaNode(
     type: type,
     parent: node && node.link.def.name,
 
-    async getPermission(subject: Subject): Promise<Permission> {
-      const thisNode = <Node> (<any> this);
+    async getPermission(this: Node, subject: Subject): Promise<Permission> {
       const subjectId = subject.getId(),
-            resourceId = thisNode.getId();
+            resourceId = this.getId();
 
       const perm = <any> (await PermissionsModel.findOne({
         subjectId,
@@ -51,18 +49,17 @@ export function createSchemaNode(
         subjectId,
         resourceId: '',
         resourceType: '',
-        subjectType: thisNode.getName(),
+        subjectType: this.getName(),
         access: {}
       });
     },
 
-    async getParents(): Promise<Node[]> {
+    async getParents(this: Node): Promise<Node[]> {
       if (node) {
-        const thisNode = <Node> (<any> this);
-        const ParentClass = thisNode.getParentClass();
+        const ParentClass = this.getParentClass();
         const parentNamePath = node.collection.parsePath(node.path);
 
-        let ids: any = parentNamePath.get(thisNode.doc);
+        let ids: any = parentNamePath.get(this.doc);
 
         if (ids && !(ids instanceof Array)) {
           ids = [ ids ];
@@ -73,8 +70,8 @@ export function createSchemaNode(
         // alternate path to current node
         if (!(ids && ids.length)) {
           const hierarchyClasses = ParentClass.getHierarchyClassNames(),
-                thisCollection = Tyr.byName[thisNode.getName()],
-                doc = <Tyr.Document> thisNode.doc;
+                thisCollection = Tyr.byName[this.getName()],
+                doc = <Tyr.Document> this.doc;
 
           hierarchyClasses.shift(); // remove parent we already tried
 

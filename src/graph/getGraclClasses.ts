@@ -10,8 +10,6 @@ export function getGraclClasses(
   resourceDocument: Tyr.Document,
   subjectDocument: Tyr.Document
 ): { subject: Subject, resource: Resource } {
-  const resourceCollectionName = resourceDocument.$model.def.name;
-
   const subject  = createSubject(plugin, subjectDocument),
         resource = createResource(plugin, resourceDocument);
 

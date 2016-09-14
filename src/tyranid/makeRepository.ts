@@ -1,6 +1,6 @@
 import { Tyr } from 'tyranid';
 import { ObjectID } from 'mongodb';
-import { Repository, Node } from 'gracl';
+import { Repository } from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 
 
@@ -22,11 +22,12 @@ export function makeRepository(
   }
   return {
 
-    getEntity(id: ObjectID, node: Node): Promise<Tyr.Document> {
+    getEntity(id: ObjectID): Promise<Tyr.Document> {
       return collection.byId(id);
     },
 
-    saveEntity(id: ObjectID, doc: Tyr.Document, node: Node): Promise<Tyr.Document> {
+    saveEntity(id: ObjectID, doc: Tyr.Document): Promise<Tyr.Document> {
+      id; // TODO: hack for no unused params...
       return doc.$save();
     }
 

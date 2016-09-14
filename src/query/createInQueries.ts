@@ -26,7 +26,7 @@ export function createInQueries(
     if (col === queriedCollection.def.name) {
       const primaryKey = queriedCollection.def.primaryKey;
       if (!primaryKey) {
-        plugin.error(`No primary key for collection ${queriedCollection.def.name}`);
+        return plugin.error(`No primary key for collection ${queriedCollection.def.name}`);
       } else {
         prop = primaryKey.field;
       }
@@ -34,7 +34,7 @@ export function createInQueries(
       const link = findLinkInCollection(plugin, queriedCollection, Tyr.byName[col]);
 
       if (!link) {
-        plugin.error(
+        return plugin.error(
           `No outgoing link from ${queriedCollection.def.name} to ${col}, cannot create restricted ${key} clause!`
         );
       }

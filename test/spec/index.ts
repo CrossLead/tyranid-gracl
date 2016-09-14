@@ -19,9 +19,8 @@ import { stepThroughCollectionPath } from '../../src/graph/stepThroughCollection
 import { getShortestPath } from '../../src/graph/getShortestPath';
 
 import { documentMethods } from '../../src/tyranid/documentMethods';
-import { makeRepository } from '../../src/tyranid/makeRepository';
 import { mixInDocumentMethods } from '../../src/tyranid/mixInDocumentMethods';
-import { extractIdAndModel, validate as validateUid } from '../../src/tyranid/extractIdAndModel';
+import { validate as validateUid } from '../../src/tyranid/extractIdAndModel';
 
 type GraclPlugin = tyranidGracl.GraclPlugin;
 
@@ -30,7 +29,10 @@ const VERBOSE_LOGGING = false;
 const permissionTypes = [
   { name: 'edit', format: 'TEST_LABEL', abstract: false },
   { name: 'view',
-    format: (act: string, col?: string) => `Allowed to view ${_.capitalize(col)}`,
+    format(act: string, col?: string) {
+      act;
+      return `Allowed to view ${_.capitalize(col)}`;
+    },
     parent: 'edit',
     abstract: false },
   { name: 'delete', abstract: false },
@@ -182,7 +184,11 @@ test.serial('should return correct ids after calling stepThroughCollectionPath',
     blogIds, Tyr.byName['blog'], Tyr.byName['post']
   );
 
-  checkStringEq(steppedPostIds, _.map(postIds, i => i.toString()) , 'ids after stepping should be all relevant ids');
+  checkStringEq(
+    steppedPostIds.map(s => s.toString()),
+    _.map(postIds, i => i.toString()),
+    'ids after stepping should be all relevant ids'
+  );
 
   await expectAsyncToThrow(
     () => stepThroughCollectionPath(secure,
@@ -265,7 +271,7 @@ test.serial('should return correct permission children on GraclPlugin.getPermiss
 
 test.serial('should successfully add permissions', async () => {
   const updatedChopped = await giveBenAccessToChoppedPosts();
-  const choppedPermissions = await updatedChopped['$permissions'](null, 'resource');
+  const choppedPermissions = await updatedChopped['$permissions'](undefined, 'resource');
   const existingPermissions = await Tyr.byName['graclPermission'].findAll({});
 
   expect(existingPermissions).to.have.lengthOf(1);
@@ -442,13 +448,13 @@ test.serial('should modify existing permissions instead of creating new ones', a
   const ben     = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
-  expect(await chopped['$permissions'](null, 'resource'), 'chopped should start with one permission').to.have.lengthOf(1);
+  expect(await chopped['$permissions'](undefined, 'resource'), 'chopped should start with one permission').to.have.lengthOf(1);
 
   expect(ben, 'ben should exist').to.exist;
   expect(chopped, 'chopped should exist').to.exist;
 
 
-  expect(await chopped['$permissions'](null, 'resource'), 'chopped should end with one permission').to.have.lengthOf(1);
+  expect(await chopped['$permissions'](undefined, 'resource'), 'chopped should end with one permission').to.have.lengthOf(1);
 
   const allPermissions = await tyranidGracl.PermissionsModel.findAll({});
 
@@ -495,9 +501,7 @@ test.serial('should successfully remove all permissions after secure.deletePermi
     ted.$allow('view-user', ben)
   ]);
 
-  const updatedTed = await Tyr.byName['user'].findOne({ name: 'ted' });
-
-  expect(await ted['$permissions'](null, 'resource', true),
+  expect(await ted['$permissions'](undefined, 'resource', true),
     'after populating teds permission (as resource), one permission should show up'
   ).to.have.lengthOf(1);
 
@@ -520,10 +524,10 @@ test.serial('should successfully remove all permissions after secure.deletePermi
   const tedSubjectPermissions = await ted['$permissions']();
   expect(tedSubjectPermissions).to.have.lengthOf(4);
 
-  const tedResourcePermissions = await ted['$permissions'](null, 'resource');
+  const tedResourcePermissions = await ted['$permissions'](undefined, 'resource');
   expect(tedResourcePermissions).to.have.lengthOf(2);
 
-  const tedDirectResourcePermissions = await ted['$permissions'](null, 'resource', true);
+  const tedDirectResourcePermissions = await ted['$permissions'](undefined, 'resource', true);
   expect(tedDirectResourcePermissions).to.have.lengthOf(1);
 
   expect(_.every(permissionChecks)).to.equal(true);
@@ -545,10 +549,10 @@ test.serial('should successfully remove all permissions after secure.deletePermi
         updatedPost = await Tyr.byName['post'].findOne({ text: 'Why burritos are amazing.' }),
         updatedChipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
 
-  expect(await updatedChopped['$permissions'](null, 'resource')).to.have.length(0);
-  expect(await updatedCava['$permissions'](null, 'resource')).to.have.length(0);
-  expect(await updatedPost['$permissions'](null, 'resource')).to.have.length(0);
-  expect(await updatedChipotle['$permissions'](null, 'resource')).to.have.length(0);
+  expect(await updatedChopped['$permissions'](undefined, 'resource')).to.have.length(0);
+  expect(await updatedCava['$permissions'](undefined, 'resource')).to.have.length(0);
+  expect(await updatedPost['$permissions'](undefined, 'resource')).to.have.length(0);
+  expect(await updatedChipotle['$permissions'](undefined, 'resource')).to.have.length(0);
 });
 
 
@@ -766,16 +770,14 @@ test.serial('should produce query restriction based on permissions', async () =>
 
 
 test.serial('Should return all relevant entities on doc.$entitiesWithPermission(perm)', async() => {
-  const ted = await Tyr.byName['user'].findOne({ name: 'ted' }),
-        ben = await Tyr.byName['user'].findOne({ name: 'ben' });
+  const ted = await Tyr.byName['user'].findOne({ name: 'ted' });
 
-  const chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' }),
-        cava = await Tyr.byName['organization'].findOne({ name: 'Cava' }),
+  const cava = await Tyr.byName['organization'].findOne({ name: 'Cava' }),
         chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
         chipotleBlogs = await Tyr.byName['blog'].findAll({ organizationId: chipotle.$id }),
         post = await Tyr.byName['post'].findOne({ text: 'Why burritos are amazing.' });
 
-  const permissionOperations = await Promise.all([
+  await Promise.all([
     cava.$allow('edit-post', ted),
     post.$deny('view-post', ted),
     chipotleBlogs[0].$allow('view-post', ted)
@@ -867,7 +869,6 @@ test.serial('should filter based on abstract parent access of collection-specifi
 
 test.serial('should filter based on abstract parent access of collection-specific permission', async () => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
-        blogs = await Tyr.byName['blog'].findAll({ }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
   await chopped.$allow('edit-organization', ben);
@@ -980,8 +981,7 @@ test.serial('Should throw when trying to set raw crud permission', async() => {
 
 
 test.serial('Should return object relating uids to access level for multiple permissions when using $determineAccessToAllPermissionsForResources()', async() => {
-  const chopped = await giveBenAccessToChoppedPosts(),
-        ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
+  const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         posts = await Tyr.byName['post'].findAll({ });
 
   const accessObj = await ben.$determineAccessToAllPermissionsForResources(

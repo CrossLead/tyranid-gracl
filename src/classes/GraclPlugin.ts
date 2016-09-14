@@ -1,16 +1,6 @@
 import { Tyr } from 'tyranid';
-import * as _ from 'lodash';
 import {
-  Permission,
-  topologicalSort,
-  Node,
   Graph,
-  binaryIndexOf,
-  baseCompare,
-  SchemaNode,
-  Subject,
-  Resource,
-  Repository
 } from 'gracl';
 
 import { PermissionsModel } from '../models/PermissionsModel';
@@ -20,8 +10,6 @@ import {
   permissionHierarchy,
   permissionTypeList,
   pluginOptions,
-  schemaGraclConfigObject,
-  TyrSchemaGraphObjects
 } from '../interfaces';
 
 import { query } from '../query/query';
@@ -148,7 +136,7 @@ export class GraclPlugin {
   query(
     queriedCollection: Tyr.CollectionInstance,
     permissionType: string,
-    subjectDocument: Tyr.Document = Tyr.local.user
+    subjectDocument?: Tyr.Document
   ) {
     return query(this, queriedCollection, permissionType, subjectDocument);
   }
@@ -166,14 +154,15 @@ export class GraclPlugin {
     const hierarchy = getObjectHierarchy(plugin);
 
     type N = { [key: string]: N };
-    const visit = (obj: N): TreeNode[] => {
+
+    function visit(obj: N): TreeNode[] {
       return Object.keys(obj).map(key => {
         const children = visit(obj[key]);
         const node = <TreeNode> { label: key };
         if (children.length) node.nodes = children;
         return node;
       });
-    };
+    }
 
     plugin.log(tree({
       label: 'hierarchy',
@@ -181,7 +170,7 @@ export class GraclPlugin {
     }));
   }
 
-  error(message: string) {
+  error(message: string): never {
     throw new Error(`tyranid-gracl: ${message}`);
   }
 

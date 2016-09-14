@@ -4,14 +4,19 @@
     "module": "commonjs",
     "moduleResolution" : "node",
     "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
     "noImplicitReturns": true,
+    "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "removeComments": false,
     "noLib": false,
+    "pretty": true,
     "outDir": "./dist-es6/",
     "inlineSourceMap": true,
-    "experimentalDecorators": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "experimentalDecorators": true
   },
   "files": [
     "./src/index.ts",

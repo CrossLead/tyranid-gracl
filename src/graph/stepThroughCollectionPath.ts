@@ -43,6 +43,6 @@ export async function stepThroughCollectionPath(
     );
 
     // extract their primary ids using the primary field
-    return <string[]> _.map(nextCollectionDocs, nextCollectionId);
+    return <ObjectID[]> _.map(nextCollectionDocs, nextCollectionId);
   }
 }

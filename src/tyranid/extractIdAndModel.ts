@@ -1,12 +1,10 @@
 import { Tyr } from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
 
-const checkForHexRegExp = new RegExp('^[0-9a-fA-F]{24}$');
-
 
 export function validate(plugin: GraclPlugin, uid: string) {
   try {
-    const components: { [key: string]: any } = Tyr.parseUid(uid) || {};
+    Tyr.parseUid(uid);
   } catch (err) {
     if (/must be a single String of 12 bytes or a string of 24 hex characters/.test(err.message)) {
       plugin.error(`Invalid resource id: ${uid}`);

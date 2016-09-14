@@ -85,7 +85,7 @@ export async function query(
    *  Iterate through permissions action hierarchy, getting access
    */
   const getAccess = (permission: Permission) => {
-    let perm: boolean;
+    let perm: boolean | undefined;
     for (const type of permissionTypes) {
       if (permission.access && type && permission.access[type] === true) {
         // short circuit on true
