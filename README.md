@@ -19,7 +19,7 @@ within tyranid simply by adding a few schema annotations.
 
 ### Installation
 
-```shell
+```bash
 npm install tyranid-gracl
 ```
 
