@@ -31,7 +31,7 @@
     "node": ">=4.3.0"
   },
   "author": "bsouthga@gmail.com",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "dependencies": {
     "gracl": "0.0.16",
     "lodash": "^4.15.0"
