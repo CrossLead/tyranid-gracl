@@ -1,7 +1,7 @@
 # a [gracl](https://github.com/CrossLead/gracl) plugin for [tyranid](http://tyranid.org/)
 
-[![Build Status](https://travis-ci.org/CrossLead/tyranid-gracl.svg?branch=master)](https://travis-ci.org/CrossLead/tyranid-gracl)
-[![codecov](https://codecov.io/gh/CrossLead/tyranid-gracl/branch/master/graph/badge.svg)](https://codecov.io/gh/CrossLead/tyranid-gracl)
+[![Build Status](https://travis-ci.org/tyranid-org/tyranid-gracl.svg?branch=master)](https://travis-ci.org/tyranid-org/tyranid-gracl)
+[![codecov](https://codecov.io/gh/tyranid-org/tyranid-gracl/branch/master/graph/badge.svg)](https://codecov.io/gh/tyranid-org/tyranid-gracl)
 [![npm version](https://badge.fury.io/js/tyranid-gracl.svg)](https://badge.fury.io/js/tyranid-gracl)
 
 This repository contains a plugin for `tyranid` that allows for graph-based acl permissions to be enforced / utilized
@@ -10,8 +10,8 @@ within tyranid simply by adding a few schema annotations.
 
 ## Links
 
-- [Generated Documentation](http://crosslead.github.io/tyranid-gracl)
-- [Github Repository](https://github.com/CrossLead/tyranid-gracl)
+- [Generated Documentation](http://tyranid-org.github.io/tyranid-gracl)
+- [Github Repository](https://github.com/tyranid-org/tyranid-gracl)
 - [A few slides](http://slides.com/bensouthgate/graph-based-permissions#/) that explain the basical algorithm and motivation of this project.
 
 ## Setup
