@@ -3,12 +3,12 @@ import * as mongodb from 'mongodb';
 import * as path from 'path';
 import * as _ from 'lodash';
 import * as tyranidGracl from '../../src/';
-import { expect } from 'chai';
+
 import { expectedLinkPaths } from '../helpers/expectedLinkPaths';
 import { createTestData } from '../helpers/createTestData';
 import { expectAsyncToThrow } from '../helpers/expectAsyncToThrow';
 import { captureLogStream } from '../helpers/captureLogStream';
-import test from 'ava';
+import test, { ContextualTestContext } from 'ava';
 import { Blog } from '../models/';
 
 import { PermissionsModel } from '../../src/models/PermissionsModel';
@@ -54,19 +54,18 @@ const root = __dirname.replace(`${path.sep}test${path.sep}spec`, ''),
       });
 
 
-const checkStringEq = (got: string[], want: string[], message = '') => {
-  expect(_.map(got, s => s.toString()), message)
-    .to.deep.equal(_.map(want, s => s.toString()));
+const checkStringEq = (t: ContextualTestContext, got: string[], want: string[], message = '') => {
+  t.deepEqual(_.map(got, s => s.toString()), _.map(want, s => s.toString()), message);
 };
 
 
 
-async function giveBenAccessToChoppedPosts(perm = 'view') {
+async function giveBenAccessToChoppedPosts(t: ContextualTestContext, perm = 'view') {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
-  expect(ben, 'ben should exist').to.exist;
-  expect(chopped, 'chopped should exist').to.exist;
+  t.truthy(ben, 'ben should exist');
+  t.truthy(chopped, 'chopped should exist');
 
   const updatedChopped = secure.permissionsModel.updatePermissions(
     chopped, { [`${perm}-post`]: true }, ben
@@ -77,12 +76,12 @@ async function giveBenAccessToChoppedPosts(perm = 'view') {
 
 let plugin: GraclPlugin;
 
-test.before(async () => {
+test.before(async (t) => {
   const db = await mongodb.MongoClient.connect('mongodb://127.0.0.1:27017/tyranid_gracl_test');
 
-  expect(() => {
+  t.throws(() => {
     PermissionsModel.getGraclPlugin();
-  }, 'should throw if requesting plugin before tyranid boot').to.throw();
+  });
 
   Tyr.config({
     db: db,
@@ -105,6 +104,7 @@ test.before(async () => {
   plugin = <GraclPlugin> secure;
 
   await createTestData();
+  t.pass();
 });
 
 
@@ -112,68 +112,62 @@ test.before(async () => {
 test.beforeEach(createTestData);
 
 
-test.serial('Should correctly validate uid', () => {
-  expect(() => {
+test.serial('Should correctly validate uid', (t) => {
+  t.throws(() => {
     validateUid(plugin, 'asdfasdfasdfasdf');
-  }).to.throw();
-  expect(() => {
+  });
+  t.throws(() => {
     validateUid(plugin, 'xxxf32caa57cb7dceac70ef8d0a');
-  }).to.throw(/No collection found for id "xxx"/);
+  }, /No collection found for id "xxx"/);
 });
 
 
-test.serial('Should produce correctly formatted labels', () => {
-  expect(secure.formatPermissionLabel('view-blog'))
-    .to.equal(`Allowed to view Blog`);
-
-  expect(secure.formatPermissionLabel('view_alignment_triangle_private'))
-    .to.equal('View Alignment Triangle Private');
-
-  expect(secure.formatPermissionLabel('edit-user'))
-    .to.equal('TEST_LABEL');
+test.serial('Should produce correctly formatted labels', (t) => {
+  t.deepEqual(secure.formatPermissionLabel('view-blog'), `Allowed to view Blog`);
+  t.deepEqual(secure.formatPermissionLabel('view_alignment_triangle_private'), 'View Alignment Triangle Private');
+  t.deepEqual(secure.formatPermissionLabel('edit-user'), 'TEST_LABEL');
 });
 
 
-test.serial('mixInDocumentMethods should throw when called again', () => {
-  expect(() => {
+test.serial('mixInDocumentMethods should throw when called again', (t) => {
+  t.throws(() => {
     mixInDocumentMethods(<GraclPlugin> Tyr.secure);
-  }).to.throw();
+  });
 });
 
 
-test.serial('Should log formatted log output', () => {
+test.serial('Should log formatted log output', (t) => {
   const hook = captureLogStream(process.stdout);
   plugin.verbose = true;
   plugin.log('TEST MESSAGE');
   plugin.verbose = false;
   hook.unhook();
-  expect(hook.captured()).to.match(/tyranid-gracl: TEST MESSAGE/);
+  t.regex(hook.captured(), /tyranid-gracl: TEST MESSAGE/);
 });
 
 
-test.serial('should correctly find links using getCollectionLinksSorted', () => {
+test.serial('should correctly find links using getCollectionLinksSorted', (t) => {
   const Chart = Tyr.byName['chart'],
         options = { direction: 'outgoing' },
         links = getCollectionLinksSorted(secure, Chart, options);
 
-  expect(links, 'should produce sorted links')
-    .to.deep.equal(_.sortBy(Chart.links(options), field => field.link.def.name));
+  t.deepEqual(links, _.sortBy(Chart.links(options), field => field.link.def.name), 'should produce sorted links');
 });
 
 
 
-test.serial('should find specific link using findLinkInCollection', () => {
+test.serial('should find specific link using findLinkInCollection', (t) => {
   const Chart     = Tyr.byName['chart'],
         User      = Tyr.byName['user'],
         linkField = findLinkInCollection(secure, Chart, User);
 
-  expect(linkField).to.exist;
-  expect(linkField.link.def.name).to.equal('user');
-  expect(linkField.spath).to.equal('userIds');
+  t.truthy(linkField);
+  t.deepEqual(linkField.link.def.name, 'user');
+  t.deepEqual(linkField.spath, 'userIds');
 });
 
 
-test.serial('should return correct ids after calling stepThroughCollectionPath', async () => {
+test.serial('should return correct ids after calling stepThroughCollectionPath', async (t) => {
   const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
         chipotleBlogs = await Tyr.byName['blog'].findAll({ organizationId: chipotle.$id }),
         blogIds = <mongodb.ObjectID[]> _.map(chipotleBlogs, '_id'),
@@ -185,12 +179,14 @@ test.serial('should return correct ids after calling stepThroughCollectionPath',
   );
 
   checkStringEq(
+    t,
     steppedPostIds.map(s => s.toString()),
     _.map(postIds, i => i.toString()),
     'ids after stepping should be all relevant ids'
   );
 
   await expectAsyncToThrow(
+    t,
     () => stepThroughCollectionPath(secure,
       blogIds, Tyr.byName['blog'], Tyr.byName['user']
     ),
@@ -201,36 +197,36 @@ test.serial('should return correct ids after calling stepThroughCollectionPath',
 
 
 
-test.serial('should correctly produce paths between collections', () => {
+test.serial('should correctly produce paths between collections', (t) => {
   for (const a in expectedLinkPaths) {
     for (const b in expectedLinkPaths[a]) {
       const path = getShortestPath(secure, Tyr.byName[a], Tyr.byName[b]);
-      expect(path, `Path from ${a} to ${b}`).to.deep.equal(expectedLinkPaths[a][b] || []);
+      t.deepEqual(path, expectedLinkPaths[a][b] || [], `Path from ${a} to ${b}`);
     }
   }
 });
 
 
 
-test.serial('should add permissions methods to documents', async () => {
+test.serial('should add permissions methods to documents', async (t) => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' });
   const methods = Object.keys(documentMethods);
 
   for (const method of methods) {
-    method && expect(ben, `should have method: ${method}`).to.have.property(method);
+    method && t.truthy(ben[method], `should have method: ${method}`);
   }
 });
 
 
 
-test.serial('should create subject and resource classes for collections without links in or out', () => {
-  expect(secure.graclHierarchy.resources.has('usagelog')).to.equal(true);
-  expect(secure.graclHierarchy.subjects.has('usagelog')).to.equal(true);
+test.serial('should create subject and resource classes for collections without links in or out', (t) => {
+  t.true(secure.graclHierarchy.resources.has('usagelog'));
+  t.true(secure.graclHierarchy.subjects.has('usagelog'));
 });
 
 
 
-test.serial('should return all relevant permissions on GraclPlugin.getAllPermissionTypes()', () => {
+test.serial('should return all relevant permissions on GraclPlugin.getAllPermissionTypes()', (t) => {
   const number_of_resources = secure.graclHierarchy.resources.size;
   const number_of_crud_perms = _.filter(permissionTypes, (perm: { [k: string]: any }) => {
     return !perm['abstract'] && !perm['collection'];
@@ -239,88 +235,87 @@ test.serial('should return all relevant permissions on GraclPlugin.getAllPermiss
     return perm['abstract'];
   }).length;
   const allPermissionTypes = secure.getAllPossiblePermissionTypes();
-  expect(allPermissionTypes, 'should have the correct number')
-    .to.have.lengthOf(
-      number_of_abstract_perms + (number_of_resources * number_of_crud_perms)
-    );
+  t.deepEqual(
+    allPermissionTypes.length,
+    number_of_abstract_perms + (number_of_resources * number_of_crud_perms),
+    'should have the correct number'
+  );
 });
 
 
 
-test.serial('should return correct parent permissions on GraclPlugin.getPermissionParents(perm)', () => {
+test.serial('should return correct parent permissions on GraclPlugin.getPermissionParents(perm)', (t) => {
   const view_blog_parents = secure.getPermissionParents('view-blog');
-  expect(view_blog_parents, 'view-blog should have two parent permissions').to.have.lengthOf(2);
-  expect(view_blog_parents, 'view-blog should have edit-blog parent').to.contain('edit-blog');
-  expect(
-    view_blog_parents,
+  t.deepEqual(view_blog_parents.length, 2, 'view-blog should have two parent permissions');
+  t.notDeepEqual(view_blog_parents.indexOf('edit-blog'), -1, 'view-blog should have edit-blog parent');
+  t.notDeepEqual(
+    view_blog_parents.indexOf('view_alignment_triangle_private'),
+    -1,
     'view-blog should have view_alignment_triangle_private parent'
-  ).to.contain('view_alignment_triangle_private');
+  );
 });
 
 
 
-test.serial('should return correct permission children on GraclPlugin.getPermissionChildren(perm)', () => {
+test.serial('should return correct permission children on GraclPlugin.getPermissionChildren(perm)', (t) => {
   const edit_post_children = secure.getPermissionChildren('edit-post');
   const edit_children = secure.getPermissionChildren('edit');
-  expect(edit_children, 'should include crud child').to.contain('view');
-  expect(edit_post_children, 'should include specifically set abstract child').to.contain('abstract_view_chart');
-  expect(edit_post_children, 'should include collection specific crud child').to.contain('view-post');
+  t.notDeepEqual(edit_children.indexOf('view'), -1, 'should include crud child');
+  t.notDeepEqual(edit_post_children.indexOf('abstract_view_chart'), -1, 'should include specifically set abstract child');
+  t.notDeepEqual(edit_post_children.indexOf('view-post'), -1, 'should include collection specific crud child');
 });
 
 
 
-test.serial('should successfully add permissions', async () => {
-  const updatedChopped = await giveBenAccessToChoppedPosts();
+test.serial('should successfully add permissions', async (t) => {
+  const updatedChopped = await giveBenAccessToChoppedPosts(t);
   const choppedPermissions = await updatedChopped['$permissions'](undefined, 'resource');
   const existingPermissions = await Tyr.byName['graclPermission'].findAll({});
 
-  expect(existingPermissions).to.have.lengthOf(1);
-  expect(existingPermissions[0]['resourceId'].toString(), 'resourceId')
-    .to.equal(choppedPermissions[0]['resourceId'].toString());
-  expect(existingPermissions[0]['subjectId'].toString(), 'subjectId')
-    .to.equal(choppedPermissions[0]['subjectId'].toString());
-  expect(existingPermissions[0]['access']['view-post'], 'access')
-    .to.equal(choppedPermissions[0]['access']['view-post']);
+  t.deepEqual(existingPermissions.length, 1);
+  t.deepEqual(existingPermissions[0]['resourceId'].toString(), choppedPermissions[0]['resourceId'].toString(), 'resourceId');
+  t.deepEqual(existingPermissions[0]['subjectId'].toString(), choppedPermissions[0]['subjectId'].toString(), 'subjectId');
+  t.deepEqual(existingPermissions[0]['access']['view-post'], choppedPermissions[0]['access']['view-post'], 'access');
 });
 
 
 
-test.serial('should respect subject / resource hierarchy', async () => {
-  await giveBenAccessToChoppedPosts();
+test.serial('should respect subject / resource hierarchy', async (t) => {
+  await giveBenAccessToChoppedPosts(t);
 
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         choppedBlog = await Tyr.byName['blog'].findOne({ name: 'Salads are great' });
 
-  expect(ben, 'ben should exist').to.exist;
-  expect(choppedBlog, 'choppedBlog should exist').to.exist;
+  t.truthy(ben, 'ben should exist');
+  t.truthy(choppedBlog, 'choppedBlog should exist');
 
-  expect(
+  t.true(
     await choppedBlog.$isAllowed('view-post', ben),
     'ben should have access to choppedBlog through access to chopped org'
-  ).to.equal(true);
+  );
 });
 
 
 
-test.serial('should respect permissions hierarchy', async () => {
-  await giveBenAccessToChoppedPosts('edit');
+test.serial('should respect permissions hierarchy', async (t) => {
+  await giveBenAccessToChoppedPosts(t, 'edit');
 
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         choppedBlog = await Tyr.byName['blog'].findOne({ name: 'Salads are great' });
 
 
-  expect(ben, 'ben should exist').to.exist;
-  expect(choppedBlog, 'choppedBlog should exist').to.exist;
+  t.truthy(ben, 'ben should exist');
+  t.truthy(choppedBlog, 'choppedBlog should exist');
 
-  expect(
+  t.true(
     await choppedBlog.$isAllowed('view-post', ben),
     'ben should have \'view\' access to choppedBlog through \'edit\' access to chopped org'
-  ).to.equal(true);
+  );
 });
 
 
 
-test.serial('should correctly respect combined permission/subject/resource hierarchy', async () => {
+test.serial('should correctly respect combined permission/subject/resource hierarchy', async (t) => {
   /**
     Set deny view-access for parent subject to parent resource
     Set allow edit-access for child subject to child resource
@@ -338,17 +333,19 @@ test.serial('should correctly respect combined permission/subject/resource hiera
   await chipotle.$deny('edit-post', chipotle);
 
   const access = await chipotleCorporateBlog.$isAllowed('view-post', ben);
-  expect(access, 'Ben should have view access to blog').to.equal(true);
+  t.true(access, 'Ben should have view access to blog');
 });
 
 
-test.serial('should validate permissions', async () => {
+test.serial('should validate permissions', async (t) => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chipotleCorporateBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' });
 
-  expect(ben, 'ben should exist').to.exist;
-  expect(chipotleCorporateBlog, 'chipotleCorporateBlog should exist').to.exist;
+  t.truthy(ben, 'ben should exist');
+  t.truthy(chipotleCorporateBlog, 'chipotleCorporateBlog should exist');
+
   await expectAsyncToThrow(
+    t,
     () => chipotleCorporateBlog.$isAllowed('viewBlahBlah', ben),
     /Invalid permission type/g,
     'checking \'viewBlahBlah\' should throw'
@@ -357,39 +354,43 @@ test.serial('should validate permissions', async () => {
 
 
 
-test.serial('should successfully find permission when multiple permissions parents', async () => {
-  await giveBenAccessToChoppedPosts();
+test.serial('should successfully find permission when multiple permissions parents', async (t) => {
+  await giveBenAccessToChoppedPosts(t);
 
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
   const access = await chopped.$isAllowed('abstract_view_chart', ben);
-  expect(access).to.equal(true);
+  t.true(access);
 });
 
 
-test.serial('should throw error when passing invalid uid', async () => {
+test.serial('should throw error when passing invalid uid', async (t) => {
   const chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
   await expectAsyncToThrow(
+    t,
     () => (<any> chopped).$allow('abstract_view_chart', { $uid: 'u00undefined', $model: Tyr.byName['user'] }),
     /Invalid resource id/g,
     'invalid uid should throw (allow, string)'
   );
 
   await expectAsyncToThrow(
+    t,
     () => chopped.$allow('abstract_view_chart', 'u00undefined'),
     /Invalid resource id/g,
     'invalid uid should throw (allow, doc)'
   );
 
   await expectAsyncToThrow(
+    t,
     () => chopped.$isAllowed('abstract_view_chart', 'u00undefined'),
     /Invalid resource id/g,
     'invalid uid should throw (isAllowed, string)'
   );
 
   await expectAsyncToThrow(
+    t,
     () => (<any> chopped).$isAllowed('abstract_view_chart', { $uid: 'u00undefined', $model: Tyr.byName['user'] }),
     /Invalid resource id/g,
     'invalid uid should throw (isAllowed, doc)'
@@ -399,7 +400,7 @@ test.serial('should throw error when passing invalid uid', async () => {
 
 
 
-test.serial('should skip a link in the hierarchy chain when no immediate parent ids present', async () => {
+test.serial('should skip a link in the hierarchy chain when no immediate parent ids present', async (t) => {
   const noTeamUser = await Tyr.byName['user'].findOne({ name: 'noTeams' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' }),
         chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
@@ -407,12 +408,11 @@ test.serial('should skip a link in the hierarchy chain when no immediate parent 
   chopped.$allow('view-post', chipotle);
 
   const access = await chopped.$isAllowed('view-post', noTeamUser);
-  expect(access, 'noTeamUser should have access even without teams linking to org')
-    .to.equal(true);
+  t.true(access, 'noTeamUser should have access even without teams linking to org');
 });
 
 
-test.serial('should skip multiple links in the hierarchy chain when no immediate parent ids present', async () => {
+test.serial('should skip multiple links in the hierarchy chain when no immediate parent ids present', async (t) => {
   const freeComment = await Tyr.byName['comment'].findOne({ text: 'TEST_COMMENT' }),
         ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
@@ -420,12 +420,11 @@ test.serial('should skip multiple links in the hierarchy chain when no immediate
   await chipotle.$allow('view-comment', ben);
 
   const access = await freeComment.$isAllowed('view-comment', ben);
-  expect(access, 'ben should have access through organization')
-    .to.equal(true);
+  t.true(access, 'ben should have access through organization');
 });
 
 
-test.serial('should skip multiple links in the hierarchy chain when no immediate parent ids present, passing uid, using model', async () => {
+test.serial('should skip multiple links in the hierarchy chain when no immediate parent ids present, passing uid, using model', async (t) => {
   const freeComment = await Tyr.byName['comment'].findOne({ text: 'TEST_COMMENT' }),
         ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
@@ -436,34 +435,32 @@ test.serial('should skip multiple links in the hierarchy chain when no immediate
   }, ben.$uid);
 
   const access = await freeComment.$isAllowed('view-comment', ben);
-  expect(access, 'ben should have access through organization')
-    .to.equal(true);
+  t.true(access, 'ben should have access through organization');
 });
 
 
 
-test.serial('should modify existing permissions instead of creating new ones', async () => {
-  await giveBenAccessToChoppedPosts();
+test.serial('should modify existing permissions instead of creating new ones', async (t) => {
+  await giveBenAccessToChoppedPosts(t);
 
   const ben     = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
-  expect(await chopped['$permissions'](undefined, 'resource'), 'chopped should start with one permission').to.have.lengthOf(1);
+  t.is((await chopped['$permissions'](undefined, 'resource')).length, 1, 'chopped should start with one permission');
 
-  expect(ben, 'ben should exist').to.exist;
-  expect(chopped, 'chopped should exist').to.exist;
+  t.truthy(ben, 'ben should exist');
+  t.truthy(chopped, 'chopped should exist');
 
-
-  expect(await chopped['$permissions'](undefined, 'resource'), 'chopped should end with one permission').to.have.lengthOf(1);
+  t.is((await chopped['$permissions'](undefined, 'resource')).length, 1, 'chopped should end with one permission');
 
   const allPermissions = await tyranidGracl.PermissionsModel.findAll({});
 
-  expect(allPermissions, 'there should be one permission in the database').to.have.lengthOf(1);
+  t.is(allPermissions.length, 1, 'there should be one permission in the database');
 });
 
 
 
-test.serial('should successfully remove all permissions after secure.deletePermissions()', async () => {
+test.serial('should successfully remove all permissions after secure.deletePermissions()', async (t) => {
   const ted = await Tyr.byName['user'].findOne({ name: 'ted' }),
         ben = await Tyr.byName['user'].findOne({ name: 'ben' });
 
@@ -472,7 +469,7 @@ test.serial('should successfully remove all permissions after secure.deletePermi
         post = await Tyr.byName['post'].findOne({ text: 'Why burritos are amazing.' }),
         chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
 
-  expect(!(await ted['$permissions']()).length, 'initially should have no permissions').to.equal(true);
+  t.true(!(await ted['$permissions']()).length, 'initially should have no permissions');
 
   const permissionsForTed = await Tyr.byName['graclPermission'].findAll({
     $or: [
@@ -481,7 +478,7 @@ test.serial('should successfully remove all permissions after secure.deletePermi
     ]
   });
 
-  expect(permissionsForTed, 'global search for permissions should turn up nothing').to.have.lengthOf(0);
+  t.falsy(permissionsForTed.length, 'global search for permissions should turn up nothing');
 
   const prePermissionChecks = await Promise.all([
     chopped.$isAllowed('view-user', ted),
@@ -491,7 +488,7 @@ test.serial('should successfully remove all permissions after secure.deletePermi
     chipotle.$isAllowed('view-post', ted)
   ]);
 
-  expect(_.every(prePermissionChecks), 'all initial perm checks should return false').to.equal(false);
+  t.false(_.every(prePermissionChecks), 'all initial perm checks should return false');
 
   const permissionOperations = await Promise.all([
     chopped.$allow('view-user', ted),
@@ -501,9 +498,9 @@ test.serial('should successfully remove all permissions after secure.deletePermi
     ted.$allow('view-user', ben)
   ]);
 
-  expect(await ted['$permissions'](undefined, 'resource', true),
+  t.is((await ted['$permissions'](undefined, 'resource', true)).length, 1,
     'after populating teds permission (as resource), one permission should show up'
-  ).to.have.lengthOf(1);
+  );
 
   const updatedPermissionsForTed = await Tyr.byName['graclPermission'].findAll({
     $or: [
@@ -512,7 +509,7 @@ test.serial('should successfully remove all permissions after secure.deletePermi
     ]
   });
 
-  expect(updatedPermissionsForTed).to.have.lengthOf(permissionOperations.length);
+  t.is(updatedPermissionsForTed.length, permissionOperations.length);
 
   const permissionChecks = await Promise.all([
     chopped.$isAllowed('view-user', ted),
@@ -522,16 +519,16 @@ test.serial('should successfully remove all permissions after secure.deletePermi
   ]);
 
   const tedSubjectPermissions = await ted['$permissions']();
-  expect(tedSubjectPermissions).to.have.lengthOf(4);
+  t.is(tedSubjectPermissions.length, 4);
 
   const tedResourcePermissions = await ted['$permissions'](undefined, 'resource');
-  expect(tedResourcePermissions).to.have.lengthOf(2);
+  t.is(tedResourcePermissions.length, 2);
 
   const tedDirectResourcePermissions = await ted['$permissions'](undefined, 'resource', true);
-  expect(tedDirectResourcePermissions).to.have.lengthOf(1);
+  t.is(tedDirectResourcePermissions.length, 1);
 
-  expect(_.every(permissionChecks)).to.equal(true);
-  expect(await chipotle.$isAllowed('view-post', ted)).to.equal(false);
+  t.true(_.every(permissionChecks));
+  t.false(await chipotle.$isAllowed('view-post', ted));
 
   await secure.permissionsModel.deletePermissions(ted);
 
@@ -542,22 +539,22 @@ test.serial('should successfully remove all permissions after secure.deletePermi
     ted.$isAllowed('view-user', ben)
   ]);
 
-  expect(_.every(postPermissionChecks)).to.equal(false);
+  t.false(_.every(postPermissionChecks));
 
   const updatedChopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' }),
         updatedCava = await Tyr.byName['organization'].findOne({ name: 'Cava' }),
         updatedPost = await Tyr.byName['post'].findOne({ text: 'Why burritos are amazing.' }),
         updatedChipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
 
-  expect(await updatedChopped['$permissions'](undefined, 'resource')).to.have.length(0);
-  expect(await updatedCava['$permissions'](undefined, 'resource')).to.have.length(0);
-  expect(await updatedPost['$permissions'](undefined, 'resource')).to.have.length(0);
-  expect(await updatedChipotle['$permissions'](undefined, 'resource')).to.have.length(0);
+  t.falsy((await updatedChopped['$permissions'](undefined, 'resource')).length);
+  t.falsy((await updatedCava['$permissions'](undefined, 'resource')).length);
+  t.falsy((await updatedPost['$permissions'](undefined, 'resource')).length);
+  t.falsy((await updatedChipotle['$permissions'](undefined, 'resource')).length);
 });
 
 
 
-test.serial('should work if passing uid instead of document', async () => {
+test.serial('should work if passing uid instead of document', async (t) => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
@@ -567,16 +564,16 @@ test.serial('should work if passing uid instead of document', async () => {
   const blogExplaination = await chopped.$explainPermission('view-blog', ben.$uid);
   const postAccess = await chopped.$isAllowed('view-post', ben.$uid);
 
-  expect(blogExplaination.reason, 'blogExplaination.reason').to.match(/Permission set on <Resource:organization/);
-  expect(blogExplaination.access, 'blogExplaination.access').to.equal(false);
-  expect(blogExplaination.type, 'blogExplaination.type').to.equal('view-blog');
-  expect(postAccess, 'postAccess').to.equal(true);
+  t.regex(blogExplaination.reason, /Permission set on <Resource:organization/, 'blogExplaination.reason');
+  t.false(blogExplaination.access, 'blogExplaination.access');
+  t.is(blogExplaination.type, 'view-blog', 'blogExplaination.type');
+  t.true(postAccess, 'postAccess');
 });
 
 
 
-test.serial('should correctly explain permissions', async () => {
-  await giveBenAccessToChoppedPosts();
+test.serial('should correctly explain permissions', async (t) => {
+  await giveBenAccessToChoppedPosts(t);
 
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
@@ -587,14 +584,14 @@ test.serial('should correctly explain permissions', async () => {
     ben.$uid
   );
 
-  expect(access.reason).to.match(/Permission set on <Resource:organization/);
-  expect(access.access).to.equal(true);
-  expect(access.type).to.equal('view-post');
+  t.regex(access.reason, /Permission set on <Resource:organization/);
+  t.true(access.access);
+  t.is(access.type, 'view-post');
 });
 
 
 
-test.serial('should remove permissions when using $removePermissionAsSubject', async () => {
+test.serial('should remove permissions when using $removePermissionAsSubject', async (t) => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
@@ -602,23 +599,22 @@ test.serial('should remove permissions when using $removePermissionAsSubject', a
 
   const access = await chopped.$explainPermission('view-post', ben);
 
-  expect(access.reason).to.match(/Permission set on <Resource:organization/);
-  expect(access.access).to.equal(true);
-  expect(access.type).to.equal('view-post');
+  t.regex(access.reason, /Permission set on <Resource:organization/);
+  t.true(access.access);
+  t.is(access.type, 'view-post');
 
   await ben.$removePermissionAsSubject('view-post');
 
   const accessAfterRemove = await chopped.$explainPermission('view-post', ben);
 
-  expect(accessAfterRemove.reason).to.match(/No permissions were set specifically/);
-  expect(accessAfterRemove.access).to.equal(false);
-  expect(accessAfterRemove.type).to.equal('view-post');
-
+  t.regex(accessAfterRemove.reason, /No permissions were set specifically/);
+  t.false(accessAfterRemove.access);
+  t.is(accessAfterRemove.type, 'view-post');
 });
 
 
 
-test.serial('should remove permissions when using $removePermissionAsResource', async () => {
+test.serial('should remove permissions when using $removePermissionAsResource', async (t) => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
@@ -626,23 +622,22 @@ test.serial('should remove permissions when using $removePermissionAsResource', 
 
   const access = await chopped.$explainPermission('view-post', ben);
 
-  expect(access.reason).to.match(/Permission set on <Resource:organization/);
-  expect(access.access).to.equal(true);
-  expect(access.type).to.equal('view-post');
+  t.regex(access.reason, /Permission set on <Resource:organization/);
+  t.true(access.access);
+  t.is(access.type, 'view-post');
 
   await chopped['$removePermissionAsResource']('view-post');
 
   const accessAfterRemove = await chopped.$explainPermission('view-post', ben);
 
-  expect(accessAfterRemove.reason).to.match(/No permissions were set specifically/);
-  expect(accessAfterRemove.access).to.equal(false);
-  expect(accessAfterRemove.type).to.equal('view-post');
-
+  t.regex(accessAfterRemove.reason, /No permissions were set specifically/);
+  t.false(accessAfterRemove.access);
+  t.is(accessAfterRemove.type, 'view-post');
 });
 
 
 
-test.serial('should remove permissions for specific access when using $removePermissionAsResource', async () => {
+test.serial('should remove permissions for specific access when using $removePermissionAsResource', async (t) => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         ted = await Tyr.byName['user'].findOne({ name: 'ted' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
@@ -652,101 +647,101 @@ test.serial('should remove permissions for specific access when using $removePer
 
   const accessBen = await chopped.$explainPermission('view-post', ben);
 
-  expect(accessBen.reason).to.match(/Permission set on <Resource:organization/);
-  expect(accessBen.access).to.equal(true);
-  expect(accessBen.type).to.equal('view-post');
+  t.regex(accessBen.reason, /Permission set on <Resource:organization/);
+  t.true(accessBen.access);
+  t.is(accessBen.type, 'view-post');
 
 
   const accessTed = await chopped.$explainPermission('view-post', ted);
 
-  expect(accessTed.reason).to.match(/Permission set on <Resource:organization/);
-  expect(accessTed.access).to.equal(false);
-  expect(accessTed.type).to.equal('view-post');
+  t.regex(accessTed.reason, /Permission set on <Resource:organization/);
+  t.false(accessTed.access);
+  t.is(accessTed.type, 'view-post');
 
   await chopped['$removePermissionAsResource']('view-post', 'deny');
 
   const accessBenAfter = await chopped.$explainPermission('view-post', ben);
 
-  expect(accessBenAfter.reason).to.match(/Permission set on <Resource:organization/);
-  expect(accessBenAfter.access).to.equal(true);
-  expect(accessBenAfter.type).to.equal('view-post');
+  t.regex(accessBenAfter.reason, /Permission set on <Resource:organization/);
+  t.true(accessBenAfter.access);
+  t.is(accessBenAfter.type, 'view-post');
 
 
   const accessTedAfter = await chopped.$explainPermission('view-post', ted);
 
-  expect(accessTedAfter.reason).to.match(/No permissions were set specifically/);
-  expect(accessTedAfter.access).to.equal(false);
-  expect(accessTedAfter.type).to.equal('view-post');
+  t.regex(accessTedAfter.reason, /No permissions were set specifically/);
+  t.false(accessTedAfter.access);
+  t.is(accessTedAfter.type, 'view-post');
 
 });
 
 
 
-test.serial('should correctly check abstract parent of collection-specific permission', async () => {
+test.serial('should correctly check abstract parent of collection-specific permission', async (t) => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
   await chopped.$allow('view_alignment_triangle_private', ben);
   const access = await chopped.$isAllowed('view-blog', ben);
-  expect(access, 'should have access through abstract parent').to.equal(true);
+  t.true(access, 'should have access through abstract parent');
 });
 
 
 
-test.serial('should correctly check normal crud hierarchy for crud permission with additional abstract permission', async () => {
+test.serial('should correctly check normal crud hierarchy for crud permission with additional abstract permission', async (t) => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
   await chopped.$allow('edit-blog', ben);
   const access = await chopped.$isAllowed('view-blog', ben);
-  expect(access, 'should have access through abstract parent').to.equal(true);
+  t.true(access, 'should have access through abstract parent');
 });
 
 
 
-test.serial('should return false with no user', async () => {
+test.serial('should return false with no user', async (t) => {
   const Post = Tyr.byName['post'],
         query = await secure.query(Post, 'view');
 
-  expect(query, 'query should be false').to.equal(false);
+  t.falsy(query, 'query should be false');
 });
 
 
 
-test.serial('should return false with no permissions', async () => {
+test.serial('should return false with no permissions', async (t) => {
   const Post = Tyr.byName['post'],
         ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         query = await secure.query(Post, 'edit', ben);
 
-  expect(query, 'query should be false').to.equal(false);
+  t.falsy(query, 'query should be false');
 });
 
 
 
-test.serial('should return false with no permissions set for user for specific permission type', async () => {
-  await giveBenAccessToChoppedPosts();
+test.serial('should return false with no permissions set for user for specific permission type', async (t) => {
+  await giveBenAccessToChoppedPosts(t);
 
   const Post = <any> Tyr.byName['post'],
         ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         query = await secure.query(Post, 'edit', ben);
 
-  expect(query, 'query should be false').to.equal(false);
+  t.falsy(query, 'query should be false');
 });
 
 
 
-test.serial('should return empty object for collection with no permissions hierarchy node', async () => {
+test.serial('should return empty object for collection with no permissions hierarchy node', async (t) => {
   const Chart = Tyr.byName['chart'],
         ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         query = await secure.query(Chart, 'view', ben);
 
-  expect(query, 'query should be {}').to.deep.equal({});
+  t.deepEqual(query, {}, 'query should be {}');
 });
 
 
 
-test.serial('should produce query restriction based on permissions', async () => {
-  await giveBenAccessToChoppedPosts();
+test.serial('should produce query restriction based on permissions', async (t) => {
+  await giveBenAccessToChoppedPosts(t);
 
   const Post = Tyr.byName['post'],
         Blog = Tyr.byName['blog'],
@@ -762,6 +757,7 @@ test.serial('should produce query restriction based on permissions', async () =>
   const query = await secure.query(Post, 'view', ben);
 
   checkStringEq(
+    t,
     <string[]> _.get(query, '$or.0.blogId.$in'),
     <string[]> _.map(choppedBlogs, '_id'),
     'query should find correct blogs'
@@ -769,7 +765,7 @@ test.serial('should produce query restriction based on permissions', async () =>
 });
 
 
-test.serial('Should return all relevant entities on doc.$entitiesWithPermission(perm)', async() => {
+test.serial('Should return all relevant entities on doc.$entitiesWithPermission(perm)', async(t) => {
   const ted = await Tyr.byName['user'].findOne({ name: 'ted' });
 
   const cava = await Tyr.byName['organization'].findOne({ name: 'Cava' }),
@@ -785,13 +781,13 @@ test.serial('Should return all relevant entities on doc.$entitiesWithPermission(
 
   const entities = await ted['$entitiesWithPermission']('view-post');
 
-  expect(entities).to.contain(cava['$uid']);
-  expect(entities).to.contain(chipotleBlogs[0]['$uid']);
+  t.not(entities.indexOf(cava['$uid']), -1);
+  t.not(entities.indexOf(chipotleBlogs[0]['$uid']), -1);
 });
 
 
 
-test.serial('should correctly respect combined permission/subject/resource hierarchy in query()', async () => {
+test.serial('should correctly respect combined permission/subject/resource hierarchy in query()', async (t) => {
   /**
     Set deny view-access for parent subject to parent resource
     Set allow edit-access for child subject to child resource
@@ -811,15 +807,15 @@ test.serial('should correctly respect combined permission/subject/resource hiera
 
   const foundPosts = await Tyr.byName['post'].findAll({ query });
 
-  expect(_.every(foundPosts, (post: any) => {
+  t.true(_.every(foundPosts, (post: any) => {
     return post['blogId'].toString() === chipotleCorporateBlog.$id.toString();
-  }), 'all found posts should come from the one allowed blog').to.equal(true);
+  }), 'all found posts should come from the one allowed blog');
 });
 
 
 
-test.serial('should be appropriately filtered based on permissions', async () => {
-  await giveBenAccessToChoppedPosts();
+test.serial('should be appropriately filtered based on permissions', async (t) => {
+  await giveBenAccessToChoppedPosts(t);
 
   const Post = Tyr.byName['post'],
         User = Tyr.byName['user'],
@@ -841,6 +837,7 @@ test.serial('should be appropriately filtered based on permissions', async () =>
   });
 
   checkStringEq(
+    t,
     <string[]> _.map(postsBenCanSee, '_id'),
     <string[]> _.map(choppedPosts, '_id'),
     'ben should only see chopped posts'
@@ -850,7 +847,7 @@ test.serial('should be appropriately filtered based on permissions', async () =>
 
 
 
-test.serial('should filter based on abstract parent access of collection-specific permission', async () => {
+test.serial('should filter based on abstract parent access of collection-specific permission', async (t) => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         blogs = await Tyr.byName['blog'].findAll({ }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
@@ -860,14 +857,14 @@ test.serial('should filter based on abstract parent access of collection-specifi
   const blogsBenCanSee = await Tyr.byName['blog']
     .findAll({}, null, { tyranid: { secure: true, user: ben } });
 
-  expect(blogs).to.have.lengthOf(4);
-  expect(blogsBenCanSee).to.have.lengthOf(1);
-  expect(blogsBenCanSee[0]['organizationId'].toString()).to.equal(chopped.$id.toString());
+  t.is(blogs.length, 4);
+  t.is(blogsBenCanSee.length, 1);
+  t.is(blogsBenCanSee[0]['organizationId'].toString(), chopped.$id.toString());
 });
 
 
 
-test.serial('should filter based on abstract parent access of collection-specific permission', async () => {
+test.serial('should filter based on abstract parent access of collection-specific permission', async (t) => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         chopped = await Tyr.byName['organization'].findOne({ name: 'Chopped' });
 
@@ -883,23 +880,23 @@ test.serial('should filter based on abstract parent access of collection-specifi
     ]
   } = await Tyr.byName['blog'].secureQuery({}, 'view-organization', ben);
 
-  expect(organizationId.toString()).to.equal(chopped.$id.toString());
+  t.is(organizationId.toString(), chopped.$id.toString());
 });
 
 
 
-test.serial('should get view access to parent when parent can view itself', async () => {
+test.serial('should get view access to parent when parent can view itself', async (t) => {
    const ben = await Tyr.byName['user'].findOne({ name: 'ben' });
    const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' });
    await chipotle.$allow('view-organization', chipotle);
    const access = await chipotle.$isAllowed('view-organization', ben);
-   expect(access, 'ben should have access through parent').to.equal(true);
+   t.true(access, 'ben should have access through parent');
 });
 
 
 
-test.serial('should default to lowest hierarchy permission', async () => {
-  const chopped      = await giveBenAccessToChoppedPosts(),
+test.serial('should default to lowest hierarchy permission', async (t) => {
+  const chopped      = await giveBenAccessToChoppedPosts(t),
         ben          = await Tyr.byName['user'].findOne({ name: 'ben' }),
         post         = await Tyr.byName['post'].findOne({ text: 'Salads are great, the post.' }),
         choppedBlogs = await Tyr.byName['blog'].findAll({ organizationId: chopped.$id }),
@@ -908,34 +905,33 @@ test.serial('should default to lowest hierarchy permission', async () => {
         );
 
   // all chopped posts
-  expect(choppedPosts).to.have.lengthOf(2);
-  expect(_.map(choppedPosts, '$id')).to.contain(post.$id);
+  t.is(choppedPosts.length, 2);
+  t.not(_.map(choppedPosts, p => p.$id.toString()).indexOf(post.$id.toString()), -1);
 
   // explicitly deny view access to this post
   await post.$deny('view-post', ben);
 
   const postsBenCanSee = await Tyr.byName['post'].findAll({}, null, { tyranid: { secure: true, user: ben } });
 
-  expect(postsBenCanSee).to.have.lengthOf(1);
-  expect(_.map(postsBenCanSee, '$id')).to.not.contain(post.$id);
+  t.is(postsBenCanSee.length, 1);
+  t.is(_.map(postsBenCanSee, p => p.$id.toString()).indexOf(post.$id.toString()), -1);
 });
 
 
 
-test.serial('Should restrict permission to include set in graclConfig schema option', () => {
+test.serial('Should restrict permission to include set in graclConfig schema option', (t) => {
   const allowed = secure.getAllowedPermissionsForCollection('comment');
-  expect(allowed.sort()).to.deep.equal(
-    [ 'view-comment' ].sort()
-  );
+  t.deepEqual(allowed.sort(), [ 'view-comment' ].sort());
 });
 
 
 
-test.serial('Should throw error if attempting to use permission not allowed for collection', async () => {
+test.serial('Should throw error if attempting to use permission not allowed for collection', async (t) => {
   const post = await Tyr.byName['post'].findOne({}),
         ben  = await Tyr.byName['user'].findOne({ name: 'ben' });
 
   await expectAsyncToThrow(
+    t,
     () => post.$allow('view-user', ben),
     /tyranid-gracl: Tried to use permission "view-user" with collection "post"/,
     'Should throw when not using a post-specific permission.'
@@ -943,13 +939,13 @@ test.serial('Should throw error if attempting to use permission not allowed for 
 });
 
 
-test.serial('Should return correct allowed permissions for given collection', () => {
+test.serial('Should return correct allowed permissions for given collection', (t) => {
   const allowed = secure.getAllowedPermissionsForCollection('post'),
         blogAllowed = secure.getAllowedPermissionsForCollection('blog');
   allowed.sort();
   blogAllowed.sort();
 
-  expect(blogAllowed).to.deep.equal(
+  t.deepEqual(blogAllowed,
    [ 'abstract_view_chart',
      'delete-blog',
      'delete-comment',
@@ -962,16 +958,17 @@ test.serial('Should return correct allowed permissions for given collection', ()
      'view-post',
      'view_alignment_triangle_private' ]
   );
-  expect(allowed).to.deep.equal([ 'delete-post', 'edit-post', 'view-post' ]);
+  t.deepEqual(allowed, [ 'delete-post', 'edit-post', 'view-post' ]);
 });
 
 
 
-test.serial('Should throw when trying to set raw crud permission', async() => {
+test.serial('Should throw when trying to set raw crud permission', async(t) => {
   const post = await Tyr.byName['post'].findOne({}),
         ben  = await Tyr.byName['user'].findOne({ name: 'ben' });
 
   await expectAsyncToThrow(
+    t,
     () => post.$allow('view', ben),
     /Cannot use raw crud permission/,
     'Should throw when using a raw crud permission.'
@@ -980,7 +977,7 @@ test.serial('Should throw when trying to set raw crud permission', async() => {
 
 
 
-test.serial('Should return object relating uids to access level for multiple permissions when using $determineAccessToAllPermissionsForResources()', async() => {
+test.serial('Should return object relating uids to access level for multiple permissions when using $determineAccessToAllPermissionsForResources()', async(t) => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         posts = await Tyr.byName['post'].findAll({ });
 
@@ -991,25 +988,24 @@ test.serial('Should return object relating uids to access level for multiple per
 
   for (const post of posts) {
     for (const perm in accessObj[post.$uid]) {
-      expect(accessObj[post.$uid][perm])
-        .to.equal(await post.$isAllowedForThis(perm, ben));
+      t.deepEqual(accessObj[post.$uid][perm], await post.$isAllowedForThis(perm, ben));
     }
   }
 });
 
 
 
-test.serial('Should allow inclusion / exclusion of all permissions for a given collection', () => {
+test.serial('Should allow inclusion / exclusion of all permissions for a given collection', (t) => {
   const inventoryAllowed = secure.getAllowedPermissionsForCollection('inventory'),
         teamAllowed = secure.getAllowedPermissionsForCollection('team');
 
-  expect(inventoryAllowed).to.deep.equal([
+  t.deepEqual(inventoryAllowed, [
     'edit-inventory',
     'view-inventory',
     'delete-inventory',
     'abstract_view_chart' ]);
 
-  expect(teamAllowed).to.deep.equal([
+  t.deepEqual(teamAllowed, [
      'abstract_view_chart',
      'delete-team',
      'edit-team',
@@ -1022,11 +1018,12 @@ test.serial('Should allow inclusion / exclusion of all permissions for a given c
 });
 
 
-test.serial('Should throw when *forThis methods are given non-crud permission', async () => {
+test.serial('Should throw when *forThis methods are given non-crud permission', async (t) => {
   const post = await Tyr.byName['post'].findOne({}),
         ben  = await Tyr.byName['user'].findOne({ name: 'ben' });
 
   await expectAsyncToThrow(
+    t,
     () => {
     return post.$isAllowedForThis('view_alignment_triangle_private', ben);
     },
@@ -1035,6 +1032,7 @@ test.serial('Should throw when *forThis methods are given non-crud permission', 
   );
 
   await expectAsyncToThrow(
+    t,
     () => {
     return post.$allowForThis('view_alignment_triangle_private', ben);
     },
@@ -1043,6 +1041,7 @@ test.serial('Should throw when *forThis methods are given non-crud permission', 
   );
 
   await expectAsyncToThrow(
+    t,
     () => {
     return post.$denyForThis('view_alignment_triangle_private', ben);
     },
@@ -1052,7 +1051,7 @@ test.serial('Should throw when *forThis methods are given non-crud permission', 
 });
 
 
-test.serial('Should respect resource hierarchy for deny exception (linked parent deny, child allow)', async () => {
+test.serial('Should respect resource hierarchy for deny exception (linked parent deny, child allow)', async (t) => {
     const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
           ben          = await Tyr.byName['user'].findOne({ name: 'ben' }),
           posts        = await Tyr.byName['post'].findAll({ blogId: chipotleBlog.$id });
@@ -1061,11 +1060,11 @@ test.serial('Should respect resource hierarchy for deny exception (linked parent
     await posts[0].$allow('view-post', ben);
 
     const access = await ben.$determineAccessToAllPermissionsForResources(['view-post'], posts.map(p => p.$uid));
-    expect(access[posts[0].$uid]['view-post'], 'should have access to first post').to.equal(true);
+    t.true(access[posts[0].$uid]['view-post'], 'should have access to first post');
 });
 
 
-test.serial('Should respect resource hierarchy for deny exception (removed parent deny, child allow)', async () => {
+test.serial('Should respect resource hierarchy for deny exception (removed parent deny, child allow)', async (t) => {
     const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
           chipotleBlogs = await Tyr.byName['blog'].findAll({ organizationId: chipotle.$id }),
           ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
@@ -1075,12 +1074,12 @@ test.serial('Should respect resource hierarchy for deny exception (removed paren
     await posts[0].$allow('view-post', ben);
 
     const access = await ben.$determineAccessToAllPermissionsForResources(['view-post'], posts.map(p => p.$uid));
-    expect(access[posts[0].$uid]['view-post'], 'should have access to first post').to.equal(true);
+    t.true(access[posts[0].$uid]['view-post'], 'should have access to first post');
 });
 
 
 
-test.serial('Should default to deny if conflicting parent access', async () => {
+test.serial('Should default to deny if conflicting parent access', async (t) => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' }),
         ted = await Tyr.byName['user'].findOne({ name: 'ted' }),
         burritoMakers = await Tyr.byName['team'].findOne({ name: 'burritoMakers' }),
@@ -1089,14 +1088,14 @@ test.serial('Should default to deny if conflicting parent access', async () => {
   await burritoMakers.$allow('view-user', ted);
   await chipotleMarketing.$deny('view-user', ted);
 
-  expect(await ben.$isAllowed('view-user', ted), 'Should not have access').to.equal(false);
+  t.false(await ben.$isAllowed('view-user', ted), 'Should not have access');
   const foundUsers = await Tyr.byName['user'].findAll({ query: { name: 'ben' }, auth: ted });
-  expect(foundUsers, 'authenticated query should return no users').to.have.lengthOf(0);
+  t.falsy(foundUsers.length, 'authenticated query should return no users');
 });
 
 
 
-test.serial('Should be able to query collection using perm with alternate collection', async() => {
+test.serial('Should be able to query collection using perm with alternate collection', async(t) => {
   const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
         ted = await Tyr.byName['user'].findOne({ name: 'ted' });
 
@@ -1108,12 +1107,12 @@ test.serial('Should be able to query collection using perm with alternate collec
     auth: ted
   });
 
-  expect(usersThatTedHasViewCommentAccessTo).to.have.lengthOf(2);
+  t.is(usersThatTedHasViewCommentAccessTo.length, 2);
 });
 
 
 
-test.serial('Should return correct documents when using $canAccessThis', async () => {
+test.serial('Should return correct documents when using $canAccessThis', async (t) => {
   const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
       ted = await Tyr.byName['user'].findOne({ name: 'ted' }),
       ben = await Tyr.byName['user'].findOne({ name: 'ben' });
@@ -1126,14 +1125,14 @@ test.serial('Should return correct documents when using $canAccessThis', async (
   const canAccessView = _.map(canAccessViewResults, '$uid');
   const canAccessEdit = _.map(await chipotleBlog.$canAccessThis('edit'), '$uid');
 
-  expect(canAccessView, 'canAccessView should include ben').to.deep.include(ben.$uid);
-  expect(canAccessView, 'canAccessView should include ted').to.deep.include(ted.$uid);
-  expect(canAccessEdit, 'canAccessEdit should include ted').to.deep.include(ted.$uid);
+  t.not(canAccessView.indexOf(ben.$uid), -1, 'canAccessView should include ben');
+  t.not(canAccessView.indexOf(ted.$uid), -1, 'canAccessView should include ted');
+  t.not(canAccessEdit.indexOf(ted.$uid), -1, 'canAccessEdit should include ted');
 });
 
 
 
-test.serial('Should return correct inherited documents when using $canAccessThis', async () => {
+test.serial('Should return correct inherited documents when using $canAccessThis', async (t) => {
   const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
     noTeamUser = await Tyr.byName['user'].findOne({ name: 'noTeams' }),
     chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
@@ -1148,19 +1147,19 @@ test.serial('Should return correct inherited documents when using $canAccessThis
   const canAccessView = _.map(await chipotleBlog.$canAccessThis(), '$uid');
   const canAccessEdit = _.map(await chipotleBlog.$canAccessThis('edit'), '$uid');
 
-  expect(canAccessView, 'canAccessView should include ben').to.include(ben.$uid);
-  expect(canAccessView, 'canAccessView should include ted').to.include(ted.$uid);
-  expect(canAccessView, 'canAccessView should include noTeamUser').to.include(noTeamUser.$uid);
-  expect(canAccessView, 'canAccessView should include chipotle').to.include(chipotle.$uid);
-  expect(canAccessView).to.include(chipotleMarketing.$uid);
+  t.not(canAccessView.indexOf(ben.$uid), -1, 'canAccessView should include ben');
+  t.not(canAccessView.indexOf(ted.$uid), -1, 'canAccessView should include ted');
+  t.not(canAccessView.indexOf(noTeamUser.$uid), -1, 'canAccessView should include noTeamUser');
+  t.not(canAccessView.indexOf(chipotle.$uid), -1, 'canAccessView should include chipotle');
+  t.not(canAccessView.indexOf(chipotleMarketing.$uid), -1);
 
-  expect(canAccessEdit, 'canAccessEdit should not include ben').to.not.include(ben.$uid);
-  expect(canAccessEdit, 'canAccessEdit should include ted').to.include(ted.$uid);
+  t.is(canAccessEdit.indexOf(ben.$uid), -1, 'canAccessEdit should not include ben');
+  t.not(canAccessEdit.indexOf(ted.$uid), -1, 'canAccessEdit should include ted');
 });
 
 
 
-test.serial('Should not include explicitly denied documents for $canAccessThis', async () => {
+test.serial('Should not include explicitly denied documents for $canAccessThis', async (t) => {
   const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
     noTeamUser = await Tyr.byName['user'].findOne({ name: 'noTeams' }),
     chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
@@ -1172,14 +1171,14 @@ test.serial('Should not include explicitly denied documents for $canAccessThis',
 
   const canAccessView = _.map(await chipotleBlog.$canAccessThis(), '$uid');
 
-  expect(canAccessView, 'canAccessView should not include ben').to.not.include(ben.$uid);
-  expect(canAccessView, 'canAccessView should include noTeamUser').to.include(noTeamUser.$uid);
-  expect(canAccessView, 'canAccessView should include chipotle').to.include(chipotle.$uid);
+  t.is(canAccessView.indexOf(ben.$uid), -1, 'canAccessView should not include ben');
+  t.not(canAccessView.indexOf(noTeamUser.$uid), -1, 'canAccessView should include noTeamUser');
+  t.not(canAccessView.indexOf(chipotle.$uid), -1, 'canAccessView should include chipotle');
 });
 
 
 
-test.serial('Should only return documents that match all permissions provided', async() => {
+test.serial('Should only return documents that match all permissions provided', async(t) => {
   const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
     noTeamUser = await Tyr.byName['user'].findOne({ name: 'noTeams' }),
     chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
@@ -1191,20 +1190,20 @@ test.serial('Should only return documents that match all permissions provided', 
 
   const canAccessView = _.map(await chipotleBlog.$canAccessThis(), '$uid');
 
-  expect(canAccessView, 'canAccessView should include ben').to.include(ben.$uid);
-  expect(canAccessView, 'canAccessView should include noTeamUser').to.include(noTeamUser.$uid);
-  expect(canAccessView, 'canAccessView should include chipotle').to.include(chipotle.$uid);
+  t.not(canAccessView.indexOf(ben.$uid), -1, 'canAccessView should include ben');
+  t.not(canAccessView.indexOf(noTeamUser.$uid), -1, 'canAccessView should include noTeamUser');
+  t.not(canAccessView.indexOf(chipotle.$uid), -1, 'canAccessView should include chipotle');
 
   const canAccessViewAndAT = _.map(await chipotleBlog.$canAccessThis('view', 'abstract_view_chart'), '$uid');
 
-  expect(canAccessViewAndAT, 'canAccessViewAndAT should not include ben').to.not.include(ben.$uid);
-  expect(canAccessViewAndAT, 'canAccessViewAndAT should include noTeamUser').to.include(noTeamUser.$uid);
-  expect(canAccessViewAndAT, 'canAccessViewAndAT should include chipotle').to.include(chipotle.$uid);
+  t.is(canAccessViewAndAT.indexOf(ben.$uid), -1, 'canAccessViewAndAT should not include ben');
+  t.not(canAccessViewAndAT.indexOf(noTeamUser.$uid), -1, 'canAccessViewAndAT should include noTeamUser');
+  t.not(canAccessViewAndAT.indexOf(chipotle.$uid), -1, 'canAccessViewAndAT should include chipotle');
 });
 
 
 
-test.serial('Should only return documents that do not have access to resouce via denies', async () => {
+test.serial('Should only return documents that do not have access to resouce via denies', async (t) => {
   const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
     noTeamUser = await Tyr.byName['user'].findOne({ name: 'noTeams' }),
     chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
@@ -1218,28 +1217,28 @@ test.serial('Should only return documents that do not have access to resouce via
 
   const canNotAccessView = _.map(await chipotleBlog.$deniedAccessToThis(), '$uid');
 
-  expect(canNotAccessView, 'canNotAccessView should include ben').to.include(ben.$uid);
-  expect(canNotAccessView, 'canNotAccessView should include noTeamUser').to.include(noTeamUser.$uid);
-  expect(canNotAccessView, 'canNotAccessView should include chipotle').to.include(chipotle.$uid);
+  t.not(canNotAccessView.indexOf(ben.$uid), -1, 'canNotAccessView should include ben');
+  t.not(canNotAccessView.indexOf(noTeamUser.$uid), -1, 'canNotAccessView should include noTeamUser');
+  t.not(canNotAccessView.indexOf(chipotle.$uid), -1, 'canNotAccessView should include chipotle');
 
   const canNotAccessViewAndAT = _.map(await chipotleBlog.$deniedAccessToThis('view', 'abstract_view_chart'), '$uid');
 
-  expect(canNotAccessViewAndAT, 'canNotAccessViewAndAT should not include ben').to.not.include(ben.$uid);
-  expect(canNotAccessViewAndAT, 'canNotAccessViewAndAT should include noTeamUser').to.include(noTeamUser.$uid);
-  expect(canNotAccessViewAndAT, 'canNotAccessViewAndAT should include chipotle').to.include(chipotle.$uid);
+  t.is(canNotAccessViewAndAT.indexOf(ben.$uid), -1, 'canNotAccessViewAndAT should not include ben');
+  t.not(canNotAccessViewAndAT.indexOf(noTeamUser.$uid), -1, 'canNotAccessViewAndAT should include noTeamUser');
+  t.not(canNotAccessViewAndAT.indexOf(chipotle.$uid), -1, 'canNotAccessViewAndAT should include chipotle');
 });
 
 
-test.serial('Should throw if passing no permissions to PermissionsModel.findEntitiesWithPermissionAccessToResource', async () => {
+test.serial('Should throw if passing no permissions to PermissionsModel.findEntitiesWithPermissionAccessToResource', async (t) => {
   const ben = await Tyr.byName['user'].findOne({ name: 'ben' });
-  await expectAsyncToThrow(() => {
+  await expectAsyncToThrow(t, () => {
     return PermissionsModel.findEntitiesWithPermissionAccessToResource('allow', [], ben);
   }, /No permissions provided to/);
 });
 
 
 
-test.serial('Should successfully deny multiple permissions when passing array to $deny', async () => {
+test.serial('Should successfully deny multiple permissions when passing array to $deny', async (t) => {
   const chipotle = await Tyr.byName['organization'].findOne({ name: 'Chipotle' }),
     ben = await Tyr.byName['user'].findOne({ name: 'ben' });
 
@@ -1248,7 +1247,7 @@ test.serial('Should successfully deny multiple permissions when passing array to
   await chipotle.$allow(permissions, chipotle);
 
   const accessResult = await chipotle['$determineAccess'](permissions, ben);
-  expect(_.every(permissions, p => accessResult[p]), 'ben should inherit all perms').to.equal(true);
+  t.true(_.every(permissions, p => accessResult[p]), 'ben should inherit all perms');
 
   await chipotle.$deny(['view-organization', 'view-comment'], ben);
   const accessResult2 = await PermissionsModel.determineAccess(
@@ -1257,15 +1256,15 @@ test.serial('Should successfully deny multiple permissions when passing array to
     ben.$uid
   );
 
-  expect(accessResult2['view-organization'], 'should not have view-organization').to.equal(false);
-  expect(accessResult2['view-comment'], 'should not have view-comment').to.equal(false);
-  expect(accessResult2['view_alignment_triangle_private'], 'should have view_alignment_triangle_private').to.equal(true);
+  t.false(accessResult2['view-organization'], 'should not have view-organization');
+  t.false(accessResult2['view-comment'], 'should not have view-comment');
+  t.true(accessResult2['view_alignment_triangle_private'], 'should have view_alignment_triangle_private');
 });
 
 
 
 
-test.serial('Should handle lots of concurrent permissions updates', async () => {
+test.serial('Should handle lots of concurrent permissions updates', async (t) => {
   const chipotleBlog = await Tyr.byName['blog'].findOne({ name: 'Mexican Empire' }),
         ben          = await Tyr.byName['user'].findOne({ name: 'ben' });
 
@@ -1278,7 +1277,7 @@ test.serial('Should handle lots of concurrent permissions updates', async () => 
 
   const posts = await Tyr.byName['post'].findAll({});
 
-  expect(posts.length, 'should be at least 1000 posts').to.be.greaterThan(1000);
+  t.true(posts.length >= 1000, 'should be at least 1000 posts');
 
   // 14,000 concurrent updates
   await Promise.all(posts.map(p => Promise.all([

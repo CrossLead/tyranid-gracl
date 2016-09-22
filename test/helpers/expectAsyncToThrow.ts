@@ -1,6 +1,7 @@
-import { expect } from 'chai';
+import { ContextualTestContext } from 'ava';
 
 export async function expectAsyncToThrow(
+    t: ContextualTestContext,
     asyncFn: (...args: any[]) => Promise<any>,
     expectedMessageRegex: RegExp,
     description = ''
@@ -15,6 +16,6 @@ export async function expectAsyncToThrow(
     message = err.message;
   }
 
-  expect(threw, description).to.equal(true);
-  expect(message, description).to.match(expectedMessageRegex);
+  t.true(threw, description);
+  t.regex(message, expectedMessageRegex, description);
 };
