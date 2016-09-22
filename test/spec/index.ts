@@ -2,13 +2,15 @@ import { Tyr } from 'tyranid';
 import * as mongodb from 'mongodb';
 import * as path from 'path';
 import * as _ from 'lodash';
+import test, { ContextualTestContext } from 'ava';
+
+
 import * as tyranidGracl from '../../src/';
 
 import { expectedLinkPaths } from '../helpers/expectedLinkPaths';
 import { createTestData } from '../helpers/createTestData';
 import { expectAsyncToThrow } from '../helpers/expectAsyncToThrow';
 import { captureLogStream } from '../helpers/captureLogStream';
-import test, { ContextualTestContext } from 'ava';
 import { Blog } from '../models/';
 
 import { PermissionsModel } from '../../src/models/PermissionsModel';
@@ -27,7 +29,8 @@ type GraclPlugin = tyranidGracl.GraclPlugin;
 const VERBOSE_LOGGING = false;
 
 const permissionTypes = [
-  { name: 'edit', format: 'TEST_LABEL', abstract: false },
+  { name: 'own', abstract: false },
+  { name: 'edit', format: 'TEST_LABEL', abstract: false, parent: 'own' },
   { name: 'view',
     format(act: string, col?: string) {
       act;
@@ -786,6 +789,32 @@ test.serial('Should return all relevant entities on doc.$entitiesWithPermission(
 });
 
 
+test.serial('Allowed parent permission should be reflected in both isAllowed and authenticated query', async (t) => {
+  const ben = await Tyr.byName['user'].findOne({ name: 'ben' });
+
+  const posts = await Tyr.byName['post'].findAll({
+    query: {},
+    auth: ben,
+    perm: 'edit'
+  });
+
+  // should initially return no posts
+  t.deepEqual(posts, []);
+
+  // make ben owner of one post
+  const post = await Tyr.byName['post'].findOne({});
+  await post.$allow('own-post', ben);
+
+  const owned = await Tyr.byName['post'].findAll({
+    query: {},
+    auth: ben,
+    perm: 'edit'
+  });
+
+  t.deepEqual(owned, [ post ]);
+  t.deepEqual((await owned[0].$isAllowed('edit-post', ben)), true);
+});
+
 
 test.serial('should correctly respect combined permission/subject/resource hierarchy in query()', async (t) => {
   /**
@@ -945,20 +974,32 @@ test.serial('Should return correct allowed permissions for given collection', (t
   allowed.sort();
   blogAllowed.sort();
 
-  t.deepEqual(blogAllowed,
-   [ 'abstract_view_chart',
-     'delete-blog',
-     'delete-comment',
-     'delete-post',
-     'edit-blog',
-     'edit-comment',
-     'edit-post',
-     'view-blog',
-     'view-comment',
-     'view-post',
-     'view_alignment_triangle_private' ]
-  );
-  t.deepEqual(allowed, [ 'delete-post', 'edit-post', 'view-post' ]);
+  const blogExpected = [
+    'abstract_view_chart',
+    'own-blog',
+    'own-comment',
+    'own-post',
+    'delete-blog',
+    'delete-comment',
+    'delete-post',
+    'edit-blog',
+    'edit-comment',
+    'edit-post',
+    'view-blog',
+    'view-comment',
+    'view-post',
+    'view_alignment_triangle_private'
+  ];
+
+  const allowedExpected = [ 'own-post', 'delete-post', 'edit-post', 'view-post' ];
+
+  blogAllowed.sort();
+  blogExpected.sort();
+  allowed.sort();
+  allowedExpected.sort();
+
+  t.deepEqual(blogAllowed, blogExpected);
+  t.deepEqual(allowed, allowedExpected);
 });
 
 
@@ -999,22 +1040,33 @@ test.serial('Should allow inclusion / exclusion of all permissions for a given c
   const inventoryAllowed = secure.getAllowedPermissionsForCollection('inventory'),
         teamAllowed = secure.getAllowedPermissionsForCollection('team');
 
-  t.deepEqual(inventoryAllowed, [
+  const inventoryExpected = [
+    'own-inventory',
     'edit-inventory',
     'view-inventory',
     'delete-inventory',
-    'abstract_view_chart' ]);
+    'abstract_view_chart'
+  ];
 
-  t.deepEqual(teamAllowed, [
+  const teamExpected = [
      'abstract_view_chart',
+     'own-team',
      'delete-team',
      'edit-team',
      'view-team',
+     'own-user',
      'delete-user',
      'edit-user',
      'view-user'
-  ]);
+  ];
 
+  inventoryAllowed.sort();
+  inventoryExpected.sort();
+  teamAllowed.sort();
+  teamExpected.sort();
+
+  t.deepEqual(inventoryAllowed, inventoryExpected);
+  t.deepEqual(teamAllowed, teamExpected);
 });
 
 
