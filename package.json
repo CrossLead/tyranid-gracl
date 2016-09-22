@@ -58,7 +58,7 @@
     "uglifyjs": "2.4.10"
   },
   "peerDependencies": {
-    "tyranid": "0.1.7"
+    "tyranid": "^0.1.7"
   },
   "babel": {
     "presets": [
