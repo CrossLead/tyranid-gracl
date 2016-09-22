@@ -249,7 +249,7 @@ test.serial('should return all relevant permissions on GraclPlugin.getAllPermiss
 
 test.serial('should return correct parent permissions on GraclPlugin.getPermissionParents(perm)', (t) => {
   const view_blog_parents = secure.getPermissionParents('view-blog');
-  t.deepEqual(view_blog_parents.length, 2, 'view-blog should have two parent permissions');
+  t.deepEqual(view_blog_parents.length, 3, 'view-blog should have three parent permissions');
   t.notDeepEqual(view_blog_parents.indexOf('edit-blog'), -1, 'view-blog should have edit-blog parent');
   t.notDeepEqual(
     view_blog_parents.indexOf('view_alignment_triangle_private'),
@@ -1349,22 +1349,13 @@ test.serial('Should handle lots of concurrent permissions updates', async (t) =>
     p.$allow('edit-post', ben)
   ])));
 
-
-  // 14,000 concurrent checks
+  // 4,000 concurrent checks
   await Promise.all(posts.map(p => Promise.all([
     p.$isAllowed('view-post', ben),
     p.$isAllowed('edit-post', ben),
     p.$isAllowed('delete-post', ben),
     p.$isAllowed('view-post', ben),
-    p.$isAllowed('view-post', ben),
-    p.$isAllowed('view-post', ben),
-    p.$isAllowed('edit-post', ben),
-    p.$isAllowed('view-post', ben),
-    p.$isAllowed('edit-post', ben),
-    p.$isAllowed('delete-post', ben),
-    p.$isAllowed('view-post', ben),
-    p.$isAllowed('view-post', ben),
-    p.$isAllowed('view-post', ben),
-    p.$isAllowed('edit-post', ben)
   ])));
+
+  t.pass();
 });
