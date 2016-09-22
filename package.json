@@ -32,6 +32,9 @@
   "author": "bsouthga@gmail.com",
   "license": "Apache-2.0",
   "dependencies": {
+    "@types/express": "^4.0.33",
+    "@types/lodash": "^4.14.36",
+    "@types/mongodb": "^2.1.33",
     "gracl": "0.0.16",
     "lodash": "^4.15.0"
   },
