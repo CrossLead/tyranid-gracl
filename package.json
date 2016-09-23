@@ -14,7 +14,7 @@
   "typings": "./dist-es6/src/index.d.ts",
   "scripts": {
     "babel": "./node_modules/.bin/babel --quiet ./dist-es6 --out-dir ./dist-node4",
-    "build": "rm -rf ./dist-es6/ ./dist-node4/ && npm run lint && npm run tsc && npm run babel && npm run compile-module-test",
+    "build": "rm -rf ./dist-es6/ ./dist-node4/ ./test/spec/generated.d.ts && npm run generate-collection-types && npm run lint && npm run tsc && npm run babel && npm run compile-module-test",
     "pretest": "npm run build",
     "prepublish": "npm run test",
     "test": "./node_modules/.bin/nyc ./node_modules/.bin/ava",
@@ -23,7 +23,9 @@
     "tsc": "./node_modules/typescript/bin/tsc -d --pretty",
     "docs": "rm -rf ./docs/ && ./node_modules/typedoc/bin/typedoc --mode file --theme default --target es6 --out ./docs/ ./src/ && touch ./docs/.nojekyll",
     "gh-pages": "npm run docs && ./node_modules/gh-pages/bin/gh-pages --dotfiles true -d ./docs/",
-    "lint": "./node_modules/tslint/bin/tslint -c ./tslint.json ./{test,lib}/**/*.ts && echo '> \\033[0;32mlinter passed!\\033[0m'"
+    "lint": "./node_modules/tslint/bin/tslint -e ./test/spec/generated.d.ts -c ./tslint.json ./{test,lib}/**/*.ts && echo '> \\033[0;32mlinter passed!\\033[0m'",
+    "compile-collections": "./node_modules/.bin/tsc -p ./test/models",
+    "generate-collection-types": "npm run compile-collections && ./node_modules/.bin/tyranid-tdgen ./dist-es6/test/models > test/spec/generated.d.ts"
   },
   "engines": {
     "node": ">=4.3.0"
@@ -55,6 +57,7 @@
     "typedoc": "https://github.com/DatenMetzgerX/typedoc.git#typescript-2-build",
     "typescript": "2.0.3",
     "tyranid": "0.1.7",
+    "tyranid-tdgen": "0.0.3",
     "uglifyjs": "2.4.10"
   },
   "peerDependencies": {
