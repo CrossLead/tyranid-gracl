@@ -10,6 +10,7 @@ import { createHierarchicalQuery } from './createHierarchicalQuery';
 import { parsePermissionString } from '../permission/parsePermissionString';
 import { formatPermissionType } from '../permission/formatPermissionType';
 import { getPermissionParents } from '../permission/getPermissionParents';
+import { validatePermissionExists } from '../permission/validatePermissionExists';
 
 import { getCollectionLinksSorted } from '../graph/getCollectionLinksSorted';
 import { getShortestPath } from '../graph/getShortestPath';
@@ -46,6 +47,9 @@ export async function query(
   if (!plugin.graclHierarchy) {
     plugin.error(`Must call GraclPlugin.boot() before using GraclPlugin.query()`);
   }
+
+  // ensure that permission exists before trying to filter query
+  validatePermissionExists(plugin, permissionType);
 
   const components = parsePermissionString(plugin, permissionType);
 

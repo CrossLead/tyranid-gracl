@@ -1172,6 +1172,18 @@ test.serial('Should be able to query collection using perm with alternate collec
 });
 
 
+test.serial('Should be throw if passing invalid permission as part of filtered query', async(t) => {
+  const ted = await Tyr.byName.user.findOne({ name: 'ted' });
+
+  await expectAsyncToThrow(t, async () => {
+    await Tyr.byName.team.findAll({
+      query: {},
+      perm: 'edit-invalidCollectionType',
+      auth: ted
+    });
+  }, /resource class and thus can't be used with permission/);
+});
+
 
 test.serial('Should return correct documents when using $canAccessThis', async (t) => {
   const chipotleBlog = await Tyr.byName.blog.findOne({ name: 'Mexican Empire' }),
