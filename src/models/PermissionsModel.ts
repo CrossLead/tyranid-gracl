@@ -357,61 +357,56 @@ export class PermissionsModel extends PermissionsBaseCollection {
     doc: Tyr.Document
   ) {
     const plugin = PermissionsModel.getGraclPlugin();
-
-
     validateAsResource(plugin, doc.$model);
 
-    const rawList = permissions;
-
-    if (!rawList.length) {
+    if (!permissions.length) {
       plugin.error(`No permissions provided to findEntitiesWithPermissionAccessToResource()!`);
     }
 
-    const permList = rawList.map(p => {
-        const components = parsePermissionString(plugin, p);
-        return formatPermissionType(plugin, {
-          action: components.action,
-          collection: (
-            components.collection ||
-            (isCrudPermission(plugin, p) && doc.$model.def.name) ||
-            undefined
-          )
-        });
+    /**
+     * Get hierarchy of permissions stemming from provided list
+     */
+    const permHierarchy = permissions.map(p => {
+      const components = parsePermissionString(plugin, p);
+
+      const formatted = formatPermissionType(plugin, {
+        action: components.action,
+        collection: (
+          components.collection ||
+          (isCrudPermission(plugin, p) && doc.$model.def.name) ||
+          undefined
+        )
       });
 
+      validatePermissionExists(plugin, formatted);
 
-    permList.forEach(p => validatePermissionExists(plugin, p));
-
-    const permHierarchy: string[][] = [];
-    _.each(permList, perm => {
-      permHierarchy.push([perm, ...getPermissionParents(plugin, perm)]);
+      return [formatted, ...getPermissionParents(plugin, formatted)];
     });
 
 
-    const query = {
-      $and: <Tyr.MongoQuery[]> [
-        { resourceId: doc.$uid }
-      ]
-    };
-
-
-    const anyPerms: Tyr.MongoQuery[] = [];
-
-    _.each(permHierarchy, list => {
-      anyPerms.push({
-        $or: _.map(list, permission => {
-          return {
-            [`access.${permission}`]: { $exists: true }
+    const permissionsAsResource = await plugin.permissionsModel.findAll({
+      query: {
+        $and: [
+          // for the given resource...
+          { resourceId: doc.$uid },
+          // get any permission docs with any of the possible permTypes
+          {
+            $or: permHierarchy.map(list => ({
+              $or: list.map(permission => ({
+                [`access.${permission}`]: { $exists: true }
+              }))
+            }))
           }
-        })
-      });
+        ]
+      }
     });
 
-    query.$and.push({ $or: anyPerms });
 
-
-    const permissionsAsResource = await plugin.permissionsModel.findAll({ query });
-    const subjectDocuments = await Tyr.byUids(<string[]> _.map(permissionsAsResource, 'subjectId'));
+    // get all subjects with direct permissions set for this resource,
+    // does not yet include _all_ subjects down the heirarchy
+    const subjectDocuments = await Tyr.byUids(
+      <string[]> permissionsAsResource.map(p => p['subjectId'])
+    );
 
 
     const subjectsByCollection: Hash<Tyr.Document[]> = {};
@@ -501,9 +496,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
       }));
     }
 
-    const subjectHierarchy = getObjectHierarchy(plugin).subjects;
-
-    await traverse(subjectHierarchy);
+    await traverse(getObjectHierarchy(plugin).subjects);
 
     return <Tyr.Document[]> _(subjectsByCollection)
       .values()

@@ -12,12 +12,27 @@
   ],
   "main": "./dist-node4/src/index.js",
   "typings": "./dist-es6/src/index.d.ts",
+  "watch": {
+    "tsc": {
+      "patterns": ["src", "test"],
+      "extensions": "ts"
+    },
+    "lint": {
+      "patterns": ["src", "test"],
+      "extensions": "ts"
+    },
+    "babel": {
+      "patterns": ["dist-es6"],
+      "extensions": "js"
+    }
+  },
   "scripts": {
     "babel": "babel --quiet ./dist-es6 --out-dir ./dist-node4",
     "build": "rm -rf ./dist-es6/ ./dist-node4/ ./test/spec/generated.d.ts && npm run generate-collection-types && npm run lint && npm run tsc && npm run babel && npm run compile-module-test",
     "pretest": "npm run build",
     "prepublish": "npm run test",
     "test": "nyc ava",
+    "watch": "npm-watch",
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "compile-module-test": "cd ./test/tscompile && tsc --pretty",
     "tsc": "./node_modules/typescript/bin/tsc -d --pretty",
@@ -52,6 +67,7 @@
     "gh-pages": "0.11.0",
     "gulp": "3.9.1",
     "mongodb": "2.2.10",
+    "npm-watch": "^0.1.6",
     "nyc": "8.3.0",
     "tslint": "3.15.1",
     "typedoc": "https://github.com/DatenMetzgerX/typedoc.git#typescript-2-build",
