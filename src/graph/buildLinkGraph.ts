@@ -18,6 +18,8 @@ export function buildLinkGraph(plugin: GraclPlugin) {
           colName = col.def.name;
 
     _.each(links, linkField => {
+      if (linkField.def['graclIgnore']) return;
+
       const edges = _.get(g, colName, new Set<string>()),
             linkName = linkField.link.def.name;
 
