@@ -654,7 +654,7 @@ console.log(accessObj.p0057365273edce8e452bee9cfa.view)
     resourceUidList: string[] | Tyr.Document[]
   ) {
     const plugin = PermissionsModel.getGraclPlugin(),
-          accessMap: Hash<Hash<boolean>> = {};
+          accessMap = {} as { [k: string]: { [k: string]: boolean } };
 
     const uidsToCheck: string[] =
       typeof resourceUidList[0] === 'string'
