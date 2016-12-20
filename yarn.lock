@@ -4846,9 +4846,9 @@ typescript@2.1.4:
   version "2.1.4"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.1.4.tgz#b53b69fb841126acb1dd4b397d21daba87572251"
 
-tyranid-tdgen@0.0.7:
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/tyranid-tdgen/-/tyranid-tdgen-0.0.7.tgz#6ca4f3c6b63bc20f06e7d1817126ee00f2fcc24d"
+tyranid-tdgen@^0.0.15:
+  version "0.0.15"
+  resolved "https://registry.yarnpkg.com/tyranid-tdgen/-/tyranid-tdgen-0.0.15.tgz#70c2af0e7833625382c874f8f14cb18f2597c6c6"
   dependencies:
     "@types/commander" "2.3.30"
     "@types/lodash" "4.14.43"

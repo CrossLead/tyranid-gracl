@@ -81,7 +81,7 @@
     "typedoc": "0.5.1",
     "typescript": "2.1.4",
     "tyranid": "0.1.10",
-    "tyranid-tdgen": "0.0.7",
+    "tyranid-tdgen": "^0.0.15",
     "uglifyjs": "2.4.10"
   },
   "peerDependencies": {
