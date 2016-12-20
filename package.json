@@ -60,8 +60,7 @@
     "@types/lodash": "4.14.40",
     "@types/mongodb": "2.1.35",
     "gracl": "0.0.16",
-    "lodash": "4.17.2",
-    "typescript": "2.0.10"
+    "lodash": "4.17.2"
   },
   "devDependencies": {
     "ava": "0.17.0",
@@ -80,9 +79,9 @@
     "nyc": "10.0.0",
     "tslint": "4.0.1",
     "typedoc": "0.5.1",
-    "typescript": "2.0.10",
+    "typescript": "2.1.4",
     "tyranid": "0.1.10",
-    "tyranid-tdgen": "0.0.3",
+    "tyranid-tdgen": "0.0.7",
     "uglifyjs": "2.4.10"
   },
   "peerDependencies": {
