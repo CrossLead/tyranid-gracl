@@ -51,7 +51,7 @@
     "generate-collection-types": "npm run compile-collections && ./node_modules/.bin/tyranid-tdgen ./dist-es6/test/models > test/spec/generated.d.ts"
   },
   "engines": {
-    "node": ">=4.3.0"
+    "node": ">=6.9.1"
   },
   "author": "bsouthga@gmail.com",
   "license": "Apache-2.0",
