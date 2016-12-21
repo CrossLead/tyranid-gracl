@@ -10,8 +10,8 @@
     "tyranid",
     "gracl"
   ],
-  "main": "./dist-node4/src/index.js",
-  "typings": "./dist-es6/src/index.d.ts",
+  "main": "./dist/src/index.js",
+  "typings": "./dist/src/index.d.ts",
   "watch": {
     "tsc": {
       "patterns": [
@@ -26,29 +26,22 @@
         "test"
       ],
       "extensions": "ts"
-    },
-    "babel": {
-      "patterns": [
-        "dist-es6"
-      ],
-      "extensions": "js"
     }
   },
   "scripts": {
-    "babel": "babel --quiet ./dist-es6 --out-dir ./dist-node4",
-    "build": "rm -rf ./dist-es6/ ./dist-node4/ ./test/spec/generated.d.ts && npm run generate-collection-types && npm run lint && npm run tsc && npm run babel && npm run compile-module-test",
+    "build": "rm -rf ./dist/ ./test/spec/generated.d.ts && npm run generate-collection-types && npm run lint && npm run tsc && npm run compile-module-test",
     "pretest": "npm run build",
     "prepublish": "npm run test",
     "test": "nyc ava",
     "watch": "npm-watch",
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "compile-module-test": "cd ./test/tscompile && tsc --pretty",
-    "tsc": "./node_modules/typescript/bin/tsc -d --pretty",
+    "tsc": "./node_modules/typescript/bin/tsc -d --pretty -p ./",
     "docs": "rm -rf ./docs/ && ./node_modules/typedoc/bin/typedoc --mode file --theme default --target es6 --out ./docs/ ./src/ && touch ./docs/.nojekyll",
     "gh-pages": "npm run docs && ./node_modules/gh-pages/bin/gh-pages --dotfiles true -d ./docs/",
     "lint": "./node_modules/tslint/bin/tslint -e ./test/spec/generated.d.ts -c ./tslint.json ./{test,lib}/**/*.ts && echo '> \\033[0;32mlinter passed!\\033[0m'",
     "compile-collections": "tsc -p ./test/models",
-    "generate-collection-types": "npm run compile-collections && ./node_modules/.bin/tyranid-tdgen ./dist-es6/test/models > test/spec/generated.d.ts"
+    "generate-collection-types": "npm run compile-collections && ./node_modules/.bin/tyranid-tdgen './dist/test/models/**/*.js' > test/spec/generated.d.ts"
   },
   "engines": {
     "node": ">=6.9.1"
@@ -64,43 +57,29 @@
   },
   "devDependencies": {
     "ava": "0.17.0",
-    "babel-cli": "6.18.0",
-    "babel-core": "6.18.2",
-    "babel-polyfill": "6.16.0",
-    "babel-preset-es2015-node4": "2.1.0",
-    "babel-register": "6.18.0",
-    "babelify": "7.3.0",
-    "browserify": "13.1.1",
     "codecov": "1.0.1",
     "gh-pages": "0.12.0",
     "gulp": "3.9.1",
     "mongodb": "2.2.11",
-    "npm-watch": "^0.1.6",
+    "npm-watch": "0.1.6",
     "nyc": "10.0.0",
     "tslint": "4.0.1",
     "typedoc": "0.5.1",
     "typescript": "2.1.4",
     "tyranid": "0.1.10",
-    "tyranid-tdgen": "^0.0.15",
-    "uglifyjs": "2.4.10"
+    "tyranid-tdgen": "0.0.16"
   },
   "peerDependencies": {
     "tyranid": "^0.1.7"
   },
-  "babel": {
-    "presets": [
-      "es2015-node4"
-    ],
-    "sourceMaps": "inline"
-  },
   "ava": {
     "files": [
-      "dist-node4/test/spec/**/*.js"
+      "dist/test/spec/**/*.js"
     ]
   },
   "nyc": {
     "include": [
-      "dist-node4/src"
+      "dist/src"
     ]
   }
 }

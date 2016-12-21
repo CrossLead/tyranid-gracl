@@ -3,8 +3,7 @@ tmp/*
 docs/*
 .publish/*
 npm-debug.log
-dist-node4/*
-dist-es6/*
+dist
 coverage
 .nyc_output
 test/tscompile/index.js*

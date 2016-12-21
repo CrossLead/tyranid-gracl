@@ -13,7 +13,7 @@
     "removeComments": false,
     "noLib": false,
     "pretty": true,
-    "outDir": "../../dist-es6/test/models",
+    "outDir": "../../dist/test/models",
     "inlineSourceMap": true,
     "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true
