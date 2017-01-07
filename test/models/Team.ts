@@ -30,6 +30,6 @@ const TeamBaseCollection = new Tyr.Collection({
 });
 
 
-export class Team extends (<Tyr.CollectionInstance> TeamBaseCollection) {
+export class Team extends (<Tyr.GenericCollection> TeamBaseCollection) {
 
 }

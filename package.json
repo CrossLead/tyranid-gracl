@@ -66,11 +66,11 @@
     "tslint": "4.0.1",
     "typedoc": "0.5.1",
     "typescript": "2.1.4",
-    "tyranid": "0.1.10",
-    "tyranid-tdgen": "0.0.16"
+    "tyranid": "0.1.15",
+    "tyranid-tdgen": "0.0.19"
   },
   "peerDependencies": {
-    "tyranid": "^0.1.7"
+    "tyranid": "^0.1.15"
   },
   "ava": {
     "files": [

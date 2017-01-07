@@ -13,6 +13,6 @@ export const UsageLogBaseCollection = new Tyr.Collection({
   }
 });
 
-export class UsageLog extends (<Tyr.CollectionInstance> UsageLogBaseCollection) {
+export class UsageLog extends (<Tyr.GenericCollection> UsageLogBaseCollection) {
 
 }

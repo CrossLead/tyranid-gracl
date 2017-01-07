@@ -8,9 +8,9 @@ import { GraclPlugin } from '../classes/GraclPlugin';
  */
 export function getCollectionLinksSorted(
   plugin: GraclPlugin,
-  col: Tyr.CollectionInstance,
+  col: Tyr.GenericCollection,
   opts: any = { direction: 'outgoing' }
-): Tyr.Field[] {
+): Tyr.FieldInstance[] {
   const collectionFieldCache = plugin._sortedLinkCache,
         hash = `${col.def.name}:${_.toPairs(opts).map(e => e.join('=')).sort().join(':')}`;
 

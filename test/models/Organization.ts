@@ -10,6 +10,6 @@ const OrganizationBaseCollection = new Tyr.Collection({
   }
 });
 
-export class Organization extends (<Tyr.CollectionInstance> OrganizationBaseCollection) {
+export class Organization extends (<Tyr.GenericCollection> OrganizationBaseCollection) {
 
 }

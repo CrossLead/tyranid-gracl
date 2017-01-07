@@ -21,6 +21,6 @@ export const PostBaseCollection = new Tyr.Collection({
   }
 });
 
-export class Post extends (<Tyr.CollectionInstance> PostBaseCollection) {
+export class Post extends (<Tyr.GenericCollection> PostBaseCollection) {
 
 }

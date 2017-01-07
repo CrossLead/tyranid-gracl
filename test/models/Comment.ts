@@ -21,6 +21,6 @@ export const CommentBaseCollection = new Tyr.Collection({
   }
 });
 
-export class Comment extends (<Tyr.CollectionInstance> CommentBaseCollection) {
+export class Comment extends (<Tyr.GenericCollection> CommentBaseCollection) {
 
 }

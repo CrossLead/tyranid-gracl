@@ -20,7 +20,7 @@ export function extractIdAndModel(plugin: GraclPlugin, doc: Tyr.Document | strin
     const components: { [key: string]: any } = Tyr.parseUid(doc) || {};
     return {
       $uid: <string> doc,
-      $model: <Tyr.CollectionInstance> components['collection']
+      $model: <Tyr.GenericCollection> components['collection']
     };
   } else {
     validate(plugin, doc.$uid);

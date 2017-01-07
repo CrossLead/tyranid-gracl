@@ -14,7 +14,7 @@ import { GraclPlugin } from '../classes/GraclPlugin';
  */
 export function makeRepository(
   plugin: GraclPlugin,
-  collection: Tyr.CollectionInstance,
+  collection: Tyr.GenericCollection,
   graclType: string
 ): Repository {
   if (graclType !== 'resource' && graclType !== 'subject') {

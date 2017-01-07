@@ -91,7 +91,7 @@ export class GraclPlugin {
   _outgoingLinkPaths: Hash<Hash<string>>;
   _permissionChildCache: Hash<string[]> = {};
   _allPossiblePermissionsCache: string[];
-  _sortedLinkCache: Hash<Tyr.Field[]> = {};
+  _sortedLinkCache: Hash<Tyr.FieldInstance[]> = {};
 
 
   constructor(opts: pluginOptions = {}) {
@@ -134,7 +134,7 @@ export class GraclPlugin {
 
 
   query(
-    queriedCollection: Tyr.CollectionInstance,
+    queriedCollection: Tyr.GenericCollection,
     permissionType: string,
     subjectDocument?: Tyr.Document
   ) {

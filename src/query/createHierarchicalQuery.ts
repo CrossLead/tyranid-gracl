@@ -28,7 +28,7 @@ import { Hash } from '../interfaces';
 export function createHierarchicalQuery(
   plugin: GraclPlugin,
   queryMaps: Hash<Map<string, Set<string>>>,
-  queriedCollection: Tyr.CollectionInstance
+  queriedCollection: Tyr.GenericCollection
 ) {
   const positiveUids = queryMaps['positive'],
         negativeUids = queryMaps['negative'];

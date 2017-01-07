@@ -15,7 +15,7 @@ import { validatePermissionExists } from './validatePermissionExists';
 export function validatePermissionForResource(
   plugin: GraclPlugin,
   permissionString: string,
-  resourceCollection: Tyr.CollectionInstance
+  resourceCollection: Tyr.GenericCollection
 ) {
   const name = resourceCollection.def.name;
 

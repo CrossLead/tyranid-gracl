@@ -42,6 +42,6 @@ export type schemaGraclConfigObject = {
 
 
 export type TyrSchemaGraphObjects = {
-  links: Tyr.Field[];
-  parents: Tyr.CollectionInstance[];
+  links: Tyr.FieldInstance[];
+  parents: Tyr.GenericCollection[];
 };

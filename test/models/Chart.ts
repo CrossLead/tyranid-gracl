@@ -25,6 +25,6 @@ export const ChartBaseCollection = new Tyr.Collection({
   }
 });
 
-export class Chart extends (<Tyr.CollectionInstance> ChartBaseCollection) {
+export class Chart extends (<Tyr.GenericCollection> ChartBaseCollection) {
 
 }

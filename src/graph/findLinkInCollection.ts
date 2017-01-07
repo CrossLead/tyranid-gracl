@@ -5,8 +5,8 @@ import { getCollectionLinksSorted } from './getCollectionLinksSorted';
 
 
 function compareCollectionWithField(
-  aCol: Tyr.CollectionInstance,
-  bCol: Tyr.Field
+  aCol: Tyr.GenericCollection,
+  bCol: Tyr.FieldInstance
 ) {
 
   const a = aCol.def.name,
@@ -23,9 +23,9 @@ function compareCollectionWithField(
  */
 export function findLinkInCollection(
   plugin: GraclPlugin,
-  col: Tyr.CollectionInstance,
-  linkCollection: Tyr.CollectionInstance
-): Tyr.Field {
+  col: Tyr.GenericCollection,
+  linkCollection: Tyr.GenericCollection
+): Tyr.FieldInstance {
   const links = getCollectionLinksSorted(plugin, col),
         index = binaryIndexOf(links, linkCollection, compareCollectionWithField);
 

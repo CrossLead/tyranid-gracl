@@ -11,7 +11,7 @@ import { findLinkInCollection } from '../graph/findLinkInCollection';
 export function createInQueries(
   plugin: GraclPlugin,
   map: Map<string, Set<string>>,
-  queriedCollection: Tyr.CollectionInstance,
+  queriedCollection: Tyr.GenericCollection,
   key: '$nin' | '$in'
 ): Hash<Hash<Hash<string[]>>[]> {
   if (!(key === '$in' || key === '$nin')) {

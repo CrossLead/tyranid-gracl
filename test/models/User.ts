@@ -21,6 +21,6 @@ const UserBaseCollection = new Tyr.Collection({
 });
 
 
-export class User extends (<Tyr.CollectionInstance> UserBaseCollection) {
+export class User extends (<Tyr.GenericCollection> UserBaseCollection) {
 
 }

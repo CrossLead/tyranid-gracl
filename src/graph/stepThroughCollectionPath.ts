@@ -12,9 +12,8 @@ import { findLinkInCollection } from './findLinkInCollection';
 export async function stepThroughCollectionPath(
   plugin: GraclPlugin,
   ids: ObjectID[],
-  previousCollection: Tyr.CollectionInstance,
-  nextCollection: Tyr.CollectionInstance,
-  secure: boolean = false
+  previousCollection: Tyr.GenericCollection,
+  nextCollection: Tyr.GenericCollection
 ) {
   // find the field in the current path collection which we need to get
   // for the ids of the next path collection
@@ -37,9 +36,10 @@ export async function stepThroughCollectionPath(
     // get the objects in the second to last collection of the path using
     // the ids of the last collection in the path
     const nextCollectionDocs = await nextCollection.findAll(
-      { [nextCollectionLinkField.spath]: { $in: ids } },
-      { _id: 1, [nextCollectionId]: 1 },
-      { tyranid: { secure } }
+      {
+        query: { [nextCollectionLinkField.spath]: { $in: ids } },
+        fields: { _id: 1, [nextCollectionId]: 1 }
+      }
     );
 
     // extract their primary ids using the primary field

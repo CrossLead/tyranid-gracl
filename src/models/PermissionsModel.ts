@@ -22,7 +22,7 @@ import { extractIdAndModel } from '../tyranid/extractIdAndModel';
 /**
  * The main model for storing individual permission edges
  */
-export const PermissionsBaseCollection = <Tyr.CollectionInstance> new Tyr.Collection({
+export const PermissionsBaseCollection = <Tyr.GenericCollection> new Tyr.Collection({
   id: '_gp',
   name: 'graclPermission',
   dbName: 'graclPermissions',
@@ -39,6 +39,32 @@ export const PermissionsBaseCollection = <Tyr.CollectionInstance> new Tyr.Collec
     }
   }
 });
+
+
+
+async function resolveSubjectAndResourceDocuments(
+  resourceData: Tyr.Document | string,
+  subjectData: Tyr.Document | string
+) {
+  const resourceDocument = typeof resourceData === 'string'
+    ? await Tyr.byUid(resourceData)
+    : resourceData;
+
+  if (!resourceDocument) throw new Error(`No resourceDocument resolvable given: ${JSON.stringify(resourceData)}`);
+
+  const subjectDocument = typeof subjectData === 'string'
+    ? await Tyr.byUid(subjectData)
+    : subjectData;
+
+  if (!subjectDocument) throw new Error(`No subjectDocument resolvable given: ${JSON.stringify(subjectData)}`);
+
+  return {
+    resourceDocument,
+    subjectDocument
+  };
+}
+
+
 
 /**
   Collection to contain all permissions used by gracl
@@ -84,7 +110,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
       };
     }
 
-    return PermissionsModel.findAll(query);
+    return PermissionsModel.findAll({ query });
   }
 
 
@@ -113,7 +139,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
       };
     }
 
-    return PermissionsModel.findAll(query);
+    return PermissionsModel.findAll({query});
   }
 
 
@@ -153,13 +179,10 @@ export class PermissionsModel extends PermissionsBaseCollection {
     extractIdAndModel(plugin, resourceData);
     extractIdAndModel(plugin, subjectData);
 
-    let resourceDocument = typeof resourceData === 'string'
-      ? await Tyr.byUid(resourceData)
-      : resourceData;
-
-    let subjectDocument = typeof subjectData === 'string'
-      ? await Tyr.byUid(subjectData)
-      : subjectData;
+    let {
+      resourceDocument,
+      subjectDocument
+    } = await resolveSubjectAndResourceDocuments(resourceData, subjectData);
 
     const {
             subject,
@@ -210,13 +233,10 @@ export class PermissionsModel extends PermissionsBaseCollection {
     extractIdAndModel(plugin, resourceData);
     extractIdAndModel(plugin, subjectData);
 
-    let resourceDocument = typeof resourceData === 'string'
-      ? await Tyr.byUid(resourceData)
-      : resourceData;
-
-    let subjectDocument = typeof subjectData === 'string'
-      ? await Tyr.byUid(subjectData)
-      : subjectData;
+    let {
+      resourceDocument,
+      subjectDocument
+    } = await resolveSubjectAndResourceDocuments(resourceData, subjectData);
 
     const { subject, resource } = getGraclClasses(plugin, resourceDocument, subjectDocument);
 
@@ -275,7 +295,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
     } catch (error) {
       // hack for https://jira.mongodb.org/browse/SERVER-14322
       if (attempt < 10 && /E11000 duplicate key error/.test(error.message)) {
-        return <Tyr.Document> (await new Promise((resolve, reject) => {
+        return <Tyr.Document> (await new Promise<Tyr.Document | null>((resolve, reject) => {
           setTimeout(() => {
             PermissionsModel
               .updatePermissions(
@@ -316,10 +336,12 @@ export class PermissionsModel extends PermissionsBaseCollection {
     if (!uid) plugin.error('No $uid property on document!');
 
     await PermissionsModel.remove({
-      $or: [
-        { subjectId: uid },
-        { resourceId: uid }
-      ]
+      query: {
+        $or: [
+          { subjectId: uid },
+          { resourceId: uid }
+        ]
+      }
     });
 
     return doc;

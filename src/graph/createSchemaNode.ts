@@ -24,9 +24,9 @@ import { findLinkInCollection } from './findLinkInCollection';
  */
 export function createSchemaNode(
   plugin: GraclPlugin,
-  collection: Tyr.CollectionInstance,
+  collection: Tyr.GenericCollection,
   type: string,
-  node?: Tyr.Field
+  node?: Tyr.FieldInstance
 ): SchemaNode {
   return <SchemaNode> {
 
@@ -40,9 +40,11 @@ export function createSchemaNode(
       const subjectId = subject.getId(),
             resourceId = this.getId();
 
-      const perm = <any> (await PermissionsModel.findOne({
-        subjectId,
-        resourceId
+      const perm = <any> (await PermissionsModel.findOne({ query:
+        {
+          subjectId,
+          resourceId
+        }
       }));
 
       return <Permission> (perm || {

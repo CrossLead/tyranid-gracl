@@ -212,10 +212,12 @@ await user.$removeEntityPermission('resource', 'view-user', 'deny');
           allPermissionTypes = [ permissionType ].concat(getPermissionParents(plugin, permissionType));
 
     return <string[]> _.chain(await PermissionsModel.findAll({
-      [`${graclType}Id`]: this.$uid,
-      $or: allPermissionTypes.map(perm => {
-        return { [`access.${perm}`]: true };
-      })
+      query: {
+        [`${graclType}Id`]: this.$uid,
+        $or: allPermissionTypes.map(perm => {
+          return { [`access.${perm}`]: true };
+        })
+      }
     }))
     .map(otherType)
     .uniq()

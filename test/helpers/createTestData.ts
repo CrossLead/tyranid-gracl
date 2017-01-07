@@ -9,7 +9,7 @@ import { Comment } from '../models/Comment';
 
 export async function createTestData() {
   // nuke old data...
-  await Promise.all(Tyr.collections.map(c => c.remove({})));
+  await Promise.all(Tyr.collections.map(c => c.remove({ query: {} })));
 
   /**
     Organiations

@@ -28,7 +28,7 @@ import { stepThroughCollectionPath } from '../graph/stepThroughCollectionPath';
  */
 export async function query(
   plugin: GraclPlugin,
-  queriedCollection: Tyr.CollectionInstance,
+  queriedCollection: Tyr.GenericCollection,
   permissionType: string,
   subjectDocument = Tyr.local.user
 ): Promise<boolean | {}> {
@@ -133,7 +133,7 @@ export async function query(
           })
         };
 
-  const permissions = await PermissionsModel.findAll(permissionsQuery);
+  const permissions = await PermissionsModel.findAll({ query: permissionsQuery });
 
   // no permissions found, return no restriction
   if (!Array.isArray(permissions) || permissions.length === 0) {
@@ -143,7 +143,7 @@ export async function query(
 
   type resourceMapEntries = {
     permissions: Map<string, any>,
-    collection: Tyr.CollectionInstance
+    collection: Tyr.GenericCollection
   };
 
   const resourceMap = (<Permission[]> (<any> permissions))
@@ -169,10 +169,10 @@ export async function query(
   // building the query string for, grabbing all fields that are links
   // and storing them in a map of (linkFieldCollection => Field)
   const queriedCollectionLinkFields = getCollectionLinksSorted(plugin, queriedCollection)
-    .reduce((map, field) => {
+    .reduce((map, field: Tyr.FieldInstance) => {
       if (field.def.link) map.set(field.def.link, field);
       return map;
-    }, new Map<string, Tyr.Field>());
+    }, new Map<string, Tyr.FieldInstance>());
 
   const queryMaps: Hash<Map<string, Set<string>>> = {
     positive: new Map<string, Set<string>>(),
