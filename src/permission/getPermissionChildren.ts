@@ -10,8 +10,12 @@ import { getPermissionParents } from './getPermissionParents';
  *  For example, if edit is set as the parent of view in the configuration,
  *  view-user will be returned as a child of edit-user.
  */
-export function getPermissionChildren(plugin: GraclPlugin, perm: string): string[] {
-  if (plugin._permissionChildCache[perm]) return plugin._permissionChildCache[perm].slice();
+export function getPermissionChildren(
+  plugin: GraclPlugin,
+  perm: string
+): string[] {
+  if (plugin._permissionChildCache[perm])
+    return plugin._permissionChildCache[perm].slice();
 
   const { action, collection } = parsePermissionString(plugin, perm);
 

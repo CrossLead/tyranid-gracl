@@ -1,4 +1,7 @@
-export function captureLogStream(stream: NodeJS.WritableStream, passThrough = false) {
+export function captureLogStream(
+  stream: NodeJS.WritableStream,
+  passThrough = false
+) {
   const oldWrite = stream.write;
   let buf = '';
 
@@ -7,16 +10,18 @@ export function captureLogStream(stream: NodeJS.WritableStream, passThrough = fa
     encoding?: string | Function,
     callback?: Function
   ) {
-    buf += chunk.toString(); // chunk is a String or Buffer
-    if (passThrough) oldWrite.apply(stream, [chunk, encoding, callback]);
+    buf += chunk.toString();
+    // chunk is a String or Buffer
+    if (passThrough)
+      oldWrite.apply(stream, [ chunk, encoding, callback ]);
     return true;
   };
 
   return {
-    unhook: function unhook(){
-     stream.write = oldWrite;
+    unhook: function unhook() {
+      stream.write = oldWrite;
     },
-    captured: function(){
+    captured: function() {
       return buf;
     }
   };

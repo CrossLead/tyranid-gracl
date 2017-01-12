@@ -9,10 +9,13 @@ import { getPermissionObject } from './getPermissionObject';
  *
  * -- if the permission was given a format function, that is used
  */
-export function formatPermissionLabel(plugin: GraclPlugin, perm: string): string {
+export function formatPermissionLabel(
+  plugin: GraclPlugin,
+  perm: string
+): string {
   const components = parsePermissionString(plugin, perm),
-        obj = getPermissionObject(plugin, perm),
-        format = obj && obj.format;
+    obj = getPermissionObject(plugin, perm),
+    format = obj && obj.format;
 
   if (format) {
     if (typeof format === 'string') {

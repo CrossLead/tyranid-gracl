@@ -20,18 +20,14 @@ export function validatePermissionForResource(
   const name = resourceCollection.def.name;
 
   if (isCrudPermission(plugin, permissionString)) {
-
     const action = parsePermissionString(plugin, permissionString).action;
     const formatted = !action
       ? permissionString
-      : formatPermissionType(plugin, {
-        collection: name,
-        action: action
-      });
+      : formatPermissionType(plugin, { collection: name, action: action });
 
     plugin.error(
       `Cannot use raw crud permission "${permissionString}" ` +
-      `without attached resource. Did you mean ${formatted}?`
+        `without attached resource. Did you mean ${formatted}?`
     );
   }
 
@@ -43,9 +39,8 @@ export function validatePermissionForResource(
     if (!restrictions.has(permissionString)) {
       plugin.error(
         `Tried to use permission "${permissionString}" with collection "${name}" ` +
-        `but "${name}" is restricted to the following permissions: ` + (
-          [...restrictions.values()].join(', ')
-        )
+          `but "${name}" is restricted to the following permissions: ` +
+          [ ...restrictions.values() ].join(', ')
       );
     }
   }

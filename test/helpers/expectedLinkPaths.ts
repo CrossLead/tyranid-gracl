@@ -3,33 +3,11 @@
  */
 
 export const expectedLinkPaths: { [k: string]: { [k: string]: string[] } } = {
-  'blog': {
-    'organization': [
-      'blog',
-      'organization'
-    ]
-  },
+  'blog': { 'organization': [ 'blog', 'organization' ] },
   'post': {
-    'blog': [
-      'post',
-      'blog'
-    ],
-    'organization': [
-      'post',
-      'blog',
-      'organization'
-    ]
+    'blog': [ 'post', 'blog' ],
+    'organization': [ 'post', 'blog', 'organization' ]
   },
-  'team': {
-    'organization': [
-      'team',
-      'organization'
-    ]
-  },
-  'user': {
-    'organization': [
-      'user',
-      'organization'
-    ]
-  }
+  'team': { 'organization': [ 'team', 'organization' ] },
+  'user': { 'organization': [ 'user', 'organization' ] }
 };

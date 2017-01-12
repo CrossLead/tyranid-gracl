@@ -14,11 +14,7 @@ export async function createTestData() {
   /**
     Organiations
    */
-  const [
-    chipotle,
-    chopped,
-    cava
-  ] = await Promise.all([
+  const [ chipotle, chopped, cava ] = await Promise.all([
     Organization.insert({ name: 'Chipotle' }),
     Organization.insert({ name: 'Chopped' }),
     Organization.insert({ name: 'Cava' })
@@ -27,11 +23,7 @@ export async function createTestData() {
   /**
     Organiations
    */
-  const [
-    // chipotleInventory,
-    // choppedInventory,
-    // cavaInventory
-  ] = await Promise.all([
+  const [] = await Promise.all([
     Inventory.insert({ name: 'Chipotle', organizationId: chipotle.$id }),
     Inventory.insert({ name: 'Chopped', organizationId: chopped.$id }),
     Inventory.insert({ name: 'Cava', organizationId: cava.$id })
@@ -52,42 +44,30 @@ export async function createTestData() {
     Blog.insert({ name: 'Spinach + Lentils', organizationId: cava.$id })
   ]);
 
-
   /**
     Posts
    */
-  const [
-    // whyBurritosAreAmazing,
-    // ecoliChallenges,
-    // weDontKnowWhyPeopleGotSick,
-    // cleaningUp,
-    // burritoManagement,
-    // saladsAreGreat,
-    // guacGreens,
-    // lentilsAreGreat
-  ] = await Promise.all([
+  const [] = await Promise.all([
     Blog.addPost('Why burritos are amazing.', chipotleFoodBlog),
     Blog.addPost('Ecoli challenges.', chipotleFoodBlog),
-    Blog.addPost('We don\' actually know why people got sick.', chipotleFoodBlog),
+    Blog.addPost(
+      'We don\' actually know why people got sick.',
+      chipotleFoodBlog
+    ),
     Blog.addPost('Re-evaluating the way we clean up.', chipotleCorporateBlog),
     Blog.addPost('Burrito Management, a new paradigm.', chipotleCorporateBlog),
-    Blog.addPost('Salads are great, the post.', choppedBlog ),
+    Blog.addPost('Salads are great, the post.', choppedBlog),
     Blog.addPost('Guacamole Greens to the rescue!.', choppedBlog),
     Blog.addPost('Lentils are great', cavaBlog)
   ]);
-
 
   /**
    *  Comment
    */
   await Promise.all([
     // comment with no post id but organizationId which links to higher
-    Comment.insert({
-      text: 'TEST_COMMENT',
-      blogId: chipotleCorporateBlog.$id
-    })
+    Comment.insert({ text: 'TEST_COMMENT', blogId: chipotleCorporateBlog.$id })
   ]);
-
 
   /**
     Teams
@@ -107,33 +87,18 @@ export async function createTestData() {
   /**
     Users
    */
-  const [
-    ben,
-    ted
-  ] = await Promise.all([
-
+  const [ ben, ted ] = await Promise.all([
     User.insert({
       name: 'ben',
       organizationId: chipotle.$id,
-      teamIds: [
-        burritoMakers.$id,
-        chipotleMarketing.$id
-      ]
+      teamIds: [ burritoMakers.$id, chipotleMarketing.$id ]
     }),
-
     User.insert({
       name: 'ted',
       organizationId: cava.$id,
-      teamIds: [
-        cavaEngineers.$id
-      ]
+      teamIds: [ cavaEngineers.$id ]
     }),
-
-    User.insert({
-      name: 'noTeams',
-      organizationId: chipotle.$id
-    })
-
+    User.insert({ name: 'noTeams', organizationId: chipotle.$id })
   ]);
 
   await Promise.all([
@@ -144,5 +109,4 @@ export async function createTestData() {
       userIds: [ ben.$id, ted.$id ]
     })
   ]);
-
 }

@@ -3,7 +3,6 @@ import { ObjectID } from 'mongodb';
 import { Repository } from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 
-
 /**
  *
  * Creates a repository aligning with the separate `gracl` library's Repository interface
@@ -21,15 +20,13 @@ export function makeRepository(
     plugin.error(`graclType must be subject or resource, given ${graclType}`);
   }
   return {
-
     getEntity(id: ObjectID): Promise<Tyr.Document> {
       return collection.byId(id);
     },
-
     saveEntity(id: ObjectID, doc: Tyr.Document): Promise<Tyr.Document> {
-      id; // TODO: hack for no unused params...
+      id;
+      // TODO: hack for no unused params...
       return doc.$save();
     }
-
   };
 }

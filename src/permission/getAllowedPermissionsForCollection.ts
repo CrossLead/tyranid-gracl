@@ -38,12 +38,14 @@ new Tyr.Collection({
  * user, blog, and post collections. Additionally, the abstract permission `view_alignment_triangle_private`
  * cannot be used with the collection.
  */
-export function getAllowedPermissionsForCollection(plugin: GraclPlugin, collectionName: string) {
+export function getAllowedPermissionsForCollection(
+  plugin: GraclPlugin,
+  collectionName: string
+) {
   const restriction = plugin.permissionRestrictions.get(collectionName);
 
   const childResources = new Set(
-    plugin
-      .graclHierarchy
+    plugin.graclHierarchy
       .getChildResources(collectionName)
       .map(r => r.displayName)
   );
@@ -51,7 +53,9 @@ export function getAllowedPermissionsForCollection(plugin: GraclPlugin, collecti
   // add own name
   childResources.add(collectionName);
 
-  const preFiltered = restriction ? [...restriction] : [...plugin.setOfAllPermissions];
+  const preFiltered = restriction
+    ? [ ...restriction ]
+    : [ ...plugin.setOfAllPermissions ];
 
   // filter permissions, excluding collection specific perms that
   // are not child resources of this collection

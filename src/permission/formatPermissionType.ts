@@ -1,6 +1,5 @@
 import { GraclPlugin } from '../classes/GraclPlugin';
 
-
 /**
  * Inverse function of parsePermissionString. Given an action, and a collection, formats
  * the permission for usage by the plugin

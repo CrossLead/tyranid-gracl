@@ -2,22 +2,26 @@ import { Tyr } from 'tyranid';
 import { Subject } from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 
-
 /**
  * Given a subject document, wrap it in a `gracl` Subject instance
  */
-export function createSubject(plugin: GraclPlugin, subjectDocument: Tyr.Document): Subject {
+export function createSubject(
+  plugin: GraclPlugin,
+  subjectDocument: Tyr.Document
+): Subject {
   if (!(subjectDocument && subjectDocument.$uid)) {
-    plugin.error('No subject document provided (or Tyr.local.user is unavailable)!');
+    plugin.error(
+      'No subject document provided (or Tyr.local.user is unavailable)!'
+    );
   }
 
-  const subjectCollectionName  = subjectDocument.$model.def.name,
-        SubjectClass           = plugin.graclHierarchy.getSubject(subjectCollectionName);
+  const subjectCollectionName = subjectDocument.$model.def.name,
+    SubjectClass = plugin.graclHierarchy.getSubject(subjectCollectionName);
 
   if (!SubjectClass) {
     plugin.error(
       `Attempted to set/get permission using ${subjectCollectionName} as subject, ` +
-      `no relevant subject class found in tyranid-gracl plugin!`
+        `no relevant subject class found in tyranid-gracl plugin!`
     );
   }
 

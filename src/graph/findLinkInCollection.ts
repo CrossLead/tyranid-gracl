@@ -3,18 +3,14 @@ import { binaryIndexOf, baseCompare } from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { getCollectionLinksSorted } from './getCollectionLinksSorted';
 
-
 function compareCollectionWithField(
   aCol: Tyr.GenericCollection,
   bCol: Tyr.FieldInstance
 ) {
-
-  const a = aCol.def.name,
-        b = bCol.link.def.name;
+  const a = aCol.def.name, b = bCol.link.def.name;
 
   return baseCompare(a, b);
 }
-
 
 /**
  *  Function to find if <linkCollection> appears on an outgoing link field
@@ -27,7 +23,7 @@ export function findLinkInCollection(
   linkCollection: Tyr.GenericCollection
 ): Tyr.FieldInstance {
   const links = getCollectionLinksSorted(plugin, col),
-        index = binaryIndexOf(links, linkCollection, compareCollectionWithField);
+    index = binaryIndexOf(links, linkCollection, compareCollectionWithField);
 
   return links[index];
 }
