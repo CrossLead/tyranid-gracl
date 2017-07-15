@@ -7,5 +7,5 @@ dist
 coverage
 .nyc_output
 test/tscompile/index.js*
-test/spec/generated.d.ts
+test/spec/types
 .vscode

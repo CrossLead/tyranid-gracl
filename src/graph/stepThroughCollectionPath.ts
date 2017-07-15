@@ -12,8 +12,8 @@ import { findLinkInCollection } from './findLinkInCollection';
 export async function stepThroughCollectionPath(
   plugin: GraclPlugin,
   ids: ObjectID[],
-  previousCollection: Tyr.GenericCollection,
-  nextCollection: Tyr.GenericCollection
+  previousCollection: Tyr.CollectionInstance,
+  nextCollection: Tyr.CollectionInstance
 ) {
   // find the field in the current path collection which we need to get
   // for the ids of the next path collection

@@ -1,21 +1,13 @@
 import { Tyr } from 'tyranid';
 
-const TeamBaseCollection = new Tyr.Collection({
+export const Team = new Tyr.Collection({
   id: 't00',
   name: 'team',
   dbName: 'teams',
   graclConfig: {
     permissions: {
-      includeCollections: [
-        'team',
-        'user',
-        'chart',
-        'post',
-        'blog'
-      ],
-      include: [
-        'abstract_view_chart'
-      ]
+      includeCollections: [ 'team', 'user', 'chart', 'post', 'blog' ],
+      include: [ 'abstract_view_chart' ]
     }
   },
   fields: {
@@ -24,12 +16,7 @@ const TeamBaseCollection = new Tyr.Collection({
     organizationId: {
       link: 'organization',
       relate: 'ownedBy',
-      graclTypes: ['subject', 'resource']
+      graclTypes: [ 'subject', 'resource' ]
     }
   }
 });
-
-
-export class Team extends (<Tyr.GenericCollection> TeamBaseCollection) {
-
-}

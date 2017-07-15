@@ -22,7 +22,7 @@ import { extractIdAndModel } from '../tyranid/extractIdAndModel';
 /**
  * The main model for storing individual permission edges
  */
-export const PermissionsBaseCollection = <Tyr.GenericCollection> new Tyr.Collection({
+export const PermissionsBaseCollection = new Tyr.Collection({
   id: '_gp',
   name: 'graclPermission',
   dbName: 'graclPermissions',
@@ -427,7 +427,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
     // get all subjects with direct permissions set for this resource,
     // does not yet include _all_ subjects down the heirarchy
     const subjectDocuments = await Tyr.byUids(
-      <string[]> permissionsAsResource.map(p => p['subjectId'])
+      <string[]> permissionsAsResource.map((p: any) => p['subjectId'])
     );
 
 
@@ -439,7 +439,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
     });
 
     const permsBySubjectId: Hash<Tyr.Document> = {};
-    _.each(permissionsAsResource, permObj => {
+    _.each(permissionsAsResource, (permObj: any) => {
       permsBySubjectId[permObj['subjectId']] = permObj;
     });
 

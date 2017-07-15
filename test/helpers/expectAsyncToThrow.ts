@@ -17,4 +17,3 @@ export async function expectAsyncToThrow(
   t.true(threw, description);
   t.regex(message, expectedMessageRegex, description);
 }
-

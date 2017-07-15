@@ -1,26 +1,12 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "es2015",
     "module": "commonjs",
-    "moduleResolution" : "node",
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "noImplicitThis": true,
-    "noUnusedLocals": true,
-    "noImplicitReturns": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    "removeComments": false,
-    "noLib": false,
-    "pretty": true,
-    "outDir": "./dist/",
-    "inlineSourceMap": true,
-    "forceConsistentCasingInFileNames": true,
-    "experimentalDecorators": true
+    "strict": true,
+    "outDir": "./dist/"
   },
-  "files": [
-    "./src/index.ts",
-    "./src/tyranid-extensions.d.ts",
-    "./test/spec/index.ts"
+  "include": [
+    "src",
+    "test/spec"
   ]
 }

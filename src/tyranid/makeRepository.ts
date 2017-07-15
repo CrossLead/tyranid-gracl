@@ -13,7 +13,7 @@ import { GraclPlugin } from '../classes/GraclPlugin';
  */
 export function makeRepository(
   plugin: GraclPlugin,
-  collection: Tyr.GenericCollection,
+  collection: Tyr.CollectionInstance,
   graclType: string
 ): Repository {
   if (graclType !== 'resource' && graclType !== 'subject') {
@@ -21,7 +21,7 @@ export function makeRepository(
   }
   return {
     getEntity(id: ObjectID): Promise<Tyr.Document> {
-      return collection.byId(id);
+      return collection.byId(id) as Promise<Tyr.Document>;
     },
     saveEntity(id: ObjectID, doc: Tyr.Document): Promise<Tyr.Document> {
       id;

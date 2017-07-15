@@ -289,7 +289,7 @@ await blog.$updatePermissions({
 ```
 
   */
-  $updatePermissions<T extends Tyr.Document>(
+  async $updatePermissions<T extends Tyr.Document>(
     this: T,
     permissionChanges: Hash<boolean>,
     subjectDocument?: Tyr.Document | string
@@ -301,7 +301,9 @@ await blog.$updatePermissions({
     });
 
     if (subjectDocument) {
-      return PermissionsModel.updatePermissions(this, permissionChanges, subjectDocument);
+      const result = await PermissionsModel.updatePermissions(this, permissionChanges, subjectDocument);
+      if (!result) throw new Error(`No document returned after updatePermissions!`);
+      return result as T;
     }
 
     return plugin.error(`No subject given to doc.$updatePermissions()`);

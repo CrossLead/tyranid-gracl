@@ -24,7 +24,7 @@ import { findLinkInCollection } from './findLinkInCollection';
  */
 export function createSchemaNode(
   plugin: GraclPlugin,
-  collection: Tyr.GenericCollection,
+  collection: Tyr.CollectionInstance,
   type: string,
   node?: Tyr.FieldInstance
 ): SchemaNode {
@@ -34,7 +34,7 @@ export function createSchemaNode(
     name: collection.def.name,
     repository: makeRepository(plugin, collection, type),
     type: type,
-    parent: node && node.link.def.name,
+    parent: node && node.link && node.link.def.name,
 
     async getPermission(this: Node, subject: Subject): Promise<Permission> {
       const subjectId = subject.getId(),
@@ -103,7 +103,7 @@ export function createSchemaNode(
               // we need to try another upper level resource
               if (!ids.length) continue;
 
-              while (linkField.link.def.name !== currentParent) {
+              while (linkField.link && (linkField.link.def.name !== currentParent)) {
                 currentCollection = nextCollection;
                 nextCollection = Tyr.byName[path.shift() || plugin._NO_COLLECTION];
                 linkField = findLinkInCollection(plugin, currentCollection, nextCollection);
@@ -129,7 +129,7 @@ export function createSchemaNode(
 
 
         const linkCollection = node.link,
-              parentObjects  = await linkCollection.byIds(ids);
+              parentObjects  = await (linkCollection && linkCollection.byIds(ids));
 
         return _.map(parentObjects, doc => new ParentClass(doc));
       } else {

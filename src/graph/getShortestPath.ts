@@ -9,8 +9,8 @@ import { GraclPlugin } from '../classes/GraclPlugin';
  */
 export function getShortestPath(
   plugin: GraclPlugin,
-  colA: Tyr.GenericCollection,
-  colB: Tyr.GenericCollection
+  colA: Tyr.CollectionInstance,
+  colB: Tyr.CollectionInstance
 ) {
   let a = colA.def.name,
       b = colB.def.name,

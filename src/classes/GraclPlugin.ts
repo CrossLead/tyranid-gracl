@@ -134,7 +134,7 @@ export class GraclPlugin {
 
 
   query(
-    queriedCollection: Tyr.GenericCollection,
+    queriedCollection: Tyr.CollectionInstance,
     permissionType: string,
     subjectDocument?: Tyr.Document
   ) {

@@ -62,7 +62,7 @@ export function createGraclHierarchy(plugin: GraclPlugin) {
         case 'subject':
           if (field) {
             graclGraphNodes.subjects.links.push(field);
-            graclGraphNodes.subjects.parents.push(field.link);
+            graclGraphNodes.subjects.parents.push(field.link!);
           } else {
             graclGraphNodes.subjects.parents.push(col);
           }
@@ -70,7 +70,7 @@ export function createGraclHierarchy(plugin: GraclPlugin) {
         case 'resource':
           if (field) {
             graclGraphNodes.resources.links.push(field);
-            graclGraphNodes.resources.parents.push(field.link);
+            graclGraphNodes.resources.parents.push(field.link!);
           } else {
             graclGraphNodes.resources.parents.push(col);
           }

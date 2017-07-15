@@ -28,7 +28,7 @@ import { stepThroughCollectionPath } from '../graph/stepThroughCollectionPath';
  */
 export async function query(
   plugin: GraclPlugin,
-  queriedCollection: Tyr.GenericCollection,
+  queriedCollection: Tyr.CollectionInstance,
   permissionType: string,
   subjectDocument = Tyr.local.user
 ): Promise<boolean | {}> {
@@ -143,7 +143,7 @@ export async function query(
 
   type resourceMapEntries = {
     permissions: Map<string, any>,
-    collection: Tyr.GenericCollection
+    collection: Tyr.CollectionInstance
   };
 
   const resourceMap = (<Permission[]> (<any> permissions))
@@ -301,7 +301,7 @@ export async function query(
       }
 
       const pathEndCollection = Tyr.byName[pathEndCollectionName],
-            nextCollection = Tyr.byName[_.last(path)];
+            nextCollection = Tyr.byName[_.last(path) as string];
 
       positiveIds = await stepThroughCollectionPath(plugin, positiveIds, pathEndCollection, nextCollection);
       negativeIds = await stepThroughCollectionPath(plugin, negativeIds, pathEndCollection, nextCollection);
@@ -313,7 +313,7 @@ export async function query(
 
       while (path.length > 2) {
         const pathCollection = Tyr.byName[pathCollectionName = (path.pop() || plugin._NO_COLLECTION)],
-              nextCollection = Tyr.byName[_.last(path)];
+              nextCollection = Tyr.byName[_.last(path) as string];
 
         if (!pathCollection) {
           plugin.error(

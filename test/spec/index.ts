@@ -1,4 +1,4 @@
-/// <reference path="./generated.d.ts" />
+/// <reference path="./types/server.d.ts" />
 
 import { Tyr } from 'tyranid';
 import * as mongodb from 'mongodb';
@@ -160,7 +160,7 @@ test.serial('should correctly find links using getCollectionLinksSorted', (t) =>
         options = { direction: 'outgoing' },
         links = getCollectionLinksSorted(secure, Chart, options);
 
-  t.deepEqual(links, _.sortBy(Chart.links(options), field => field.link.def.name), 'should produce sorted links');
+  t.deepEqual(links, _.sortBy(Chart.links(options), field => field.link!.def.name), 'should produce sorted links');
 });
 
 
@@ -171,7 +171,7 @@ test.serial('should find specific link using findLinkInCollection', (t) => {
         linkField = findLinkInCollection(secure, Chart, User);
 
   t.truthy(linkField);
-  t.deepEqual(linkField.link.def.name, 'user');
+  t.deepEqual(linkField.link && linkField.link.def.name, 'user');
   t.deepEqual(linkField.spath, 'userIds');
 });
 
@@ -219,7 +219,7 @@ test.serial('should correctly produce paths between collections', (t) => {
 
 test.serial('should add permissions methods to documents', async (t) => {
   const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' }});
-  const methods = Object.keys(documentMethods);
+  const methods = Object.keys(documentMethods) as (keyof Tyr.Document)[];
 
   for (const method of methods) {
     method && t.truthy(ben && ben[method], `should have method: ${method}`);
@@ -279,8 +279,8 @@ test.serial('should return correct permission children on GraclPlugin.getPermiss
 
 test.serial('should successfully add permissions', async (t) => {
   const updatedChopped = await giveBenAccessToChoppedPosts(t);
-  const choppedPermissions = await updatedChopped.$permissions(undefined, 'resource');
-  const existingPermissions = await Tyr.byName['graclPermission'].findAll({ query: {} });
+  const choppedPermissions: any[] = await updatedChopped.$permissions(undefined, 'resource');
+  const existingPermissions: any[] = await Tyr.byName['graclPermission'].findAll({ query: {} });
 
   t.deepEqual(existingPermissions.length, 1);
   t.deepEqual(existingPermissions[0]['resourceId'].toString(), choppedPermissions[0]['resourceId'].toString(), 'resourceId');
@@ -1128,7 +1128,7 @@ test.serial('Should return object relating uids to access level for multiple per
 
   const accessObj = await ben.$determineAccessToAllPermissionsForResources(
     ['view', 'edit', 'delete'],
-    <Tyr.Document[]> _.map(posts, '$uid')
+    _.map(posts, '$uid')
   );
 
   for (const post of posts) {

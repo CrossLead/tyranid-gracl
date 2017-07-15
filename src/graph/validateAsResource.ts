@@ -7,7 +7,7 @@ import { GraclPlugin } from '../classes/GraclPlugin';
  */
 export function validateAsResource(
   plugin: GraclPlugin,
-  collection: Tyr.GenericCollection
+  collection: Tyr.CollectionInstance
 ) {
   if (!collection) {
     plugin.error(`Attempted to validate undefined collection!`);
