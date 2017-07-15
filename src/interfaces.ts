@@ -38,7 +38,7 @@ export type schemaGraclConfigObject = {
     exclude?: string[];
   };
   types?: ('string' | 'resource')[];
-}
+};
 
 
 export type TyrSchemaGraphObjects = {
