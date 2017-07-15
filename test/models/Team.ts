@@ -6,8 +6,8 @@ export const Team = new Tyr.Collection({
   dbName: 'teams',
   graclConfig: {
     permissions: {
-      includeCollections: [ 'team', 'user', 'chart', 'post', 'blog' ],
-      include: [ 'abstract_view_chart' ]
+      includeCollections: ['team', 'user', 'chart', 'post', 'blog'],
+      include: ['abstract_view_chart']
     }
   },
   fields: {
@@ -16,7 +16,7 @@ export const Team = new Tyr.Collection({
     organizationId: {
       link: 'organization',
       relate: 'ownedBy',
-      graclTypes: [ 'subject', 'resource' ]
+      graclTypes: ['subject', 'resource']
     }
   }
 });

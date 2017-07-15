@@ -7,8 +7,7 @@ export function getPermissionObject(
   plugin: GraclPlugin,
   permissionString: string
 ): permissionType {
-  return plugin.permissionHierarchy[plugin.parsePermissionString(
-    permissionString
-  ).action ||
-    ''];
+  return plugin.permissionHierarchy[
+    plugin.parsePermissionString(permissionString).action || ''
+  ];
 }

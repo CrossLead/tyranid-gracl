@@ -18,7 +18,6 @@ import { isCrudPermission } from '../permission/isCrudPermission';
 
 import { extractIdAndModel } from '../tyranid/extractIdAndModel';
 
-
 /**
  * The main model for storing individual permission edges
  */
@@ -40,23 +39,29 @@ export const PermissionsBaseCollection = new Tyr.Collection({
   }
 });
 
-
-
 async function resolveSubjectAndResourceDocuments(
   resourceData: Tyr.Document | string,
   subjectData: Tyr.Document | string
 ) {
-  const resourceDocument = typeof resourceData === 'string'
-    ? await Tyr.byUid(resourceData)
-    : resourceData;
+  const resourceDocument =
+    typeof resourceData === 'string'
+      ? await Tyr.byUid(resourceData)
+      : resourceData;
 
-  if (!resourceDocument) throw new Error(`No resourceDocument resolvable given: ${JSON.stringify(resourceData)}`);
+  if (!resourceDocument)
+    throw new Error(
+      `No resourceDocument resolvable given: ${JSON.stringify(resourceData)}`
+    );
 
-  const subjectDocument = typeof subjectData === 'string'
-    ? await Tyr.byUid(subjectData)
-    : subjectData;
+  const subjectDocument =
+    typeof subjectData === 'string'
+      ? await Tyr.byUid(subjectData)
+      : subjectData;
 
-  if (!subjectDocument) throw new Error(`No subjectDocument resolvable given: ${JSON.stringify(subjectData)}`);
+  if (!subjectDocument)
+    throw new Error(
+      `No subjectDocument resolvable given: ${JSON.stringify(subjectData)}`
+    );
 
   return {
     resourceDocument,
@@ -64,17 +69,13 @@ async function resolveSubjectAndResourceDocuments(
   };
 }
 
-
-
 /**
   Collection to contain all permissions used by gracl
  */
 export class PermissionsModel extends PermissionsBaseCollection {
-
-
   // error-checked method for retrieving the plugin instance attached to tyranid
   static getGraclPlugin(): GraclPlugin {
-    const plugin = <GraclPlugin | undefined> Tyr.secure;
+    const plugin = <GraclPlugin | undefined>Tyr.secure;
     if (!plugin) {
       return GraclPlugin.prototype.error(
         `No gracl plugin available, must instantiate GraclPlugin and pass to Tyr.config()!`
@@ -82,7 +83,6 @@ export class PermissionsModel extends PermissionsBaseCollection {
     }
     return plugin;
   }
-
 
   /**
    * For a given resource document, find all permission edges
@@ -94,14 +94,15 @@ export class PermissionsModel extends PermissionsBaseCollection {
     permissionType?: string,
     direct?: boolean
   ) {
-
     const plugin = PermissionsModel.getGraclPlugin(),
-          resource = createResource(plugin, resourceDocument);
+      resource = createResource(plugin, resourceDocument);
 
     const query: { [key: string]: any } = {
-      resourceId: (direct ? resourceDocument.$uid : {
-        $in: await resource.getHierarchyIds()
-      })
+      resourceId: direct
+        ? resourceDocument.$uid
+        : {
+            $in: await resource.getHierarchyIds()
+          }
     };
 
     if (permissionType) {
@@ -112,7 +113,6 @@ export class PermissionsModel extends PermissionsBaseCollection {
 
     return PermissionsModel.findAll({ query });
   }
-
 
   /**
    * For a given subject document, find all permission edges
@@ -125,12 +125,14 @@ export class PermissionsModel extends PermissionsBaseCollection {
     direct?: boolean
   ) {
     const plugin = PermissionsModel.getGraclPlugin(),
-          subject = createSubject(plugin, subjectDocument);
+      subject = createSubject(plugin, subjectDocument);
 
     const query: { [key: string]: any } = {
-      subjectId: (direct ? subjectDocument.$uid : {
-        $in: await subject.getHierarchyIds()
-      })
+      subjectId: direct
+        ? subjectDocument.$uid
+        : {
+            $in: await subject.getHierarchyIds()
+          }
     };
 
     if (permissionType) {
@@ -139,9 +141,8 @@ export class PermissionsModel extends PermissionsBaseCollection {
       };
     }
 
-    return PermissionsModel.findAll({query});
+    return PermissionsModel.findAll({ query });
   }
-
 
   /**
    * check if a subject document has positive access
@@ -156,11 +157,10 @@ export class PermissionsModel extends PermissionsBaseCollection {
     permissionType: string,
     subjectData: Tyr.Document | string
   ): Promise<boolean> {
-    return this.determineAccess(resourceData, permissionType, subjectData)
-      .then(result => result[permissionType]);
+    return this.determineAccess(resourceData, permissionType, subjectData).then(
+      result => result[permissionType]
+    );
   }
-
-
 
   /**
    * Determine access to multiple permissions simultaneously
@@ -172,9 +172,10 @@ export class PermissionsModel extends PermissionsBaseCollection {
   ): Promise<Hash<boolean>> {
     const accessResults: Hash<boolean> = {};
     const plugin = PermissionsModel.getGraclPlugin();
-    const permissionTypes = typeof permissionsToCheck === 'string'
-      ? [ permissionsToCheck ]
-      : permissionsToCheck;
+    const permissionTypes =
+      typeof permissionsToCheck === 'string'
+        ? [permissionsToCheck]
+        : permissionsToCheck;
 
     extractIdAndModel(plugin, resourceData);
     extractIdAndModel(plugin, subjectData);
@@ -184,15 +185,19 @@ export class PermissionsModel extends PermissionsBaseCollection {
       subjectDocument
     } = await resolveSubjectAndResourceDocuments(resourceData, subjectData);
 
-    const {
-            subject,
-            resource
-          } = getGraclClasses(plugin, resourceDocument, subjectDocument),
-          permHierarchyCache: Hash<string[]> = {};
+    const { subject, resource } = getGraclClasses(
+        plugin,
+        resourceDocument,
+        subjectDocument
+      ),
+      permHierarchyCache: Hash<string[]> = {};
 
-    const allPermsToCheck = <string[]> _.chain(permissionTypes)
+    const allPermsToCheck = <string[]>_.chain(permissionTypes)
       .map(perm => {
-        return permHierarchyCache[perm] = [ perm, ...getPermissionParents(plugin, perm) ];
+        return (permHierarchyCache[perm] = [
+          perm,
+          ...getPermissionParents(plugin, perm)
+        ]);
       })
       .flatten()
       .uniq()
@@ -200,7 +205,10 @@ export class PermissionsModel extends PermissionsBaseCollection {
       .value();
 
     // recurse up subject / resource hierarchy checking all permissions
-    const permCheckResults = await resource.determineAccess(subject, allPermsToCheck);
+    const permCheckResults = await resource.determineAccess(
+      subject,
+      allPermsToCheck
+    );
 
     _.each(permissionTypes, perm => {
       accessResults[perm] = _.some(
@@ -211,8 +219,6 @@ export class PermissionsModel extends PermissionsBaseCollection {
 
     return accessResults;
   }
-
-
 
   /**
    * Explain why a subject has or does not have access to a resource
@@ -238,12 +244,15 @@ export class PermissionsModel extends PermissionsBaseCollection {
       subjectDocument
     } = await resolveSubjectAndResourceDocuments(resourceData, subjectData);
 
-    const { subject, resource } = getGraclClasses(plugin, resourceDocument, subjectDocument);
+    const { subject, resource } = getGraclClasses(
+      plugin,
+      resourceDocument,
+      subjectDocument
+    );
 
     const permObj = await resource.determineAccess(subject, permissionType);
     return permObj[permissionType];
   }
-
 
   /**
    * Create/update a permission edge document to
@@ -266,11 +275,13 @@ export class PermissionsModel extends PermissionsBaseCollection {
       }
     });
 
-    if (!resourceDocument) throw new TypeError(`no resource given to updatePermissions`);
-    if (!subjectDocument) throw new TypeError(`no subject given to updatePermissions`);
+    if (!resourceDocument)
+      throw new TypeError(`no resource given to updatePermissions`);
+    if (!subjectDocument)
+      throw new TypeError(`no subject given to updatePermissions`);
 
     const resourceComponents = extractIdAndModel(plugin, resourceDocument),
-          subjectComponents = extractIdAndModel(plugin, subjectDocument);
+      subjectComponents = extractIdAndModel(plugin, subjectDocument);
 
     validateAsResource(plugin, resourceComponents.$model);
 
@@ -279,7 +290,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
       await PermissionsModel.db.findOneAndUpdate(
         {
           subjectId: subjectComponents.$uid,
-          resourceId: resourceComponents.$uid,
+          resourceId: resourceComponents.$uid
         },
         {
           $setOnInsert: {
@@ -295,19 +306,20 @@ export class PermissionsModel extends PermissionsBaseCollection {
     } catch (error) {
       // hack for https://jira.mongodb.org/browse/SERVER-14322
       if (attempt < 10 && /E11000 duplicate key error/.test(error.message)) {
-        return <Tyr.Document> (await new Promise<Tyr.Document | null>((resolve, reject) => {
-          setTimeout(() => {
-            PermissionsModel
-              .updatePermissions(
+        return <Tyr.Document>await new Promise<Tyr.Document | null>(
+          (resolve, reject) => {
+            setTimeout(() => {
+              PermissionsModel.updatePermissions(
                 resourceDocument,
                 permissionChanges,
                 subjectDocument,
                 attempt++
               )
-              .then(resolve)
-              .catch(reject);
-          }, 100);
-        }));
+                .then(resolve)
+                .catch(reject);
+            }, 100);
+          }
+        );
       } else if (/E11000 duplicate key error/.test(error.message)) {
         plugin.error(
           `Attempted to update permission 10 times, but recieved "E11000 duplicate key error" on each attempt`
@@ -316,7 +328,6 @@ export class PermissionsModel extends PermissionsBaseCollection {
       throw new Error(error);
     }
 
-
     if (typeof resourceDocument === 'string') {
       return Tyr.byUid(resourceDocument);
     } else {
@@ -324,29 +335,23 @@ export class PermissionsModel extends PermissionsBaseCollection {
     }
   }
 
-
-
   /**
    *  Given a uid, remove all permissions relating to that entity in the system
    */
   static async deletePermissions(doc: Tyr.Document): Promise<Tyr.Document> {
     const uid = doc.$uid,
-          plugin = PermissionsModel.getGraclPlugin();
+      plugin = PermissionsModel.getGraclPlugin();
 
     if (!uid) plugin.error('No $uid property on document!');
 
     await PermissionsModel.remove({
       query: {
-        $or: [
-          { subjectId: uid },
-          { resourceId: uid }
-        ]
+        $or: [{ subjectId: uid }, { resourceId: uid }]
       }
     });
 
     return doc;
   }
-
 
   // create mongodb indexes for the permission edges
   static async createIndexes() {
@@ -365,13 +370,11 @@ export class PermissionsModel extends PermissionsBaseCollection {
     await PermissionsModel.db.createIndex(
       {
         resourceType: 1,
-        subjectType: 1,
+        subjectType: 1
       },
       { unique: false }
     );
-
   }
-
 
   static async findEntitiesWithPermissionAccessToResource(
     accessType: 'allow' | 'deny',
@@ -382,7 +385,9 @@ export class PermissionsModel extends PermissionsBaseCollection {
     validateAsResource(plugin, doc.$model);
 
     if (!permissions.length) {
-      plugin.error(`No permissions provided to findEntitiesWithPermissionAccessToResource()!`);
+      plugin.error(
+        `No permissions provided to findEntitiesWithPermissionAccessToResource()!`
+      );
     }
 
     /**
@@ -393,18 +398,16 @@ export class PermissionsModel extends PermissionsBaseCollection {
 
       const formatted = formatPermissionType(plugin, {
         action: components.action,
-        collection: (
+        collection:
           components.collection ||
           (isCrudPermission(plugin, p) && doc.$model.def.name) ||
           undefined
-        )
       });
 
       validatePermissionExists(plugin, formatted);
 
       return [formatted, ...getPermissionParents(plugin, formatted)];
     });
-
 
     const permissionsAsResource = await plugin.permissionsModel.findAll({
       query: {
@@ -423,13 +426,11 @@ export class PermissionsModel extends PermissionsBaseCollection {
       }
     });
 
-
     // get all subjects with direct permissions set for this resource,
     // does not yet include _all_ subjects down the heirarchy
     const subjectDocuments = await Tyr.byUids(
-      <string[]> permissionsAsResource.map((p: any) => p['subjectId'])
+      <string[]>permissionsAsResource.map((p: any) => p['subjectId'])
     );
-
 
     const subjectsByCollection: Hash<Tyr.Document[]> = {};
     _.each(subjectDocuments, subject => {
@@ -453,80 +454,95 @@ export class PermissionsModel extends PermissionsBaseCollection {
 
       const perm = permsBySubjectId[uid] || { access: {} };
 
-      return accessCache[hashKey] = _.every(permHierarchy, list => {
+      return (accessCache[hashKey] = _.every(permHierarchy, list => {
         // check for explicit denies
         if (explicit) {
-          const access = (accessType === 'allow' ? false : true);
-          return _.every(list, p => (_.get(perm, `access.${p}`) !== access));
+          const access = accessType === 'allow' ? false : true;
+          return _.every(list, p => _.get(perm, `access.${p}`) !== access);
         } else {
-          const access = (accessType === 'allow' ? true : false);
-          return _.some(list, p => (_.get(perm, `access.${p}`) === access));
+          const access = accessType === 'allow' ? true : false;
+          return _.some(list, p => _.get(perm, `access.${p}`) === access);
         }
-      });
+      }));
     }
 
-
-    async function traverse(hierarchy: any, parentCollectionNames: string[] = []) {
+    async function traverse(
+      hierarchy: any,
+      parentCollectionNames: string[] = []
+    ) {
       const collections = Object.keys(hierarchy);
 
-      await Promise.all(_.map(collections, async (collectionName) => {
-        const subjects = subjectsByCollection[collectionName]
-                       = _.filter(subjectsByCollection[collectionName], s => filterAccess(s));
+      await Promise.all(
+        _.map(collections, async collectionName => {
+          const subjects = (subjectsByCollection[
+            collectionName
+          ] = _.filter(subjectsByCollection[collectionName], s =>
+            filterAccess(s)
+          ));
 
-        const query: Tyr.MongoQuery = {
-          $and: [
-            { _id: { $nin: _.map(subjects, '$id') } }
-          ]
-        };
+          const query: Tyr.MongoQuery = {
+            $and: [{ _id: { $nin: _.map(subjects, '$id') } }]
+          };
 
-        // get link from child collection to parent collection
-        if (parentCollectionNames.length) {
-          const $or: Tyr.MongoQuery[] = [];
+          // get link from child collection to parent collection
+          if (parentCollectionNames.length) {
+            const $or: Tyr.MongoQuery[] = [];
 
-          for (const parentCollectionName of _.compact(parentCollectionNames)) {
-            const parentSubjects = subjectsByCollection[parentCollectionName],
-                  parentSubjectIds = _.map(parentSubjects, '$id');
+            for (const parentCollectionName of _.compact(
+              parentCollectionNames
+            )) {
+              const parentSubjects = subjectsByCollection[parentCollectionName],
+                parentSubjectIds = _.map(parentSubjects, '$id');
 
-            const link = findLinkInCollection(
-              plugin,
-              Tyr.byName[collectionName],
-              Tyr.byName[parentCollectionName]
+              const link = findLinkInCollection(
+                plugin,
+                Tyr.byName[collectionName],
+                Tyr.byName[parentCollectionName]
+              );
+
+              if (link) {
+                $or.push({
+                  [link.spath]: {
+                    $in: parentSubjectIds
+                  }
+                });
+              }
+            }
+
+            query['$and'].push({ $or });
+
+            // get all matching docs to query
+            const inheritedSubjects = await Tyr.byName[collectionName].findAll({
+              query
+            });
+
+            // filter out subjects which have an explicit deny/allow on any
+            // of the required permissions
+            const filteredDeniedSubjects = _.filter(
+              inheritedSubjects,
+              subject => filterAccess(subject, true)
             );
 
-            if (link) {
-              $or.push({
-                [link.spath]: {
-                  $in: parentSubjectIds
-                }
-              });
-            }
+            subjectsByCollection[collectionName].push(
+              ...filteredDeniedSubjects
+            );
           }
 
-          query['$and'].push({ $or });
-
-          // get all matching docs to query
-          const inheritedSubjects = await Tyr.byName[collectionName].findAll({ query });
-
-          // filter out subjects which have an explicit deny/allow on any
-          // of the required permissions
-          const filteredDeniedSubjects = _.filter(inheritedSubjects, subject => filterAccess(subject, true));
-
-          subjectsByCollection[collectionName].push(...filteredDeniedSubjects);
-        }
-
-        await traverse(hierarchy[collectionName], [collectionName, ...parentCollectionNames]);
-      }));
+          await traverse(hierarchy[collectionName], [
+            collectionName,
+            ...parentCollectionNames
+          ]);
+        })
+      );
     }
 
     await traverse(getObjectHierarchy(plugin).subjects);
 
-    return <Tyr.Document[]> _(subjectsByCollection)
+    return <Tyr.Document[]>_(subjectsByCollection)
       .values()
       .flatten()
       .uniqBy('$uid')
       .compact()
       .value();
   }
-
-
 }

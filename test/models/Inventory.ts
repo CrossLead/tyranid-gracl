@@ -6,12 +6,8 @@ export const InventoryBaseCollection = new Tyr.Collection({
   dbName: 'inventories',
   graclConfig: {
     permissions: {
-      excludeCollections: [
-        'user', 'blog', 'post'
-      ],
-      exclude: [
-        'view_alignment_triangle_private'
-      ]
+      excludeCollections: ['user', 'blog', 'post'],
+      exclude: ['view_alignment_triangle_private']
     }
   },
   fields: {
@@ -21,11 +17,9 @@ export const InventoryBaseCollection = new Tyr.Collection({
     organizationId: {
       link: 'organization',
       relate: 'ownedBy',
-      graclTypes: [ 'resource' ]
+      graclTypes: ['resource']
     }
   }
 });
 
-export class Inventory extends (<Tyr.CollectionInstance> InventoryBaseCollection) {
-
-}
+export class Inventory extends (<Tyr.CollectionInstance>InventoryBaseCollection) {}

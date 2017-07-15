@@ -12,7 +12,7 @@ export const User = new Tyr.Collection({
       of: {
         link: 'team',
         relate: 'ownedBy',
-        graclTypes: [ 'subject', 'resource' ]
+        graclTypes: ['subject', 'resource']
       }
     },
     organizationId: { link: 'organization' }

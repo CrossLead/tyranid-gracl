@@ -1,7 +1,5 @@
 import { Tyr } from 'tyranid';
-import {
-  Graph,
-} from 'gracl';
+import { Graph } from 'gracl';
 
 import { PermissionsModel } from '../models/PermissionsModel';
 
@@ -9,7 +7,7 @@ import {
   Hash,
   permissionHierarchy,
   permissionTypeList,
-  pluginOptions,
+  pluginOptions
 } from '../interfaces';
 
 import { query } from '../query/query';
@@ -29,7 +27,6 @@ import { formatPermissionLabel } from '../permission/formatPermissionLabel';
 import { getPermissionChildren } from '../permission/getPermissionChildren';
 import { getPermissionParents } from '../permission/getPermissionParents';
 import { getAllowedPermissionsForCollection } from '../permission/getAllowedPermissionsForCollection';
-
 
 /**
  *  Security plugin for tyranid
@@ -60,16 +57,12 @@ import { getAllowedPermissionsForCollection } from '../permission/getAllowedPerm
 
  */
 export class GraclPlugin {
-
   graclHierarchy: Graph;
-  unsecuredCollections = new Set([
-    PermissionsModel.def.name
-  ]);
+  unsecuredCollections = new Set([PermissionsModel.def.name]);
 
   // some collections may have specific permissions
   // they are restricted to...
   permissionRestrictions = new Map<string, Set<string>>();
-
 
   // plugin options
   verbose: boolean;
@@ -79,12 +72,11 @@ export class GraclPlugin {
   permissionsModel = PermissionsModel;
   resourceChildren = new Map<string, Set<string>>();
 
-
   _NO_COLLECTION = 'TYRANID_GRACL_NO_COLLECTION_NAME_FOUND';
 
   permissionTypes: permissionTypeList = [
     { name: 'edit' },
-    { name: 'view', parents: [ 'edit' ] },
+    { name: 'view', parents: ['edit'] },
     { name: 'delete' }
   ];
 
@@ -93,19 +85,19 @@ export class GraclPlugin {
   _allPossiblePermissionsCache: string[];
   _sortedLinkCache: Hash<Tyr.FieldInstance[]> = {};
 
-
   constructor(opts: pluginOptions = {}) {
     const plugin = this;
 
-    if (opts.permissionTypes &&
-        Array.isArray(opts.permissionTypes) &&
-        opts.permissionTypes.length) {
+    if (
+      opts.permissionTypes &&
+      Array.isArray(opts.permissionTypes) &&
+      opts.permissionTypes.length
+    ) {
       plugin.permissionTypes = opts.permissionTypes;
     }
 
     plugin.verbose = opts.verbose || false;
-  };
-
+  }
 
   /**
     Create Gracl class hierarchy from tyranid schemas,
@@ -127,11 +119,9 @@ export class GraclPlugin {
     }
   }
 
-
   createIndexes() {
     return PermissionsModel.createIndexes();
   }
-
 
   query(
     queriedCollection: Tyr.CollectionInstance,
@@ -142,7 +132,7 @@ export class GraclPlugin {
   }
 
   log(message: string) {
-    const plugin = <GraclPlugin> this;
+    const plugin = <GraclPlugin>this;
     if (plugin.verbose) {
       console.log(`tyranid-gracl: ${message}`);
     }
@@ -158,16 +148,18 @@ export class GraclPlugin {
     function visit(obj: N): TreeNode[] {
       return Object.keys(obj).map(key => {
         const children = visit(obj[key]);
-        const node = <TreeNode> { label: key };
+        const node = <TreeNode>{ label: key };
         if (children.length) node.nodes = children;
         return node;
       });
     }
 
-    plugin.log(tree({
-      label: 'hierarchy',
-      nodes: visit(<any> hierarchy)
-    }));
+    plugin.log(
+      tree({
+        label: 'hierarchy',
+        nodes: visit(<any>hierarchy)
+      })
+    );
   }
 
   error(message: string): never {
@@ -197,5 +189,4 @@ export class GraclPlugin {
   formatPermissionLabel(perm: string) {
     return formatPermissionLabel(this, perm);
   }
-
 }

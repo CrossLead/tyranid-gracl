@@ -9,6 +9,6 @@ export const Post = new Tyr.Collection({
     _id: { is: 'mongoid' },
     title: { is: 'string' },
     text: { is: 'string' },
-    blogId: { link: 'blog', relate: 'ownedBy', graclTypes: [ 'resource' ] }
+    blogId: { link: 'blog', relate: 'ownedBy', graclTypes: ['resource'] }
   }
 });

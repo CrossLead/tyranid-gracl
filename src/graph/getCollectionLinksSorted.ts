@@ -12,14 +12,12 @@ export function getCollectionLinksSorted(
   opts: any = { direction: 'outgoing' }
 ): Tyr.FieldInstance[] {
   const collectionFieldCache = plugin._sortedLinkCache,
-    hash = `${col.def.name}:${_
-      .toPairs(opts)
+    hash = `${col.def.name}:${_.toPairs(opts)
       .map(e => e.join('='))
       .sort()
       .join(':')}`;
 
-  if (collectionFieldCache[hash])
-    return collectionFieldCache[hash];
+  if (collectionFieldCache[hash]) return collectionFieldCache[hash];
 
   // sort fields by link collection name
   const links = _.sortBy(
@@ -27,5 +25,5 @@ export function getCollectionLinksSorted(
     field => field.link && field.link.def.name
   );
 
-  return collectionFieldCache[hash] = links;
+  return (collectionFieldCache[hash] = links);
 }

@@ -6,7 +6,8 @@ export async function expectAsyncToThrow(
   expectedMessageRegex: RegExp,
   description = ''
 ) {
-  let threw = false, message = '';
+  let threw = false,
+    message = '';
   try {
     await asyncFn();
   } catch (err) {

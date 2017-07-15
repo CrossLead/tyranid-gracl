@@ -16,11 +16,10 @@ export const BlogBaseCollection = new Tyr.Collection({
     organizationId: {
       link: 'organization',
       relate: 'ownedBy',
-      graclTypes: [ 'resource' ]
+      graclTypes: ['resource']
     }
   }
 });
-
 
 export class Blog extends BlogBaseCollection {
   static async addPost(text: string, blog: Tyr.Document) {

@@ -31,14 +31,24 @@ export function createHierarchicalQuery(
   queriedCollection: Tyr.CollectionInstance
 ) {
   const positiveUids = queryMaps['positive'],
-        negativeUids = queryMaps['negative'];
+    negativeUids = queryMaps['negative'];
 
-  const positiveRestriction = createInQueries(plugin, queryMaps['positive'], queriedCollection, '$in'),
-        negativeRestriction = createInQueries(plugin, queryMaps['negative'], queriedCollection, '$nin');
+  const positiveRestriction = createInQueries(
+      plugin,
+      queryMaps['positive'],
+      queriedCollection,
+      '$in'
+    ),
+    negativeRestriction = createInQueries(
+      plugin,
+      queryMaps['negative'],
+      queriedCollection,
+      '$nin'
+    );
 
   const resultingQuery: Hash<any> = {},
-        hasPositive = !!positiveRestriction['$or'].length,
-        hasNegative = !!negativeRestriction['$and'].length;
+    hasPositive = !!positiveRestriction['$or'].length,
+    hasNegative = !!negativeRestriction['$and'].length;
   /**
    * For each collection with negative restrictions, we need to create an OR clause
    * which excludes uids that are lower in the resource hierarchy and exist in the
@@ -46,8 +56,7 @@ export function createHierarchicalQuery(
    */
   if (hasNegative && hasPositive) {
     const negativeModifiedQuery: Hash<any> = {};
-    const $and: Hash<any>[] = negativeModifiedQuery['$and'] = [];
-
+    const $and: Hash<any>[] = (negativeModifiedQuery['$and'] = []);
 
     negativeUids.forEach((uids, collectionName) => {
       if (!uids.size) return;
@@ -55,14 +64,18 @@ export function createHierarchicalQuery(
       const childCollectionNames = plugin.resourceChildren.get(collectionName);
 
       if (!childCollectionNames) {
-        return plugin.error(`No childCollectionNames found for ${collectionName}`);
+        return plugin.error(
+          `No childCollectionNames found for ${collectionName}`
+        );
       }
 
       const excludeMap = new Map<string, Set<string>>();
       excludeMap.set(collectionName, uids);
 
       if (excludeMap.size) {
-        $or.push(createInQueries(plugin, excludeMap, queriedCollection, '$nin'));
+        $or.push(
+          createInQueries(plugin, excludeMap, queriedCollection, '$nin')
+        );
       }
 
       const includeMap = new Map<string, Set<string>>();
@@ -82,10 +95,7 @@ export function createHierarchicalQuery(
       }
     });
 
-    resultingQuery['$and'] = [
-      positiveRestriction,
-      negativeModifiedQuery
-    ];
+    resultingQuery['$and'] = [positiveRestriction, negativeModifiedQuery];
   } else if (hasNegative) {
     Object.assign(resultingQuery, negativeRestriction);
   } else if (hasPositive) {

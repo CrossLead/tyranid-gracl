@@ -7,7 +7,8 @@ function compareCollectionWithField(
   aCol: Tyr.CollectionInstance,
   bCol: Tyr.FieldInstance
 ) {
-  const a = aCol.def.name, b = bCol.link && bCol.link.def.name;
+  const a = aCol.def.name,
+    b = bCol.link && bCol.link.def.name;
 
   return baseCompare(a, b);
 }

@@ -16,7 +16,7 @@ import { GraclPlugin } from '../classes/GraclPlugin';
  */
 export function formatPermissionType(
   plugin: GraclPlugin,
-  components: { action: string, collection?: string }
+  components: { action: string; collection?: string }
 ) {
   const hierarchyNode = plugin.permissionHierarchy[components.action];
   if (!hierarchyNode) {

@@ -40,7 +40,7 @@ export function validatePermissionForResource(
       plugin.error(
         `Tried to use permission "${permissionString}" with collection "${name}" ` +
           `but "${name}" is restricted to the following permissions: ` +
-          [ ...restrictions.values() ].join(', ')
+          [...restrictions.values()].join(', ')
       );
     }
   }

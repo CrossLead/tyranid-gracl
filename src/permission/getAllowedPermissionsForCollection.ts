@@ -54,8 +54,8 @@ export function getAllowedPermissionsForCollection(
   childResources.add(collectionName);
 
   const preFiltered = restriction
-    ? [ ...restriction ]
-    : [ ...plugin.setOfAllPermissions ];
+    ? [...restriction]
+    : [...plugin.setOfAllPermissions];
 
   // filter permissions, excluding collection specific perms that
   // are not child resources of this collection

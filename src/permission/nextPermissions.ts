@@ -11,20 +11,23 @@ import { formatPermissionType } from './formatPermissionType';
  * For example, if edit and delete are parents of 'view',
  * nextPermissions(plugin, 'view-user') === [ 'edit-user', 'delete-user' ];
  */
-export function nextPermissions(plugin: GraclPlugin, permissionString: string): string[] {
+export function nextPermissions(
+  plugin: GraclPlugin,
+  permissionString: string
+): string[] {
   const components = parsePermissionString(plugin, permissionString),
-        // get general permissions from action
-        actionParents = <Hash<string>[]> _.get(
-          plugin.permissionHierarchy,
-          `${components.action}.parents`,
-          []
-        ),
-        // if a specific action-collection permission is set in the hierarchy
-        permissionStringParents = <Hash<string>[]> _.get(
-          plugin.permissionHierarchy,
-          `${permissionString}.parents`,
-          []
-        );
+    // get general permissions from action
+    actionParents = <Hash<string>[]>_.get(
+      plugin.permissionHierarchy,
+      `${components.action}.parents`,
+      []
+    ),
+    // if a specific action-collection permission is set in the hierarchy
+    permissionStringParents = <Hash<string>[]>_.get(
+      plugin.permissionHierarchy,
+      `${permissionString}.parents`,
+      []
+    );
 
   return _.chain(actionParents)
     .concat(permissionStringParents)
@@ -42,7 +45,8 @@ export function nextPermissions(plugin: GraclPlugin, permissionString: string): 
           action: parentPermComponents.action,
           // if there was a specific collection attached to the parent permission
           // use that, otherwise use the same collection as the last permission
-          collection: parentPermComponents.collection || components.collection || ''
+          collection:
+            parentPermComponents.collection || components.collection || ''
         });
       }
     })

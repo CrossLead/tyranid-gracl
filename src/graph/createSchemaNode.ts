@@ -28,8 +28,7 @@ export function createSchemaNode(
   type: string,
   node?: Tyr.FieldInstance
 ): SchemaNode {
-  return <SchemaNode> {
-
+  return <SchemaNode>{
     id: '$uid',
     name: collection.def.name,
     repository: makeRepository(plugin, collection, type),
@@ -38,16 +37,16 @@ export function createSchemaNode(
 
     async getPermission(this: Node, subject: Subject): Promise<Permission> {
       const subjectId = subject.getId(),
-            resourceId = this.getId();
+        resourceId = this.getId();
 
-      const perm = <any> (await PermissionsModel.findOne({ query:
-        {
+      const perm = <any>await PermissionsModel.findOne({
+        query: {
           subjectId,
           resourceId
         }
-      }));
+      });
 
-      return <Permission> (perm || {
+      return <Permission>(perm || {
         subjectId,
         resourceId: '',
         resourceType: '',
@@ -64,7 +63,7 @@ export function createSchemaNode(
         let ids: any = parentNamePath.get(this.doc);
 
         if (ids && !(ids instanceof Array)) {
-          ids = [ ids ];
+          ids = [ids];
         }
 
         // if no immediate parents, recurse
@@ -72,43 +71,63 @@ export function createSchemaNode(
         // alternate path to current node
         if (!(ids && ids.length)) {
           const hierarchyClasses = ParentClass.getHierarchyClassNames(),
-                thisCollection = Tyr.byName[this.getName()],
-                doc = <Tyr.Document> this.doc;
+            thisCollection = Tyr.byName[this.getName()],
+            doc = <Tyr.Document>this.doc;
 
           hierarchyClasses.shift(); // remove parent we already tried
 
           // try to find a path between one of the hierarchy classes
           // (starting from lowest and recursing upward)
           while (hierarchyClasses.length) {
-            const currentParent = hierarchyClasses.shift() || plugin._NO_COLLECTION;
+            const currentParent =
+              hierarchyClasses.shift() || plugin._NO_COLLECTION;
 
             const currentParentCollection = Tyr.byName[currentParent],
-                  path = getShortestPath(plugin, thisCollection, currentParentCollection),
-                  CurrentParentNodeClass = type === 'resource'
-                    ? plugin.graclHierarchy.getResource(currentParent)
-                    : plugin.graclHierarchy.getSubject(currentParent);
+              path = getShortestPath(
+                plugin,
+                thisCollection,
+                currentParentCollection
+              ),
+              CurrentParentNodeClass =
+                type === 'resource'
+                  ? plugin.graclHierarchy.getResource(currentParent)
+                  : plugin.graclHierarchy.getSubject(currentParent);
 
             if (path.length && path.length >= 2) {
-              let currentCollection = Tyr.byName[path.shift() || plugin._NO_COLLECTION],
-                  nextCollection = Tyr.byName[path.shift() || plugin._NO_COLLECTION],
-                  linkField = findLinkInCollection(plugin, currentCollection, nextCollection);
+              let currentCollection =
+                  Tyr.byName[path.shift() || plugin._NO_COLLECTION],
+                nextCollection =
+                  Tyr.byName[path.shift() || plugin._NO_COLLECTION],
+                linkField = findLinkInCollection(
+                  plugin,
+                  currentCollection,
+                  nextCollection
+                );
 
               const idProp = linkField.namePath.get(doc) || [];
 
               let ids: ObjectID[] = !idProp
                 ? []
-                : (Array.isArray(idProp) ? idProp : [ idProp ]);
+                : Array.isArray(idProp) ? idProp : [idProp];
 
               // this potential path has found a dead end,
               // we need to try another upper level resource
               if (!ids.length) continue;
 
-              while (linkField.link && (linkField.link.def.name !== currentParent)) {
+              while (
+                linkField.link &&
+                linkField.link.def.name !== currentParent
+              ) {
                 currentCollection = nextCollection;
-                nextCollection = Tyr.byName[path.shift() || plugin._NO_COLLECTION];
-                linkField = findLinkInCollection(plugin, currentCollection, nextCollection);
+                nextCollection =
+                  Tyr.byName[path.shift() || plugin._NO_COLLECTION];
+                linkField = findLinkInCollection(
+                  plugin,
+                  currentCollection,
+                  nextCollection
+                );
                 const nextDocuments = await currentCollection.byIds(ids);
-                ids = <ObjectID[]> _.chain(nextDocuments)
+                ids = <ObjectID[]>_.chain(nextDocuments)
                   .map((d: Tyr.Document) => linkField.namePath.get(d))
                   .flatten()
                   .compact()
@@ -118,7 +137,10 @@ export function createSchemaNode(
               if (!ids.length) continue;
 
               const parentDocs = await nextCollection.byIds(ids),
-                    parents = _.map(parentDocs, (d: Tyr.Document) => new CurrentParentNodeClass(d));
+                parents = _.map(
+                  parentDocs,
+                  (d: Tyr.Document) => new CurrentParentNodeClass(d)
+                );
 
               return parents;
             }
@@ -127,15 +149,13 @@ export function createSchemaNode(
           return [];
         }
 
-
         const linkCollection = node.link,
-              parentObjects  = await (linkCollection && linkCollection.byIds(ids));
+          parentObjects = await (linkCollection && linkCollection.byIds(ids));
 
         return _.map(parentObjects, doc => new ParentClass(doc));
       } else {
         return [];
       }
     }
-
   };
 }
