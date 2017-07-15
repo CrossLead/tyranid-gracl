@@ -38,10 +38,10 @@ export type schemaGraclConfigObject = {
     exclude?: string[];
   };
   types?: ('string' | 'resource')[];
-}
+};
 
 
 export type TyrSchemaGraphObjects = {
   links: Tyr.FieldInstance[];
-  parents: Tyr.GenericCollection[];
+  parents: Tyr.CollectionInstance[];
 };

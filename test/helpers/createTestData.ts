@@ -14,7 +14,7 @@ export async function createTestData() {
   /**
     Organiations
    */
-  const [ chipotle, chopped, cava ] = await Promise.all([
+  const [chipotle, chopped, cava] = await Promise.all([
     Organization.insert({ name: 'Chipotle' }),
     Organization.insert({ name: 'Chopped' }),
     Organization.insert({ name: 'Cava' })
@@ -51,7 +51,7 @@ export async function createTestData() {
     Blog.addPost('Why burritos are amazing.', chipotleFoodBlog),
     Blog.addPost('Ecoli challenges.', chipotleFoodBlog),
     Blog.addPost(
-      'We don\' actually know why people got sick.',
+      `We don' actually know why people got sick.`,
       chipotleFoodBlog
     ),
     Blog.addPost('Re-evaluating the way we clean up.', chipotleCorporateBlog),
@@ -72,11 +72,7 @@ export async function createTestData() {
   /**
     Teams
    */
-  const [
-    burritoMakers,
-    chipotleMarketing,
-    cavaEngineers
-  ] = await Promise.all([
+  const [burritoMakers, chipotleMarketing, cavaEngineers] = await Promise.all([
     Team.insert({ name: 'burritoMakers', organizationId: chipotle.$id }),
     Team.insert({ name: 'chipotleMarketing', organizationId: chipotle.$id }),
     Team.insert({ name: 'cavaEngineers', organizationId: cava.$id })
@@ -87,16 +83,16 @@ export async function createTestData() {
   /**
     Users
    */
-  const [ ben, ted ] = await Promise.all([
+  const [ben, ted] = await Promise.all([
     User.insert({
       name: 'ben',
       organizationId: chipotle.$id,
-      teamIds: [ burritoMakers.$id, chipotleMarketing.$id ]
+      teamIds: [burritoMakers.$id, chipotleMarketing.$id]
     }),
     User.insert({
       name: 'ted',
       organizationId: cava.$id,
-      teamIds: [ cavaEngineers.$id ]
+      teamIds: [cavaEngineers.$id]
     }),
     User.insert({ name: 'noTeams', organizationId: chipotle.$id })
   ]);
@@ -106,7 +102,7 @@ export async function createTestData() {
       name: 'test1',
       blogId: cavaBlog.$id,
       organizationId: cava.$id,
-      userIds: [ ben.$id, ted.$id ]
+      userIds: [ben.$id, ted.$id]
     })
   ]);
 }

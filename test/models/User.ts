@@ -1,7 +1,6 @@
 import { Tyr } from 'tyranid';
 
-
-const UserBaseCollection = new Tyr.Collection({
+export const User = new Tyr.Collection({
   id: 'u00',
   name: 'user',
   dbName: 'users',
@@ -19,8 +18,3 @@ const UserBaseCollection = new Tyr.Collection({
     organizationId: { link: 'organization' }
   }
 });
-
-
-export class User extends (<Tyr.GenericCollection> UserBaseCollection) {
-
-}

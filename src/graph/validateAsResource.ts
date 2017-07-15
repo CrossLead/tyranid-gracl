@@ -7,7 +7,7 @@ import { GraclPlugin } from '../classes/GraclPlugin';
  */
 export function validateAsResource(
   plugin: GraclPlugin,
-  collection: Tyr.GenericCollection
+  collection: Tyr.CollectionInstance
 ) {
   if (!collection) {
     plugin.error(`Attempted to validate undefined collection!`);
@@ -15,7 +15,8 @@ export function validateAsResource(
 
   if (!plugin.graclHierarchy.resources.has(collection.def.name)) {
     plugin.error(
-      `Attempted to set/get permission using ${collection.def.name} as resource, ` +
+      `Attempted to set/get permission using ${collection.def
+        .name} as resource, ` +
         `no relevant resource class found in tyranid-gracl plugin!`
     );
   }

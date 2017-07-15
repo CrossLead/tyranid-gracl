@@ -11,7 +11,7 @@ import { findLinkInCollection } from '../graph/findLinkInCollection';
 export function createInQueries(
   plugin: GraclPlugin,
   map: Map<string, Set<string>>,
-  queriedCollection: Tyr.GenericCollection,
+  queriedCollection: Tyr.CollectionInstance,
   key: '$nin' | '$in'
 ): Hash<Hash<Hash<string[]>>[]> {
   if (!(key === '$in' || key === '$nin')) {
@@ -26,25 +26,31 @@ export function createInQueries(
     if (col === queriedCollection.def.name) {
       const primaryKey = queriedCollection.def.primaryKey;
       if (!primaryKey) {
-        return plugin.error(`No primary key for collection ${queriedCollection.def.name}`);
+        return plugin.error(
+          `No primary key for collection ${queriedCollection.def.name}`
+        );
       } else {
         prop = primaryKey.field;
       }
     } else {
-      const link = findLinkInCollection(plugin, queriedCollection, Tyr.byName[col]);
+      const link = findLinkInCollection(
+        plugin,
+        queriedCollection,
+        Tyr.byName[col]
+      );
 
       if (!link) {
         return plugin.error(
-          `No outgoing link from ${queriedCollection.def.name} to ${col}, cannot create restricted ${key} clause!`
+          `No outgoing link from ${queriedCollection.def
+            .name} to ${col}, cannot create restricted ${key} clause!`
         );
       }
 
       prop = link.spath;
     }
 
-    conditions.push({ [<string> prop]: { [<string> key]: Array.from(idSet) } });
+    conditions.push({ [<string>prop]: { [<string>key]: Array.from(idSet) } });
   });
-
 
   return { [key === '$in' ? '$or' : '$and']: conditions };
 }

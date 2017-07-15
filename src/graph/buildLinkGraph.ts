@@ -15,13 +15,13 @@ export function buildLinkGraph(plugin: GraclPlugin) {
 
   _.each(Tyr.collections, col => {
     const links = col.links({ direction: 'outgoing' }),
-          colName = col.def.name;
+      colName = col.def.name;
 
     _.each(links, linkField => {
       if (linkField.def['graclIgnore']) return;
 
       const edges = _.get(g, colName, new Set<string>()),
-            linkName = linkField.link.def.name;
+        linkName = linkField.link!.def.name;
 
       edges.add(linkName);
 
@@ -31,9 +31,8 @@ export function buildLinkGraph(plugin: GraclPlugin) {
   });
 
   const dist: Hash<Hash<number>> = {},
-        next: Hash<Hash<string>> = {},
-        keys = _.keys(g);
-
+    next: Hash<Hash<string>> = {},
+    keys = _.keys(g);
 
   _.each(keys, a => {
     _.each(keys, b => {
@@ -66,5 +65,5 @@ export function buildLinkGraph(plugin: GraclPlugin) {
     });
   });
 
-  return plugin._outgoingLinkPaths = next;
+  return (plugin._outgoingLinkPaths = next);
 }

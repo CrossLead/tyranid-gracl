@@ -16,15 +16,14 @@ export const BlogBaseCollection = new Tyr.Collection({
     organizationId: {
       link: 'organization',
       relate: 'ownedBy',
-      graclTypes: [ 'resource' ]
+      graclTypes: ['resource']
     }
   }
 });
 
-
-export class Blog extends (<Tyr.GenericCollection> BlogBaseCollection) {
+export class Blog extends BlogBaseCollection {
   static async addPost(text: string, blog: Tyr.Document) {
-    const post = new Post({ text, blogId: blog['_id'] });
+    const post = new Post({ text, blogId: (blog as any)['_id'] });
     await post.$save();
     return post;
   }

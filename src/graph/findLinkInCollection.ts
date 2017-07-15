@@ -4,10 +4,11 @@ import { GraclPlugin } from '../classes/GraclPlugin';
 import { getCollectionLinksSorted } from './getCollectionLinksSorted';
 
 function compareCollectionWithField(
-  aCol: Tyr.GenericCollection,
+  aCol: Tyr.CollectionInstance,
   bCol: Tyr.FieldInstance
 ) {
-  const a = aCol.def.name, b = bCol.link.def.name;
+  const a = aCol.def.name,
+    b = bCol.link && bCol.link.def.name;
 
   return baseCompare(a, b);
 }
@@ -19,8 +20,8 @@ function compareCollectionWithField(
  */
 export function findLinkInCollection(
   plugin: GraclPlugin,
-  col: Tyr.GenericCollection,
-  linkCollection: Tyr.GenericCollection
+  col: Tyr.CollectionInstance,
+  linkCollection: Tyr.CollectionInstance
 ): Tyr.FieldInstance {
   const links = getCollectionLinksSorted(plugin, col),
     index = binaryIndexOf(links, linkCollection, compareCollectionWithField);

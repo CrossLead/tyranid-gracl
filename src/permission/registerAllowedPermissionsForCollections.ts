@@ -20,17 +20,15 @@ export function registerAllowedPermissionsForCollections(plugin: GraclPlugin) {
   const crudPermissions = [...plugin.crudPermissionSet];
 
   Tyr.collections.forEach(col => {
-    const config = <schemaGraclConfigObject> _.get(col, 'def.graclConfig', {});
+    const config = <schemaGraclConfigObject>_.get(col, 'def.graclConfig', {});
 
     if (config.permissions) {
       const hasExcludeConfig = !!(
-        config.permissions.exclude ||
-        config.permissions.excludeCollections
+        config.permissions.exclude || config.permissions.excludeCollections
       );
 
       const hasIncludeConfig = !!(
-        config.permissions.include ||
-        config.permissions.includeCollections
+        config.permissions.include || config.permissions.includeCollections
       );
 
       let allowedSet: Set<string> | undefined;
@@ -43,18 +41,22 @@ export function registerAllowedPermissionsForCollections(plugin: GraclPlugin) {
         }
 
         if (config.permissions.excludeCollections) {
-        _.chain(config.permissions.excludeCollections)
-          .map(collection => _.map(
-            crudPermissions,
-            action => action && formatPermissionType(plugin, {
-              action,
-              collection
-            })
-          ))
-          .flatten()
-          .compact()
-          .each(excludeSet.add.bind(excludeSet))
-          .value();
+          _.chain(config.permissions.excludeCollections)
+            .map(collection =>
+              _.map(
+                crudPermissions,
+                action =>
+                  action &&
+                  formatPermissionType(plugin, {
+                    action,
+                    collection
+                  })
+              )
+            )
+            .flatten()
+            .compact()
+            .each(excludeSet.add.bind(excludeSet))
+            .value();
         }
 
         allowedSet = new Set<string>();
@@ -73,12 +75,17 @@ export function registerAllowedPermissionsForCollections(plugin: GraclPlugin) {
 
         if (config.permissions.includeCollections) {
           _.chain(config.permissions.includeCollections)
-            .map(collection => _.map(crudPermissions,
-              action => action && formatPermissionType(plugin, {
-                action,
-                collection
-              })
-            ))
+            .map(collection =>
+              _.map(
+                crudPermissions,
+                action =>
+                  action &&
+                  formatPermissionType(plugin, {
+                    action,
+                    collection
+                  })
+              )
+            )
             .flatten()
             .compact()
             .each(allowedSet.add.bind(allowedSet))
@@ -86,20 +93,24 @@ export function registerAllowedPermissionsForCollections(plugin: GraclPlugin) {
         }
       }
 
-
       // if flagged as this collection only,
       // add all crud permissions with this collection to allowed mapping
       if (config.permissions.thisCollectionOnly) {
-        allowedSet = new Set(_.chain(crudPermissions).map(action => {
-          if (!action) {
-            return ''; // TODO: strictNullCheck hack
-          } else {
-            return formatPermissionType(plugin, {
-              action: action,
-              collection: col.def.name
-            });
-          }
-        }).compact().value());
+        allowedSet = new Set(
+          _.chain(crudPermissions)
+            .map(action => {
+              if (!action) {
+                return ''; // TODO: strictNullCheck hack
+              } else {
+                return formatPermissionType(plugin, {
+                  action: action,
+                  collection: col.def.name
+                });
+              }
+            })
+            .compact()
+            .value()
+        );
       }
 
       if (allowedSet) {

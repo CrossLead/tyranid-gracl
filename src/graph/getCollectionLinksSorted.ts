@@ -8,21 +8,22 @@ import { GraclPlugin } from '../classes/GraclPlugin';
  */
 export function getCollectionLinksSorted(
   plugin: GraclPlugin,
-  col: Tyr.GenericCollection,
+  col: Tyr.CollectionInstance,
   opts: any = { direction: 'outgoing' }
 ): Tyr.FieldInstance[] {
   const collectionFieldCache = plugin._sortedLinkCache,
-    hash = `${col.def.name}:${_
-      .toPairs(opts)
+    hash = `${col.def.name}:${_.toPairs(opts)
       .map(e => e.join('='))
       .sort()
       .join(':')}`;
 
-  if (collectionFieldCache[hash])
-    return collectionFieldCache[hash];
+  if (collectionFieldCache[hash]) return collectionFieldCache[hash];
 
   // sort fields by link collection name
-  const links = _.sortBy(col.links(opts), field => field.link.def.name);
+  const links = _.sortBy(
+    col.links(opts),
+    field => field.link && field.link.def.name
+  );
 
-  return collectionFieldCache[hash] = links;
+  return (collectionFieldCache[hash] = links);
 }
