@@ -13,7 +13,7 @@
   "main": "./dist/src/index.js",
   "typings": "./dist/src/index.d.ts",
   "scripts": {
-    "build": "rm -rf ./dist/ ./test/spec/generated.d.ts && npm run generate-collection-types && npm run lint && npm run tsc && npm run compile-module-test",
+    "build": "rm -rf ./dist/ ./test/spec/types && npm run lint && npm run generate-collection-types && npm run tsc && npm run compile-module-test",
     "pretest": "npm run build",
     "prepublish": "npm run test",
     "test": "nyc ava",
