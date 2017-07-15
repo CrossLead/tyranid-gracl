@@ -401,7 +401,7 @@ test.serial('should respect permissions hierarchy', async t => {
 
   t.true(
     !!(ben && choppedBlog && (await choppedBlog.$isAllowed('view-post', ben))),
-    "ben should have 'view' access to choppedBlog through 'edit' access to chopped org"
+    `ben should have 'view' access to choppedBlog through 'edit' access to chopped org`
   );
 });
 
@@ -450,7 +450,7 @@ test.serial('should validate permissions', async t => {
     t,
     () => chipotleCorporateBlog.$isAllowed('viewBlahBlah', ben),
     /Invalid permission type/g,
-    "checking 'viewBlahBlah' should throw"
+    `checking 'viewBlahBlah' should throw`
   );
 });
 

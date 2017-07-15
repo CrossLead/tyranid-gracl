@@ -51,7 +51,7 @@ export async function createTestData() {
     Blog.addPost('Why burritos are amazing.', chipotleFoodBlog),
     Blog.addPost('Ecoli challenges.', chipotleFoodBlog),
     Blog.addPost(
-      "We don' actually know why people got sick.",
+      `We don' actually know why people got sick.`,
       chipotleFoodBlog
     ),
     Blog.addPost('Re-evaluating the way we clean up.', chipotleCorporateBlog),
