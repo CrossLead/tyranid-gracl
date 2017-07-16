@@ -27,12 +27,13 @@ export const PermissionsBaseCollection = new Tyr.Collection({
   dbName: 'graclPermissions',
   fields: {
     _id: { is: 'mongoid' },
-    subjectId: { is: 'uid' },
-    resourceId: { is: 'uid' },
-    subjectType: { is: 'string' },
-    resourceType: { is: 'string' },
+    subjectId: { is: 'uid', required: true },
+    resourceId: { is: 'uid', required: true },
+    subjectType: { is: 'string', required: true },
+    resourceType: { is: 'string', required: true },
     access: {
       is: 'object',
+      required: true,
       keys: { is: 'string' },
       of: { is: 'boolean' }
     }
