@@ -1,9 +1,7 @@
 import { Tyr } from 'tyranid';
 import { documentMethods as dm } from './tyranid/documentMethods';
 
-
 declare module 'tyranid' {
-
   namespace Tyr {
     /**
      * Add additional methods to Document interface
@@ -28,5 +26,4 @@ declare module 'tyranid' {
       $removeEntityPermission: typeof dm.$removeEntityPermission;
     }
   }
-
 }

@@ -123,8 +123,8 @@ export class GraclPlugin {
     return PermissionsModel.createIndexes();
   }
 
-  query(
-    queriedCollection: Tyr.CollectionInstance,
+  query<T extends Tyr.Document>(
+    queriedCollection: Tyr.CollectionInstance<T>,
     permissionType: string,
     subjectDocument?: Tyr.Document
   ) {

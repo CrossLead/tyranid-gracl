@@ -35,7 +35,6 @@ const permissionTypes = [
   {
     name: 'view',
     format(act: string, col?: string) {
-      act;
       return `Allowed to view ${_.capitalize(col)}`;
     },
     parent: 'edit',
@@ -1005,7 +1004,7 @@ test.serial(
     checkStringEq(
       t,
       <string[]>_.get(query, '$or.0.blogId.$in'),
-      <string[]>_.map(choppedBlogs, '_id'),
+      _.map(choppedBlogs, '_id').map(id => id.toHexString()),
       'query should find correct blogs'
     );
   }
@@ -1150,8 +1149,8 @@ test.serial(
 
     checkStringEq(
       t,
-      <string[]>_.map(postsBenCanSee, '_id'),
-      <string[]>_.map(choppedPosts, '_id'),
+      <string[]>_.map(postsBenCanSee, d => d.$id.toHexString()),
+      <string[]>_.map(choppedPosts, d => d.$id.toHexString()),
       'ben should only see chopped posts'
     );
   }
@@ -1871,6 +1870,24 @@ test.serial(
       },
       /No permissions provided to/
     );
+  }
+);
+
+/**
+ * https://github.com/tyranid-org/tyranid-gracl/issues/47
+ */
+test.serial(
+  'PermissionsModel.determineAccess should respect both permission and subject/resource hierarchies',
+  async t => {
+    const freeComment = await Tyr.byName.comment.findOne({
+        query: { text: 'TEST_COMMENT' }
+      }),
+      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
+      chipotle = await Tyr.byName.organization.findOne({
+        query: { name: 'Chipotle' }
+      });
+
+    if (!freeComment || !ben || !chipotle) throw new Error(`missing docs`);
   }
 );
 

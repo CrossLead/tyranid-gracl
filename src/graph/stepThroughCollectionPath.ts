@@ -8,11 +8,14 @@ import { findLinkInCollection } from './findLinkInCollection';
  * Given a list of ids, find all docs in (previousCollection) relating to those ids, and
  * pluck all ids on those docs which are links to (nextCollection)
  */
-export async function stepThroughCollectionPath(
+export async function stepThroughCollectionPath<
+  P extends Tyr.Document,
+  N extends Tyr.Document
+>(
   plugin: GraclPlugin,
   ids: ObjectID[],
-  previousCollection: Tyr.CollectionInstance,
-  nextCollection: Tyr.CollectionInstance
+  previousCollection: Tyr.CollectionInstance<P>,
+  nextCollection: Tyr.CollectionInstance<N>
 ) {
   // find the field in the current path collection which we need to get
   // for the ids of the next path collection

@@ -6,6 +6,7 @@ import { Chart } from '../models/Chart';
 import { Inventory } from '../models/Inventory';
 import { Organization } from '../models/Organization';
 import { Comment } from '../models/Comment';
+import { Item } from '../models/Item';
 
 export async function createTestData() {
   // nuke old data...
@@ -95,6 +96,16 @@ export async function createTestData() {
       teamIds: [cavaEngineers.$id]
     }),
     User.insert({ name: 'noTeams', organizationId: chipotle.$id })
+  ]);
+
+  /**
+   * items
+   */
+  await Promise.all([
+    Item.insert({
+      name: 'test-ben-item',
+      userId: ben.$id
+    })
   ]);
 
   await Promise.all([
