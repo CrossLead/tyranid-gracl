@@ -14,7 +14,6 @@ export async function expectAsyncToThrow(
     threw = true;
     message = err.message;
   }
-
   t.true(threw, description);
   t.regex(message, expectedMessageRegex, description);
 }

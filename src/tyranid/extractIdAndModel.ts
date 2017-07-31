@@ -10,7 +10,7 @@ export function validate(plugin: GraclPlugin, uid: string) {
         err.message
       )
     ) {
-      plugin.error(`Invalid resource id: ${uid}`);
+      plugin.error(`Invalid uid: ${uid}`);
     }
     throw err;
   }

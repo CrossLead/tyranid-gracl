@@ -483,33 +483,22 @@ test.serial('should throw error when passing invalid uid', async t => {
         $uid: 'u00undefined',
         $model: Tyr.byName.user
       }),
-    /Invalid resource id/g,
+    /Invalid uid/g,
     'invalid uid should throw (allow, string)'
   );
 
   await expectAsyncToThrow(
     t,
     () => chopped.$allow('abstract_view_chart', 'u00undefined'),
-    /Invalid resource id/g,
+    /Invalid uid/g,
     'invalid uid should throw (allow, doc)'
   );
 
   await expectAsyncToThrow(
     t,
     () => chopped.$isAllowed('abstract_view_chart', 'u00undefined'),
-    /Invalid resource id/g,
+    /Invalid uid/g,
     'invalid uid should throw (isAllowed, string)'
-  );
-
-  await expectAsyncToThrow(
-    t,
-    () =>
-      (<any>chopped).$isAllowed('abstract_view_chart', {
-        $uid: 'u00undefined',
-        $model: Tyr.byName.user
-      }),
-    /Invalid resource id/g,
-    'invalid uid should throw (isAllowed, doc)'
   );
 });
 
@@ -1905,6 +1894,8 @@ test.serial(
     const isAllowedResult = await item.$isAllowed('view-item', ted);
     const explainResult = await item.$explainPermission('view-item', ted);
 
+    t.false(isAllowedResult);
+    t.false(explainResult.access);
     t.is(
       isAllowedResult,
       explainResult.access,
@@ -1997,15 +1988,9 @@ test.serial('Should handle lots of concurrent permissions updates', async t => {
   );
 
   // 4,000 concurrent checks
-  await Promise.all(
-    posts.map(p =>
-      Promise.all([
-        p.$isAllowed('view-post', ben),
-        p.$isAllowed('edit-post', ben),
-        p.$isAllowed('delete-post', ben),
-        p.$isAllowed('view-post', ben)
-      ])
-    )
+  await ben.$determineAccessToAllPermissionsForResources(
+    ['view-post', 'edit-post', 'delete-post'],
+    posts
   );
 
   t.pass();
