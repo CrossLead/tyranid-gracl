@@ -71,7 +71,7 @@ export async function createTestData() {
   ]);
 
   /**
-    Teams
+   * Teams
    */
   const [burritoMakers, chipotleMarketing, cavaEngineers] = await Promise.all([
     Team.insert({ name: 'burritoMakers', organizationId: chipotle.$id }),

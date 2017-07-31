@@ -1879,15 +1879,37 @@ test.serial(
 test.serial(
   'PermissionsModel.determineAccess should respect both permission and subject/resource hierarchies',
   async t => {
-    const freeComment = await Tyr.byName.comment.findOne({
-        query: { text: 'TEST_COMMENT' }
+    /**
+     * item owned by ben
+     */
+    const item = await Tyr.byName.item.findOne({
+        query: { name: 'test-ben-item' }
       }),
       ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      chipotle = await Tyr.byName.organization.findOne({
-        query: { name: 'Chipotle' }
+      ted = await Tyr.byName.user.findOne({ query: { name: 'ted' } }),
+      cava = await Tyr.byName.organization.findOne({
+        query: { name: 'Cava' }
       });
 
-    if (!freeComment || !ben || !chipotle) throw new Error(`missing docs`);
+    if (!item || !ted || !ben || !cava) throw new Error(`missing docs`);
+
+    /**
+     *
+     * deny view item for org,
+     * allow edit user for user
+     *
+     */
+    await item.$deny('view-item', cava);
+    await ben.$allow('edit-item', ted);
+
+    const isAllowedResult = await item.$isAllowed('view-item', ted);
+    const explainResult = await item.$explainPermission('view-item', ted);
+
+    t.is(
+      isAllowedResult,
+      explainResult.access,
+      'the $isAllowed result should mirror the $explainPermission result'
+    );
   }
 );
 
