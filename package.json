@@ -1,8 +1,15 @@
 {
   "name": "tyranid-gracl",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "tyranid.js plugin for gracl",
-  "keywords": ["graph", "acl", "permissions", "permission", "tyranid", "gracl"],
+  "keywords": [
+    "graph",
+    "acl",
+    "permissions",
+    "permission",
+    "tyranid",
+    "gracl"
+  ],
   "main": "./dist/src/index.js",
   "typings": "./dist/src/index.d.ts",
   "scripts": {
@@ -51,9 +58,13 @@
     "tyranid": "^0.2.11"
   },
   "ava": {
-    "files": ["dist/test/spec/**/*.js"]
+    "files": [
+      "dist/test/spec/**/*.js"
+    ]
   },
   "nyc": {
-    "include": ["dist/src"]
+    "include": [
+      "dist/src"
+    ]
   }
 }
