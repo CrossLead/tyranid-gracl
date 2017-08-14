@@ -169,7 +169,7 @@ export async function query(
   // building the query string for, grabbing all fields that are links
   // and storing them in a map of (linkFieldCollection => Field)
   const queriedCollectionLinkFields = getCollectionLinksSorted(plugin, queriedCollection)
-    .reduce((map, field: Tyr.FieldInstance) => {
+    .reduce((map: Map<string, Tyr.FieldInstance>, field: Tyr.FieldInstance) => {
       if (field.def.link) map.set(field.def.link, field);
       return map;
     }, new Map<string, Tyr.FieldInstance>());
