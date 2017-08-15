@@ -74,9 +74,7 @@ async function giveBenAccessToChoppedPosts(t: ContextualTestContext, perm = 'vie
   t.truthy(ben, 'ben should exist');
   t.truthy(chopped, 'chopped should exist');
 
-  const updatedChopped = await secure.permissionsModel.updatePermissions(
-    chopped, { [`${perm}-post`]: true }, ben
-  );
+  const updatedChopped = await chopped.$allow(`${perm}-post`, ben);
 
   if (!updatedChopped) throw new Error(`No updated chopped!`);
 
