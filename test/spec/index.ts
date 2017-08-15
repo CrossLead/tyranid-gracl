@@ -1947,23 +1947,28 @@ test.serial(
   }
 );
 
-test.serial('should deny all objects if subject only has negative permissions for collection', async (t) => {
-  const chipotleBlog = await Tyr.byName.blog.findOne({ query: { name: 'Mexican Empire' }}),
-        ben          = await Tyr.byName.user.findOne({ query: { name: 'ben' }});
+test.serial(
+  'should deny all objects if subject only has negative permissions for collection',
+  async t => {
+    const chipotleBlog = await Tyr.byName.blog.findOne({
+        query: { name: 'Mexican Empire' }
+      }),
+      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
 
-  if (!ben || !chipotleBlog) throw new Error(`Missing documents`);
+    if (!ben || !chipotleBlog) throw new Error(`Missing documents`);
 
-  const permissions = await ben.$permissions();
-  t.is(permissions.length, 0);
+    const permissions = await ben.$permissions();
+    t.is(permissions.length, 0);
 
-  await chipotleBlog.$deny('view-blog', ben);
+    await chipotleBlog.$deny('view-blog', ben);
 
-  const permissionsAfter = await ben.$permissions();
-  t.is(permissionsAfter.length, 1);
+    const permissionsAfter = await ben.$permissions();
+    t.is(permissionsAfter.length, 1);
 
-  const blogs = await Tyr.byName.blog.findAll({ query: {}, auth: ben });
-  t.is(blogs.length, 0);
-});
+    const blogs = await Tyr.byName.blog.findAll({ query: {}, auth: ben });
+    t.is(blogs.length, 0);
+  }
+);
 
 test.serial('Should handle lots of concurrent permissions updates', async t => {
   const chipotleBlog = await Tyr.byName.blog.findOne({
