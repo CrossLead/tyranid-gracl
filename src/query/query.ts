@@ -343,8 +343,12 @@ export async function query(
       // we don't need to do another link in the path, as the current path collection
       // has a link that exists on the queried collection
       let pathCollectionName = pathEndCollectionName;
+      let nextCollectionName = nextCollection.def.name;
 
-      while (path.length > 2) {
+      while (path.length >= 2) {
+        // break if we are one edge away
+        if (path.length === 2 && path[0] === queriedCollectionName) break;
+
         const pathCollection =
             Tyr.byName[
               (pathCollectionName = path.pop() || plugin._NO_COLLECTION)
@@ -379,7 +383,7 @@ export async function query(
       // that is directly linked to by queriedCollection,
       // and positive / negativeIds should contain ids of documents
       // from <nextCollectionName>
-      const linkedCollectionName = nextCollection.def.name;
+      const linkedCollectionName = nextCollectionName;
 
       const addIdsToQueryMap = (access: boolean) => (id: string) => {
         const accessString = access ? 'positive' : 'negative',
