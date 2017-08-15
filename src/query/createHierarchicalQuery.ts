@@ -29,7 +29,7 @@ export function createHierarchicalQuery(
   plugin: GraclPlugin,
   queryMaps: Hash<Map<string, Set<string>>>,
   queriedCollection: Tyr.GenericCollection
-) {
+): Hash<any> | false {
   const positiveUids = queryMaps['positive'],
         negativeUids = queryMaps['negative'];
 
@@ -39,6 +39,7 @@ export function createHierarchicalQuery(
   const resultingQuery: Hash<any> = {},
         hasPositive = !!positiveRestriction['$or'].length,
         hasNegative = !!negativeRestriction['$and'].length;
+
   /**
    * For each collection with negative restrictions, we need to create an OR clause
    * which excludes uids that are lower in the resource hierarchy and exist in the
@@ -87,7 +88,12 @@ export function createHierarchicalQuery(
       negativeModifiedQuery
     ];
   } else if (hasNegative) {
-    Object.assign(resultingQuery, negativeRestriction);
+    /**
+     * if there are only negative restrictions set,
+     * return false to deny all objects -- there must
+     * be at least some positive permissions
+     */
+    return false;
   } else if (hasPositive) {
     Object.assign(resultingQuery, positiveRestriction);
   }
