@@ -9,3 +9,4 @@ coverage
 test/tscompile/index.js*
 test/spec/types
 .vscode
+test/spec/generated.d.ts
