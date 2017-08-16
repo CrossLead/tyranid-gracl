@@ -16,7 +16,7 @@ import { getPermissionParents } from '../permission/getPermissionParents';
 import { formatPermissionType } from '../permission/formatPermissionType';
 import { isCrudPermission } from '../permission/isCrudPermission';
 
-import { extractIdAndModel } from '../tyranid/extractIdAndModel';
+import { extractIdAndModel, validate } from '../tyranid/extractIdAndModel';
 
 
 /**
@@ -170,46 +170,27 @@ export class PermissionsModel extends PermissionsBaseCollection {
     permissionsToCheck: string | string[],
     subjectData: Tyr.Document | string
   ): Promise<Hash<boolean>> {
-    const accessResults: Hash<boolean> = {};
     const plugin = PermissionsModel.getGraclPlugin();
-    const permissionTypes = typeof permissionsToCheck === 'string'
-      ? [ permissionsToCheck ]
-      : permissionsToCheck;
 
-    extractIdAndModel(plugin, resourceData);
-    extractIdAndModel(plugin, subjectData);
+    if (typeof subjectData === 'string') {
+      validate(plugin, subjectData);
+      subjectData = (await Tyr.byUid(subjectData)) as Tyr.Document;
+    }
 
-    let {
-      resourceDocument,
-      subjectDocument
-    } = await resolveSubjectAndResourceDocuments(resourceData, subjectData);
+    if (!Array.isArray(permissionsToCheck)) {
+      permissionsToCheck = [permissionsToCheck];
+    }
 
-    const {
-            subject,
-            resource
-          } = getGraclClasses(plugin, resourceDocument, subjectDocument),
-          permHierarchyCache: Hash<string[]> = {};
+    const resourceUid: string =
+      typeof resourceData === 'string' ? resourceData : resourceData.$uid;
 
-    const allPermsToCheck = <string[]> _.chain(permissionTypes)
-      .map(perm => {
-        return permHierarchyCache[perm] = [ perm, ...getPermissionParents(plugin, perm) ];
-      })
-      .flatten()
-      .uniq()
-      .compact()
-      .value();
+    const result = await PermissionsModel.determineAccessToAllPermissions(
+      subjectData,
+      permissionsToCheck,
+      [resourceUid]
+    );
 
-    // recurse up subject / resource hierarchy checking all permissions
-    const permCheckResults = await resource.determineAccess(subject, allPermsToCheck);
-
-    _.each(permissionTypes, perm => {
-      accessResults[perm] = _.some(
-        permHierarchyCache[perm],
-        p => permCheckResults[p].access
-      );
-    });
-
-    return accessResults;
+    return result[resourceUid];
   }
 
 
@@ -227,6 +208,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
     permissionType: string,
     subjectData: Tyr.Document | string
   ): Promise<permissionExplaination> {
+    console.warn(`tyranid-gracl: Warning: the results of $explainPermission may not match $determineAccess/$isAllowed`);
     const plugin = PermissionsModel.getGraclPlugin();
     validatePermissionExists(plugin, permissionType);
 
@@ -345,6 +327,64 @@ export class PermissionsModel extends PermissionsBaseCollection {
     });
 
     return doc;
+  }
+
+
+  static async determineAccessToAllPermissions(
+    subject: Tyr.Document,
+    permissionsToCheck: string[],
+    resourceUidList: string[] | Tyr.Document[]
+  ) {
+    const plugin = PermissionsModel.getGraclPlugin(),
+      accessMap = {} as { [k: string]: { [k: string]: boolean } };
+
+    const uidsToCheck: string[] =
+      typeof resourceUidList[0] === 'string'
+        ? <string[]>resourceUidList
+        : <string[]>_.map(<Tyr.Document[]>resourceUidList, '$uid');
+
+    if (!plugin.graclHierarchy.subjects.has(subject.$model.def.name)) {
+      plugin.error(
+        `can only call $determineAccessToAllPermissions on a valid subject, ` +
+          `${subject.$model.def.name} is not a subject.`
+      );
+    }
+
+    const retrievedDocumentsPromise = Promise.all(
+      _.map(permissionsToCheck, perm => {
+        const tyranidOpts = {
+          auth: subject,
+          perm: perm,
+          fields: { _id: 1 }
+        };
+
+        return Tyr.byUids(uidsToCheck, tyranidOpts);
+      })
+    );
+
+    // Hacky double cast for promise.all weirdness
+    const retrievedDocumentMatrix = <Tyr.Document[][]>(<any>await retrievedDocumentsPromise);
+
+    const permissionSetHash = _.reduce(
+      retrievedDocumentMatrix,
+      (out, documentList, index) => {
+        const permission = permissionsToCheck[index];
+        out[permission] = new Set(
+          <string[]>_.chain(documentList).map('$uid').compact().value()
+        );
+        return out;
+      },
+      <Hash<Set<string>>>{}
+    );
+
+    _.each(uidsToCheck, uid => {
+      accessMap[uid] = {};
+      _.each(permissionsToCheck, perm => {
+        accessMap[uid][perm] = permissionSetHash[perm].has(uid);
+      });
+    });
+
+    return accessMap;
   }
 
 

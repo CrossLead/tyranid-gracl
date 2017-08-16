@@ -7,7 +7,7 @@ export function validate(plugin: GraclPlugin, uid: string) {
     Tyr.parseUid(uid);
   } catch (err) {
     if (/must be a single String of 12 bytes or a string of 24 hex characters/.test(err.message)) {
-      plugin.error(`Invalid resource id: ${uid}`);
+      plugin.error(`Invalid uid: ${uid}`);
     }
     throw err;
   }

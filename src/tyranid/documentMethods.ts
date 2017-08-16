@@ -655,54 +655,11 @@ console.log(accessObj.p0057365273edce8e452bee9cfa.view)
     permissionsToCheck: string[],
     resourceUidList: string[] | Tyr.Document[]
   ) {
-    const plugin = PermissionsModel.getGraclPlugin(),
-          accessMap = {} as { [k: string]: { [k: string]: boolean } };
-
-    const uidsToCheck: string[] =
-      typeof resourceUidList[0] === 'string'
-        ? <string[]> resourceUidList
-        : <string[]> _.map(<Tyr.Document[]> resourceUidList, '$uid');
-
-    if (!plugin.graclHierarchy.subjects.has(this.$model.def.name)) {
-      plugin.error(
-        `can only call $determineAccessToAllPermissions on a valid subject, ` +
-        `${this.$model.def.name} is not a subject.`
-      );
-    }
-
-    const retrievedDocumentsPromise = Promise.all(
-      _.map(permissionsToCheck, perm => {
-        const tyranidOpts = {
-          auth: this,
-          perm: perm,
-          fields: { _id: 1 }
-        };
-
-        return Tyr.byUids(uidsToCheck, tyranidOpts);
-      })
+    return PermissionsModel.determineAccessToAllPermissions(
+      this,
+      permissionsToCheck,
+      resourceUidList
     );
-
-    // Hacky double cast for promise.all weirdness
-    const retrievedDocumentMatrix = <Tyr.Document[][]> (<any> (await retrievedDocumentsPromise));
-
-    const permissionSetHash = _.reduce(
-      retrievedDocumentMatrix,
-      (out, documentList, index) => {
-        const permission = permissionsToCheck[index];
-        out[permission] = new Set(<string[]> _.chain(documentList).map('$uid').compact().value());
-        return out;
-      },
-      <Hash<Set<string>>> {}
-    );
-
-    _.each(uidsToCheck, uid => {
-      accessMap[uid] = {};
-      _.each(permissionsToCheck, perm => {
-        accessMap[uid][perm] = permissionSetHash[perm].has(uid);
-      });
-    });
-
-    return accessMap;
   },
 
 
