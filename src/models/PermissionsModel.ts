@@ -207,6 +207,10 @@ export class PermissionsModel extends PermissionsBaseCollection {
     permissionType: string,
     subjectData: Tyr.Document | string
   ): Promise<permissionExplaination> {
+    console.warn(
+      `tyranid-gracl: Warning: results of $explainPermission may be different than $determineAccess / $isAllowed.`
+    + ` $determineAccess should be seen as the main source of truth.`
+    );
     const plugin = PermissionsModel.getGraclPlugin();
     validatePermissionExists(plugin, permissionType);
 
