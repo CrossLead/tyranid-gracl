@@ -385,7 +385,7 @@ export async function query(
       // from <nextCollectionName>
       const linkedCollectionName = nextCollectionName;
 
-      const addIdsToQueryMap = (access: boolean) => (id: string) => {
+      const addIdsToQueryMap = (access: boolean) => (id: string | ObjectID) => {
         const accessString = access ? 'positive' : 'negative',
           altAccessString = access ? 'negative' : 'positive',
           resourceUid = Tyr.byName[linkedCollectionName].idToUid(id);
@@ -406,7 +406,7 @@ export async function query(
         // dont override the lower level
         const map = queryMaps[altAccessString].get(linkedCollectionName);
 
-        if (!map || !map.has(id)) {
+        if (!map || !map.has(id.toString())) {
           accessSet.add(id);
         }
       };
