@@ -208,8 +208,8 @@ export class PermissionsModel extends PermissionsBaseCollection {
     subjectData: Tyr.Document | string
   ): Promise<permissionExplaination> {
     console.warn(
-      `tyranid-gracl: Warning: results of $explainPermission may be different than $determineAccess / $isAllowed.`
-    + ` $determineAccess should be seen as the main source of truth.`
+      `tyranid-gracl: Warning: results of $explainPermission may be different than $determineAccess / $isAllowed.` +
+        ` $determineAccess should be seen as the main source of truth.`
     );
     const plugin = PermissionsModel.getGraclPlugin();
     validatePermissionExists(plugin, permissionType);
@@ -370,9 +370,10 @@ export class PermissionsModel extends PermissionsBaseCollection {
       retrievedDocumentMatrix,
       (out, documentList, index) => {
         const permission = permissionsToCheck[index];
-        out[permission] = new Set(
-          <string[]>_.chain(documentList).map('$uid').compact().value()
-        );
+        out[permission] = new Set(<string[]>_.chain(documentList)
+          .map('$uid')
+          .compact()
+          .value());
         return out;
       },
       <Hash<Set<string>>>{}
@@ -509,10 +510,9 @@ export class PermissionsModel extends PermissionsBaseCollection {
 
       await Promise.all(
         _.map(collections, async collectionName => {
-          const subjects = (subjectsByCollection[
-            collectionName
-          ] = _.filter(subjectsByCollection[collectionName], s =>
-            filterAccess(s)
+          const subjects = (subjectsByCollection[collectionName] = _.filter(
+            subjectsByCollection[collectionName],
+            s => filterAccess(s)
           ));
 
           const query: Tyr.MongoQuery = {

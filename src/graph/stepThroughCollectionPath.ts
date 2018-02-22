@@ -27,8 +27,9 @@ export async function stepThroughCollectionPath<
 
   if (!nextCollectionLinkField) {
     plugin.error(
-      `cannot step through collection path, as no link to collection ${nextCollection
-        .def.name} ` + `from collection ${previousCollection.def.name}`
+      `cannot step through collection path, as no link to collection ${
+        nextCollection.def.name
+      } ` + `from collection ${previousCollection.def.name}`
     );
   }
 

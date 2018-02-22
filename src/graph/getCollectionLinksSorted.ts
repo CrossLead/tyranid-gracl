@@ -44,14 +44,15 @@ export function getCollectionLinksSorted<D extends Tyr.Document>(
         if (filtered.length === 0) {
           return colLinks.slice(0, 1);
           /**
-         * one? use it
-         */
+           * one? use it
+           */
         } else if (filtered.length === 1) {
           return filtered;
         } else {
           throw new Error(
-            `Multiple links to ${colName} for collection ${col.def
-              .name} have graclTypes`
+            `Multiple links to ${colName} for collection ${
+              col.def.name
+            } have graclTypes`
           );
         }
       } else {

@@ -41,8 +41,9 @@ export function createInQueries(
 
       if (!link) {
         return plugin.error(
-          `No outgoing link from ${queriedCollection.def
-            .name} to ${col}, cannot create restricted ${key} clause!`
+          `No outgoing link from ${
+            queriedCollection.def.name
+          } to ${col}, cannot create restricted ${key} clause!`
         );
       }
 
