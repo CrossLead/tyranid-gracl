@@ -21,7 +21,7 @@ export function getShortestPath(
   const path: string[] = [a];
 
   while (a !== b) {
-    a = <string>_.get(next, `${a}.${b}`);
+    a = _.get<any>(next, `${a}.${b}` as any); // TODO: fix typings
     if (!a) return [];
     path.push(a);
   }
