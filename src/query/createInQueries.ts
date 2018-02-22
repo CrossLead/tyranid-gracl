@@ -50,7 +50,9 @@ export function createInQueries(
       prop = link.spath;
     }
 
-    conditions.push({ [prop as string]: { [key as string]: Array.from(idSet) } });
+    conditions.push({
+      [prop as string]: { [key as string]: Array.from(idSet) }
+    });
   });
 
   return { [key === '$in' ? '$or' : '$and']: conditions };

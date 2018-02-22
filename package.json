@@ -17,7 +17,7 @@
     "pretest": "npm run build",
     "prepublish": "npm run test",
     "test": "ava",
-    "prettier": "prettier --single-quote true --write './{src,test}/**/*.ts'",
+    "prettier": "prettier --loglevel error --single-quote true --write './{src,test}/**/*.ts'",
     "compile-module-test": "cd ./test/tscompile && tsc --pretty",
     "tsc": "tsc -d --pretty -p ./",
     "lint": "tslint --fix -e ./test/spec/types -c ./tslint.json ./{test,src}/**/*.ts && echo '> \\033[0;32mlinter passed!\\033[0m'",
