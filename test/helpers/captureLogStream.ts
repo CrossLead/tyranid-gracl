@@ -6,7 +6,7 @@ export function captureLogStream(
   let buf = '';
 
   stream.write = function(
-    chunk: any,
+    chunk: Buffer | string,
     encoding?: string | Function,
     callback?: Function
   ) {

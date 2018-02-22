@@ -1,8 +1,8 @@
 import { ContextualTestContext } from 'ava';
 
-export async function expectAsyncToThrow(
+export async function expectAsyncToThrow<R>(
   t: ContextualTestContext,
-  asyncFn: (...args: any[]) => Promise<any>,
+  asyncFn: () => Promise<R>,
   expectedMessageRegex: RegExp,
   description = ''
 ) {

@@ -279,13 +279,13 @@ test.serial(
     const number_of_resources = secure.graclHierarchy.resources.size;
     const number_of_crud_perms = _.filter(
       permissionTypes,
-      (perm: { [k: string]: any }) => {
+      (perm: { abstract?: boolean; collection?: boolean }) => {
         return !perm['abstract'] && !perm['collection'];
       }
     ).length;
     const number_of_abstract_perms = _.filter(
       permissionTypes,
-      (perm: { [k: string]: any }) => {
+      (perm: { abstract?: boolean; collection?: boolean }) => {
         return perm['abstract'];
       }
     ).length;
@@ -343,15 +343,21 @@ test.serial(
   }
 );
 
+interface Permission extends Tyr.Document {
+  resourceId: mongodb.ObjectID;
+  subjectId: mongodb.ObjectID;
+  access: { [key: string]: boolean | void };
+}
+
 test.serial('should successfully add permissions', async t => {
   const updatedChopped = await giveBenAccessToChoppedPosts(t);
-  const choppedPermissions: any[] = await updatedChopped.$permissions(
+  const choppedPermissions = (await updatedChopped.$permissions(
     undefined,
     'resource'
-  );
-  const existingPermissions: any[] = await Tyr.byName[
-    'graclPermission'
-  ].findAll({ query: {} });
+  )) as Permission[];
+  const existingPermissions = (await Tyr.byName['graclPermission'].findAll({
+    query: {}
+  })) as Permission[];
 
   t.deepEqual(existingPermissions.length, 1);
   t.deepEqual(
@@ -480,10 +486,10 @@ test.serial('should throw error when passing invalid uid', async t => {
   await expectAsyncToThrow(
     t,
     () =>
-      (<any>chopped).$allow('abstract_view_chart', {
+      chopped.$allow('abstract_view_chart', {
         $uid: 'u00undefined',
         $model: Tyr.byName.user
-      }),
+      } as any), // tslint:disable-line
     /Invalid uid/g,
     'invalid uid should throw (allow, string)'
   );
@@ -952,7 +958,7 @@ test.serial(
   async t => {
     await giveBenAccessToChoppedPosts(t);
 
-    const Post = <any>Tyr.byName.post,
+    const Post = Tyr.byName.post,
       ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
       query = ben && (await secure.query(Post, 'edit', ben));
 
@@ -1096,9 +1102,9 @@ test.serial(
     const foundPosts = await Tyr.byName.post.findAll({ query });
 
     t.true(
-      _.every(foundPosts, (post: any) => {
+      _.every(foundPosts, post => {
         return (
-          post['blogId'].toString() === chipotleCorporateBlog.$id.toString()
+          post['blogId']!.toString() === chipotleCorporateBlog.$id.toString()
         );
       }),
       'all found posts should come from the one allowed blog'
