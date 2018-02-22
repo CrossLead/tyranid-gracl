@@ -5,6 +5,8 @@
     "no-reference": false,
     "object-literal-sort-keys": false,
     "interface-name": false,
+    "jsdoc-format": false,
+    "ordered-imports": false,
     "quotemark": [true, "single"]
   }
 }

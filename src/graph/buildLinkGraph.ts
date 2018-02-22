@@ -1,5 +1,5 @@
-import { Tyr } from 'tyranid';
 import * as _ from 'lodash';
+import { Tyr } from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { Hash } from '../interfaces';
 
@@ -14,14 +14,16 @@ export function buildLinkGraph(plugin: GraclPlugin) {
   plugin.log(`creating link graph...`);
 
   _.each(Tyr.collections, col => {
-    const links = col.links({ direction: 'outgoing' }),
-      colName = col.def.name;
+    const links = col.links({ direction: 'outgoing' });
+    const colName = col.def.name;
 
     _.each(links, linkField => {
-      if (linkField.def['graclIgnore']) return;
+      if (linkField.def.graclIgnore) {
+        return;
+      }
 
-      const edges = _.get(g, colName, new Set<string>()),
-        linkName = linkField.link!.def.name;
+      const edges = _.get(g, colName, new Set<string>());
+      const linkName = linkField.link!.def.name;
 
       edges.add(linkName);
 
@@ -30,9 +32,9 @@ export function buildLinkGraph(plugin: GraclPlugin) {
     });
   });
 
-  const dist: Hash<Hash<number>> = {},
-    next: Hash<Hash<string>> = {},
-    keys = _.keys(g);
+  const dist: Hash<Hash<number>> = {};
+  const next: Hash<Hash<string>> = {};
+  const keys = _.keys(g);
 
   _.each(keys, a => {
     _.each(keys, b => {
@@ -65,5 +67,5 @@ export function buildLinkGraph(plugin: GraclPlugin) {
     });
   });
 
-  return (plugin._outgoingLinkPaths = next);
+  return (plugin.outgoingLinkPaths = next);
 }

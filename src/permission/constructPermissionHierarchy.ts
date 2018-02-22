@@ -1,7 +1,7 @@
 import { topologicalSort } from 'gracl';
 import * as _ from 'lodash';
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { permissionHierarchy, permissionTypeList, Hash } from '../interfaces';
+import { Hash, permissionHierarchy, PermissionTypeList } from '../interfaces';
 import { parsePermissionString } from '../permission/parsePermissionString';
 
 /**
@@ -20,7 +20,7 @@ export function constructPermissionHierarchy(plugin: GraclPlugin) {
    * Run topological sort on permissions values,
      checking for circular dependencies / missing nodes
    */
-  const sorted = <permissionTypeList>_.compact(
+  const sorted = _.compact(
     topologicalSort(
       _.map(plugin.permissionTypes, perm => {
         if (perm.abstract === undefined && !perm.collection) {
@@ -34,14 +34,16 @@ export function constructPermissionHierarchy(plugin: GraclPlugin) {
         }
 
         const singleParent = perm.parent;
-        if (singleParent) perm.parents = [singleParent];
+        if (singleParent) {
+          perm.parents = [singleParent];
+        }
 
         /**
      *  Check for non-abstract permissions (as parents) which will not have a
         node listed in the permissionType list, but whose "action" should
         be a node in the list.
      */
-        const parents = <string[]>perm.parents;
+        const parents = perm.parents as string[];
         if (parents) {
           if (!Array.isArray(parents)) {
             plugin.error(
@@ -49,7 +51,7 @@ export function constructPermissionHierarchy(plugin: GraclPlugin) {
             );
           }
 
-          const colParents = <string[]>[];
+          const colParents = [] as string[];
           for (const parent of parents) {
             // if we have an <action>-<collection> permission...
             if (parent && /-/.test(parent)) {
@@ -92,10 +94,10 @@ export function constructPermissionHierarchy(plugin: GraclPlugin) {
       'name',
       'collection_parents'
     )
-  );
+  ) as PermissionTypeList;
 
-  const duplicates = new Set(),
-    exist = new Set();
+  const duplicates = new Set();
+  const exist = new Set();
 
   for (const perm of sorted) {
     const name = perm && perm.name;
@@ -115,10 +117,10 @@ export function constructPermissionHierarchy(plugin: GraclPlugin) {
   const hierarchy: permissionHierarchy = {};
 
   _.each(sorted, node => {
-    const name = node.name,
-      parents = <string[]>(node.parents || []),
-      abstract = node.abstract || false,
-      collection = node.collection || false;
+    const name = node.name;
+    const parents = (node.parents || []) as string[];
+    const abstract = node.abstract || false;
+    const collection = node.collection || false;
 
     if (!(abstract || collection)) {
       plugin.crudPermissionSet.add(name);
@@ -126,8 +128,8 @@ export function constructPermissionHierarchy(plugin: GraclPlugin) {
 
     hierarchy[name] = {
       name,
-      abstract: abstract,
-      collection: collection,
+      abstract,
+      collection,
       format: node.format,
       // need to add parents, that may be non-abstract nodes that don't directly exist in hierarchy
       parents: _.map(parents, (p: string) => {
@@ -140,10 +142,12 @@ export function constructPermissionHierarchy(plugin: GraclPlugin) {
           );
         }
 
-        if (hierarchyParent) return hierarchyParent;
+        if (hierarchyParent) {
+          return hierarchyParent;
+        }
 
-        const parsed = parsePermissionString(plugin, p),
-          action = parsed.action;
+        const parsed = parsePermissionString(plugin, p);
+        const action = parsed.action;
 
         if (abstract && !parsed.collection) {
           plugin.error(
@@ -166,7 +170,7 @@ export function constructPermissionHierarchy(plugin: GraclPlugin) {
         }
 
         // the non-abstract parent, must itself have a parent in the hierarchy...
-        const subParents: Hash<any>[] = [];
+        const subParents: Array<Hash<{}>> = [];
         if (action) {
           subParents.push(hierarchy[action]);
         } else {

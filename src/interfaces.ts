@@ -1,12 +1,20 @@
 import { Tyr } from 'tyranid';
 
+export interface Permission extends Tyr.Document {
+  resourceId: string;
+  subjectId: string;
+  resourceType: string;
+  subjectType: string;
+  access: { [key: string]: boolean | void };
+}
+
 export interface Hash<T> {
   [key: string]: T;
 }
 
-export type permissionTypeList = permissionType[];
+export type PermissionTypeList = PermissionType[];
 
-export interface permissionType {
+export interface PermissionType {
   abstract?: boolean;
   format?: string | ((action: string, collection?: string) => string);
   collection?: boolean;
@@ -18,18 +26,18 @@ export interface permissionType {
 
 export type permissionHierarchy = Hash<any>;
 
-export interface permissionExplaination {
+export interface PermissionExplaination {
   type: string;
   reason: string;
   access: boolean;
 }
 
-export interface pluginOptions {
+export interface PluginOptions {
   verbose?: boolean;
-  permissionTypes?: permissionTypeList;
+  permissionTypes?: PermissionTypeList;
 }
 
-export interface schemaGraclConfigObject {
+export interface SchemaGraclConfigObject {
   permissions?: {
     thisCollectionOnly?: boolean;
     excludeCollections?: string[];

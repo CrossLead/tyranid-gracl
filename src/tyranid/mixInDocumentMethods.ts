@@ -7,9 +7,9 @@ import { documentMethods } from './documentMethods';
  * so permissions checks can be done directly from documents
  */
 export function mixInDocumentMethods(plugin: GraclPlugin) {
-  const tyranidDocumentPrototype = <{
-    [key: string]: any;
-  }>Tyr.documentPrototype;
+  const tyranidDocumentPrototype = Tyr.documentPrototype as {
+    [key: string]: Function; // tslint:disable-line
+  };
 
   plugin.log(`mixing in document methods...`);
 
@@ -20,7 +20,8 @@ export function mixInDocumentMethods(plugin: GraclPlugin) {
           `tried to set method ${method} on document prototype, but it already exists!`
         );
       }
-      tyranidDocumentPrototype[method] = (<any>documentMethods)[method];
+      tyranidDocumentPrototype[method] =
+        documentMethods[method as keyof typeof documentMethods];
     }
   }
 }

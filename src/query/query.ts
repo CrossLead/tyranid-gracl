@@ -1,15 +1,15 @@
-import { Tyr } from 'tyranid';
+import { baseCompare } from 'gracl';
 import * as _ from 'lodash';
 import { ObjectID } from 'mongodb';
-import { Permission, baseCompare } from 'gracl';
+import { Tyr } from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
+import { Hash, Permission } from '../interfaces';
 import { PermissionsModel } from '../models/PermissionsModel';
-import { Hash } from '../interfaces';
 import { createHierarchicalQuery } from './createHierarchicalQuery';
 
-import { parsePermissionString } from '../permission/parsePermissionString';
 import { formatPermissionType } from '../permission/formatPermissionType';
 import { getPermissionParents } from '../permission/getPermissionParents';
+import { parsePermissionString } from '../permission/parsePermissionString';
 import { validatePermissionExists } from '../permission/validatePermissionExists';
 
 import { getCollectionLinksSorted } from '../graph/getCollectionLinksSorted';
@@ -114,12 +114,12 @@ export async function query(
 
   // extract subject and resource Gracl classes
   const ResourceClass = plugin.graclHierarchy.getResource(
-      queriedCollectionName
-    ),
-    SubjectClass = plugin.graclHierarchy.getSubject(
-      subjectDocument.$model.def.name
-    ),
-    subject = new SubjectClass(subjectDocument);
+    queriedCollectionName
+  );
+  const SubjectClass = plugin.graclHierarchy.getSubject(
+    subjectDocument.$model.def.name
+  );
+  const subject = new SubjectClass(subjectDocument);
 
   plugin.log(
     `restricting query for collection = ${queriedCollectionName} ` +
@@ -133,17 +133,17 @@ export async function query(
 
   // get list of all ids in the subject hierarchy,
   // as well as the names of the classes in the resource hierarchy
-  const subjectHierarchyIds = await subject.getHierarchyIds(),
-    resourceHierarchyClasses = ResourceClass.getHierarchyClassNames(),
-    permissionsQuery = {
-      subjectId: { $in: subjectHierarchyIds },
-      resourceType: { $in: resourceHierarchyClasses },
-      $or: permissionTypes.map(perm => {
-        return {
-          [`access.${perm}`]: { $exists: true }
-        };
-      })
-    };
+  const subjectHierarchyIds = await subject.getHierarchyIds();
+  const resourceHierarchyClasses = ResourceClass.getHierarchyClassNames();
+  const permissionsQuery = {
+    subjectId: { $in: subjectHierarchyIds },
+    resourceType: { $in: resourceHierarchyClasses },
+    $or: permissionTypes.map(perm => {
+      return {
+        [`access.${perm}`]: { $exists: true }
+      };
+    })
+  };
 
   const permissions = await PermissionsModel.findAll({
     query: permissionsQuery
@@ -155,29 +155,29 @@ export async function query(
     return false;
   }
 
-  type resourceMapEntries = {
-    permissions: Map<string, any>;
+  interface ResourceMapEntries {
+    resourcePermissions: Map<string, Permission>;
     collection: Tyr.CollectionInstance;
-  };
+  }
 
-  const resourceMap = (<Permission[]>(<any>permissions)).reduce(
-    (map: Map<string, resourceMapEntries>, perm: Permission) => {
-      const resourceCollectionName = <string>perm.resourceType,
-        resourceId = <string>perm.resourceId;
+  const resourceMap = (permissions as Permission[]).reduce(
+    (map: Map<string, ResourceMapEntries>, perm: Permission) => {
+      const resourceCollectionName = perm.resourceType as string;
+      const resourceId = perm.resourceId as string;
 
       const perms = map.get(resourceCollectionName) || {
         collection: Tyr.byName[resourceCollectionName],
-        permissions: new Map()
+        resourcePermissions: new Map()
       };
 
       if (!map.has(resourceCollectionName)) {
         map.set(resourceCollectionName, perms);
       }
 
-      perms.permissions.set(resourceId, perm);
+      perms.resourcePermissions.set(resourceId, perm);
       return map;
     },
-    new Map<string, resourceMapEntries>()
+    new Map<string, ResourceMapEntries>()
   );
 
   // loop through all the fields in the collection that we are
@@ -187,7 +187,9 @@ export async function query(
     plugin,
     queriedCollection
   ).reduce((map, field: Tyr.FieldInstance) => {
-    if (field.def.link) map.set(field.def.link, field);
+    if (field.def.link) {
+      map.set(field.def.link, field);
+    }
     return map;
   }, new Map<string, Tyr.FieldInstance>());
 
@@ -211,7 +213,7 @@ export async function query(
 
   // extract all collections that have a relevant permission set for the requested resource
   for (let i = 0, l = resourceArray.length; i < l; i++) {
-    const { collection, permissions } = resourceArray[i];
+    const { collection, resourcePermissions } = resourceArray[i];
 
     const collectionName = collection.def.name;
     const isQueriedCollection = queriedCollectionName === collectionName;
@@ -221,7 +223,7 @@ export async function query(
       queriedCollectionLinkFields.has(collectionName) ||
       isQueriedCollection
     ) {
-      const permissionArray = [...permissions.values()];
+      const permissionArray = [...resourcePermissions.values()];
 
       for (const permission of permissionArray) {
         const access = getAccess(permission);
@@ -229,8 +231,8 @@ export async function query(
           // access needs to be exactly true or false
           case true:
           case false:
-            const key = access ? 'positive' : 'negative',
-              uid = permission.resourceId;
+            const key = access ? 'positive' : 'negative';
+            const uid = permission.resourceId;
             // if a permission was set by a collection of higher depth, keep it...
             if (alreadySet.has(uid)) {
               continue;
@@ -306,10 +308,10 @@ export async function query(
         );
       }
 
-      let positiveIds: ObjectID[] = [],
-        negativeIds: ObjectID[] = [];
+      let positiveIds: ObjectID[] = [];
+      let negativeIds: ObjectID[] = [];
 
-      for (const permission of permissions.values()) {
+      for (const permission of resourcePermissions.values()) {
         // grab access boolean for given permissionType
         const access = getAccess(permission);
         switch (access) {
@@ -323,8 +325,8 @@ export async function query(
         }
       }
 
-      const pathEndCollection = Tyr.byName[pathEndCollectionName],
-        nextCollection = Tyr.byName[_.last(path) as string];
+      const pathEndCollection = Tyr.byName[pathEndCollectionName];
+      const nextCollection = Tyr.byName[_.last(path) as string];
 
       positiveIds = await stepThroughCollectionPath(
         plugin,
@@ -343,17 +345,19 @@ export async function query(
       // we don't need to do another link in the path, as the current path collection
       // has a link that exists on the queried collection
       let pathCollectionName = pathEndCollectionName;
-      let nextCollectionName = nextCollection.def.name;
+      const nextCollectionName = nextCollection.def.name;
 
       while (path.length >= 2) {
         // break if we are one edge away
-        if (path.length === 2 && path[0] === queriedCollectionName) break;
+        if (path.length === 2 && path[0] === queriedCollectionName) {
+          break;
+        }
 
         const pathCollection =
-            Tyr.byName[
-              (pathCollectionName = path.pop() || plugin._NO_COLLECTION)
-            ],
-          nextCollection = Tyr.byName[_.last(path) as string];
+          Tyr.byName[
+            (pathCollectionName = path.pop() || plugin._NO_COLLECTION)
+          ];
+        const nextPathCollection = Tyr.byName[_.last(path) as string];
 
         if (!pathCollection) {
           plugin.error(
@@ -369,13 +373,13 @@ export async function query(
           plugin,
           positiveIds,
           pathCollection,
-          nextCollection
+          nextPathCollection
         );
         negativeIds = await stepThroughCollectionPath(
           plugin,
           negativeIds,
           pathCollection,
-          nextCollection
+          nextPathCollection
         );
       }
 
@@ -386,9 +390,9 @@ export async function query(
       const linkedCollectionName = nextCollectionName;
 
       const addIdsToQueryMap = (access: boolean) => (id: string | ObjectID) => {
-        const accessString = access ? 'positive' : 'negative',
-          altAccessString = access ? 'negative' : 'positive',
-          resourceUid = Tyr.byName[linkedCollectionName].idToUid(id);
+        const accessString = access ? 'positive' : 'negative';
+        const altAccessString = access ? 'negative' : 'positive';
+        const resourceUid = Tyr.byName[linkedCollectionName].idToUid(id);
 
         if (alreadySet.has(resourceUid)) {
           return;
@@ -425,11 +429,11 @@ export async function query(
     }
   }
 
-  const resultingQuery = <Hash<any>>createHierarchicalQuery(
+  const resultingQuery = createHierarchicalQuery(
     plugin,
     queryMaps,
     queriedCollection
-  );
+  ) as Hash<{}>;
 
   return resultingQuery;
 }

@@ -6,7 +6,11 @@ import { GraclPlugin } from '../classes/GraclPlugin';
 export function getObjectHierarchy(plugin: GraclPlugin) {
   const hierarchy = { subjects: {}, resources: {} };
 
-  const build = (obj: any) => (node: typeof Node) => {
+  interface Heirarchy {
+    [key: string]: Heirarchy;
+  }
+
+  const build = (obj: Heirarchy) => (node: typeof Node) => {
     const path = node.getHierarchyClassNames().reverse();
     let o = obj;
     for (let i = 0, l = path.length; i < l; i++) {

@@ -22,7 +22,7 @@ export function extractIdAndModel(
 ) {
   if (typeof doc === 'string') {
     validate(plugin, doc);
-    const components: { [key: string]: any } = Tyr.parseUid(doc) || {};
+    const components: { [key: string]: {} } = Tyr.parseUid(doc) || {};
     return {
       $uid: doc as string,
       $model: components.collection as Tyr.CollectionInstance

@@ -1,9 +1,9 @@
 import { Tyr } from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
+import { validateAsResource } from '../graph/validateAsResource';
+import { formatPermissionType } from './formatPermissionType';
 import { isCrudPermission } from './isCrudPermission';
 import { parsePermissionString } from './parsePermissionString';
-import { formatPermissionType } from './formatPermissionType';
-import { validateAsResource } from '../graph/validateAsResource';
 import { validatePermissionExists } from './validatePermissionExists';
 
 /**
@@ -23,7 +23,7 @@ export function validatePermissionForResource(
     const action = parsePermissionString(plugin, permissionString).action;
     const formatted = !action
       ? permissionString
-      : formatPermissionType(plugin, { collection: name, action: action });
+      : formatPermissionType(plugin, { collection: name, action });
 
     plugin.error(
       `Cannot use raw crud permission "${permissionString}" ` +

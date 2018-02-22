@@ -1,11 +1,11 @@
-import { Tyr } from 'tyranid';
+import { Graph, SchemaNode } from 'gracl';
 import * as _ from 'lodash';
-import { SchemaNode, Graph } from 'gracl';
+import { Tyr } from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { schemaGraclConfigObject, TyrSchemaGraphObjects } from '../interfaces';
+import { SchemaGraclConfigObject, TyrSchemaGraphObjects } from '../interfaces';
 
-import { getCollectionLinksSorted } from './getCollectionLinksSorted';
 import { createSchemaNode } from './createSchemaNode';
+import { getCollectionLinksSorted } from './getCollectionLinksSorted';
 
 /**
  * Create full gracl hierarhcy of subject and resource instances
@@ -17,29 +17,35 @@ export function createGraclHierarchy(plugin: GraclPlugin) {
   const collections = Tyr.collections;
 
   const graclGraphNodes = {
-    subjects: <TyrSchemaGraphObjects>{
+    subjects: {
       links: [],
       parents: []
-    },
-    resources: <TyrSchemaGraphObjects>{
+    } as TyrSchemaGraphObjects,
+    resources: {
       links: [],
       parents: []
-    }
+    } as TyrSchemaGraphObjects
   };
 
   // loop through all collections, retrieve
   // ownedBy links
   collections.forEach(col => {
     const linkFields = getCollectionLinksSorted(plugin, col, {
-        relate: 'ownedBy',
-        direction: 'outgoing'
-      }),
-      graclConfig = <schemaGraclConfigObject>_.get(col, 'def.graclConfig', {}),
-      graclTypeAnnotation = <string[]>_.get(graclConfig, 'types', []),
-      collectionName = col.def.name;
+      relate: 'ownedBy',
+      direction: 'outgoing'
+    });
+    const graclConfig = _.get(
+      col,
+      'def.graclConfig',
+      {}
+    ) as SchemaGraclConfigObject;
+    const graclTypeAnnotation = _.get(graclConfig, 'types', []) as string[];
+    const collectionName = col.def.name;
 
     // if no links at all, skip
-    if (!(linkFields.length || graclTypeAnnotation.length)) return;
+    if (!(linkFields.length || graclTypeAnnotation.length)) {
+      return;
+    }
 
     // validate that we can only have one parent of each field.
     if (linkFields.length > 1) {
@@ -53,7 +59,9 @@ export function createGraclHierarchy(plugin: GraclPlugin) {
     const graclType = _.get(field || {}, 'def.graclTypes', graclTypeAnnotation);
 
     // if no graclType property on this collection, skip the collection
-    if (!(graclType && graclType.length)) return;
+    if (!(graclType && graclType.length)) {
+      return;
+    }
 
     while (graclType.length) {
       const currentType = graclType.pop();
@@ -89,7 +97,8 @@ export function createGraclHierarchy(plugin: GraclPlugin) {
   };
 
   for (const type of ['subjects', 'resources']) {
-    let nodes: Map<string, SchemaNode>, tyrObjects: TyrSchemaGraphObjects;
+    let nodes: Map<string, SchemaNode>;
+    let tyrObjects: TyrSchemaGraphObjects;
 
     let graclType: string;
     if (type === 'subjects') {
@@ -133,12 +142,16 @@ export function createGraclHierarchy(plugin: GraclPlugin) {
       plugin.resourceChildren.set(childName, new Set<string>());
     }
     _.each(resource.getHierarchyClassNames(), parentName => {
-      if (parentName === childName) return;
+      if (parentName === childName) {
+        return;
+      }
       if (!plugin.resourceChildren.has(parentName)) {
         plugin.resourceChildren.set(parentName, new Set<string>());
       }
       const parent = plugin.resourceChildren.get(parentName);
-      if (parent) parent.add(childName);
+      if (parent) {
+        parent.add(childName);
+      }
     });
   });
 }

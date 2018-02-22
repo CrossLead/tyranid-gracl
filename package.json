@@ -20,7 +20,7 @@
     "prettier": "prettier --single-quote true --write './{src,test}/**/*.ts'",
     "compile-module-test": "cd ./test/tscompile && tsc --pretty",
     "tsc": "tsc -d --pretty -p ./",
-    "lint": "tslint --fix -e ./test/spec/types -c ./tslint.json ./{test,lib}/**/*.ts && echo '> \\033[0;32mlinter passed!\\033[0m'",
+    "lint": "tslint --fix -e ./test/spec/types -c ./tslint.json ./{test,src}/**/*.ts && echo '> \\033[0;32mlinter passed!\\033[0m'",
     "compile-collections": "tsc -p ./test/models",
     "generate-collection-types": "npm run compile-collections && mkdir -p test/spec/types &&  tyranid-tdgen -o './test/spec/types/isomorphic.d.ts' './dist/test/models/**/*.js' && tyranid-tdgen -o './test/spec/types/server.d.ts' -t server './dist/test/models/**/*.js'"
   },

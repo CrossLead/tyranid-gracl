@@ -9,15 +9,17 @@ import { GraclPlugin } from '../classes/GraclPlugin';
 export function getCollectionLinksSorted<D extends Tyr.Document>(
   plugin: GraclPlugin,
   col: Tyr.CollectionInstance<D>,
-  opts: any = { direction: 'outgoing' }
+  opts: { direction: string; relate?: string } = { direction: 'outgoing' }
 ): Tyr.FieldInstance[] {
-  const collectionFieldCache = plugin._sortedLinkCache,
-    hash = `${col.def.name}:${_.toPairs(opts)
-      .map(e => e.join('='))
-      .sort()
-      .join(':')}`;
+  const collectionFieldCache = plugin.sortedLinkCache;
+  const hash = `${col.def.name}:${_.toPairs(opts)
+    .map(e => e.join('='))
+    .sort()
+    .join(':')}`;
 
-  if (collectionFieldCache[hash]) { return collectionFieldCache[hash]; }
+  if (collectionFieldCache[hash]) {
+    return collectionFieldCache[hash];
+  }
 
   const linkFields = col.links(opts);
 

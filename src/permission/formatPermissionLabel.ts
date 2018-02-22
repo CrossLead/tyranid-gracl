@@ -1,7 +1,7 @@
 import { startCase } from 'lodash';
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { parsePermissionString } from './parsePermissionString';
 import { getPermissionObject } from './getPermissionObject';
+import { parsePermissionString } from './parsePermissionString';
 
 /**
  * Given a permission string, like `view-user`
@@ -13,9 +13,9 @@ export function formatPermissionLabel(
   plugin: GraclPlugin,
   perm: string
 ): string {
-  const components = parsePermissionString(plugin, perm),
-    obj = getPermissionObject(plugin, perm),
-    format = obj && obj.format;
+  const components = parsePermissionString(plugin, perm);
+  const obj = getPermissionObject(plugin, perm);
+  const format = obj && obj.format;
 
   if (format) {
     if (typeof format === 'string') {

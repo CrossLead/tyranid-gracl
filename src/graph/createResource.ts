@@ -15,8 +15,10 @@ export function createResource(
     );
   }
 
-  const resourceCollectionName = resourceDocument.$model.def.name,
-    ResourceClass = plugin.graclHierarchy.getResource(resourceCollectionName);
+  const resourceCollectionName = resourceDocument.$model.def.name;
+  const ResourceClass = plugin.graclHierarchy.getResource(
+    resourceCollectionName
+  );
 
   if (!ResourceClass) {
     plugin.error(

@@ -1,5 +1,5 @@
-import { Tyr } from 'tyranid';
 import * as _ from 'lodash';
+import { Tyr } from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
 
 /**
@@ -11,18 +11,23 @@ export function getShortestPath(
   colA: Tyr.CollectionInstance,
   colB: Tyr.CollectionInstance
 ) {
-  let a = colA.def.name,
-    b = colB.def.name,
-    originalEdge = `${a}.${b}`,
-    next = plugin._outgoingLinkPaths;
+  let a = colA.def.name;
+  const b = colB.def.name;
+  const originalEdge = `${a}.${b}`;
+  const next = plugin.outgoingLinkPaths;
 
-  if (!_.get(next, originalEdge)) return [];
+  if (!_.get(next, originalEdge)) {
+    return [];
+  }
 
   const path: string[] = [a];
 
   while (a !== b) {
-    a = _.get<any>(next, `${a}.${b}` as any); // TODO: fix typings
-    if (!a) return [];
+    // tslint:disable-next-line
+    a = _.get<any>(next, `${a}.${b}` as any);
+    if (!a) {
+      return [];
+    }
     path.push(a);
   }
 

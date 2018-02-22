@@ -1,12 +1,12 @@
-import { Tyr } from 'tyranid';
+import { Node, Permission, SchemaNode, Subject } from 'gracl';
 import * as _ from 'lodash';
 import { ObjectID } from 'mongodb';
-import { SchemaNode, Permission, Node, Subject } from 'gracl';
+import { Tyr } from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { PermissionsModel } from '../models/PermissionsModel';
 import { makeRepository } from '../tyranid/makeRepository';
-import { getShortestPath } from './getShortestPath';
 import { findLinkInCollection } from './findLinkInCollection';
+import { getShortestPath } from './getShortestPath';
 
 /**
  *  Create a schema node for consumption by gracl.buildResourceHierarchy() or gracl.buildSubjectHierarchy()
@@ -28,31 +28,31 @@ export function createSchemaNode(
   type: string,
   node?: Tyr.FieldInstance
 ): SchemaNode {
-  return <SchemaNode>{
+  return {
     id: '$uid',
     name: collection.def.name,
     repository: makeRepository(plugin, collection, type),
-    type: type,
+    type,
     parent: node && node.link && node.link.def.name,
 
     async getPermission(this: Node, subject: Subject): Promise<Permission> {
-      const subjectId = subject.getId(),
-        resourceId = this.getId();
+      const subjectId = subject.getId();
+      const resourceId = this.getId();
 
-      const perm = <any>await PermissionsModel.findOne({
+      const perm = await PermissionsModel.findOne({
         query: {
           subjectId,
           resourceId
         }
       });
 
-      return <Permission>(perm || {
+      return (perm || {
         subjectId,
         resourceId: '',
         resourceType: '',
         subjectType: this.getName(),
         access: {}
-      });
+      }) as Permission;
     },
 
     async getParents(this: Node): Promise<Node[]> {
@@ -60,7 +60,7 @@ export function createSchemaNode(
         const ParentClass = this.getParentClass();
         const parentNamePath = node.collection.parsePath(node.path);
 
-        let ids: any = parentNamePath.get(this.doc);
+        let ids = parentNamePath.get(this.doc);
 
         if (ids && !(ids instanceof Array)) {
           ids = [ids];
@@ -70,9 +70,9 @@ export function createSchemaNode(
         // up resource chain and check for
         // alternate path to current node
         if (!(ids && ids.length)) {
-          const hierarchyClasses = ParentClass.getHierarchyClassNames(),
-            thisCollection = Tyr.byName[this.getName()],
-            doc = <Tyr.Document>this.doc;
+          const hierarchyClasses = ParentClass.getHierarchyClassNames();
+          const thisCollection = Tyr.byName[this.getName()];
+          const doc = this.doc as Tyr.Document;
 
           hierarchyClasses.shift(); // remove parent we already tried
 
@@ -82,37 +82,39 @@ export function createSchemaNode(
             const currentParent =
               hierarchyClasses.shift() || plugin._NO_COLLECTION;
 
-            const currentParentCollection = Tyr.byName[currentParent],
-              path = getShortestPath(
-                plugin,
-                thisCollection,
-                currentParentCollection
-              ),
-              CurrentParentNodeClass =
-                type === 'resource'
-                  ? plugin.graclHierarchy.getResource(currentParent)
-                  : plugin.graclHierarchy.getSubject(currentParent);
+            const currentParentCollection = Tyr.byName[currentParent];
+            const path = getShortestPath(
+              plugin,
+              thisCollection,
+              currentParentCollection
+            );
+            const CurrentParentNodeClass =
+              type === 'resource'
+                ? plugin.graclHierarchy.getResource(currentParent)
+                : plugin.graclHierarchy.getSubject(currentParent);
 
             if (path.length && path.length >= 2) {
               let currentCollection =
-                  Tyr.byName[path.shift() || plugin._NO_COLLECTION],
-                nextCollection =
-                  Tyr.byName[path.shift() || plugin._NO_COLLECTION],
-                linkField = findLinkInCollection(
-                  plugin,
-                  currentCollection,
-                  nextCollection
-                );
+                Tyr.byName[path.shift() || plugin._NO_COLLECTION];
+              let nextCollection =
+                Tyr.byName[path.shift() || plugin._NO_COLLECTION];
+              let linkField = findLinkInCollection(
+                plugin,
+                currentCollection,
+                nextCollection
+              );
 
               const idProp = linkField.namePath.get(doc) || [];
 
-              let ids: ObjectID[] = !idProp
+              let linkIds: ObjectID[] = !idProp
                 ? []
                 : Array.isArray(idProp) ? idProp : [idProp];
 
               // this potential path has found a dead end,
               // we need to try another upper level resource
-              if (!ids.length) continue;
+              if (!linkIds.length) {
+                continue;
+              }
 
               while (
                 linkField.link &&
@@ -126,21 +128,23 @@ export function createSchemaNode(
                   currentCollection,
                   nextCollection
                 );
-                const nextDocuments = await currentCollection.byIds(ids);
-                ids = <ObjectID[]>_.chain(nextDocuments)
+                const nextDocuments = await currentCollection.byIds(linkIds);
+                linkIds = _.chain(nextDocuments)
                   .map((d: Tyr.Document) => linkField.namePath.get(d))
                   .flatten()
                   .compact()
-                  .value();
+                  .value() as ObjectID[];
               }
 
-              if (!ids.length) continue;
+              if (!linkIds.length) {
+                continue;
+              }
 
-              const parentDocs = await nextCollection.byIds(ids),
-                parents = _.map(
-                  parentDocs,
-                  (d: Tyr.Document) => new CurrentParentNodeClass(d)
-                );
+              const parentDocs = await nextCollection.byIds(linkIds);
+              const parents = _.map(
+                parentDocs,
+                (d: Tyr.Document) => new CurrentParentNodeClass(d)
+              );
 
               return parents;
             }
@@ -149,13 +153,14 @@ export function createSchemaNode(
           return [];
         }
 
-        const linkCollection = node.link,
-          parentObjects = await (linkCollection && linkCollection.byIds(ids));
+        const linkCollection = node.link;
+        const parentObjects = await (linkCollection &&
+          linkCollection.byIds(ids));
 
         return _.map(parentObjects, doc => new ParentClass(doc));
       } else {
         return [];
       }
     }
-  };
+  } as SchemaNode;
 }

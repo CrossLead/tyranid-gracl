@@ -14,10 +14,10 @@ export function tree(obj: TreeNode, prefix: string = ''): string {
     lines.join(splitter) +
     '\n' +
     nodes
-      .map(function(node, ix) {
+      .map((node, ix) => {
         const last = ix === nodes.length - 1;
         const more = node.nodes && node.nodes.length;
-        const prefix_ = prefix + (last ? ' ' : '│') + ' ';
+        const prefixModified = prefix + (last ? ' ' : '│') + ' ';
 
         return (
           prefix +
@@ -25,7 +25,7 @@ export function tree(obj: TreeNode, prefix: string = ''): string {
           '─' +
           (more ? '┬' : '─') +
           ' ' +
-          tree(node, prefix_).slice(prefix.length + 2)
+          tree(node, prefixModified).slice(prefix.length + 2)
         );
       })
       .join('')

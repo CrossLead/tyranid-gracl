@@ -10,8 +10,8 @@ export function getGraclClasses(
   resourceDocument: Tyr.Document,
   subjectDocument: Tyr.Document
 ): { subject: Subject; resource: Resource } {
-  const subject = createSubject(plugin, subjectDocument),
-    resource = createResource(plugin, resourceDocument);
+  const subject = createSubject(plugin, subjectDocument);
+  const resource = createResource(plugin, resourceDocument);
 
   return { subject, resource };
 }

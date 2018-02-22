@@ -1,6 +1,6 @@
-import { Tyr } from 'tyranid';
 import * as _ from 'lodash';
 import { ObjectID } from 'mongodb';
+import { Tyr } from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { findLinkInCollection } from './findLinkInCollection';
 
@@ -48,6 +48,6 @@ export async function stepThroughCollectionPath<
     });
 
     // extract their primary ids using the primary field
-    return <ObjectID[]>_.map(nextCollectionDocs, nextCollectionId);
+    return _.map(nextCollectionDocs, nextCollectionId) as ObjectID[];
   }
 }

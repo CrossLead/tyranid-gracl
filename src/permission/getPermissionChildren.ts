@@ -1,8 +1,8 @@
 import * as _ from 'lodash';
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { parsePermissionString } from './parsePermissionString';
 import { formatPermissionType } from './formatPermissionType';
 import { getPermissionParents } from './getPermissionParents';
+import { parsePermissionString } from './parsePermissionString';
 
 /**
  *  Get all children of a permission based on the permissions hierarchy.
@@ -14,8 +14,9 @@ export function getPermissionChildren(
   plugin: GraclPlugin,
   perm: string
 ): string[] {
-  if (plugin._permissionChildCache[perm])
-    return plugin._permissionChildCache[perm].slice();
+  if (plugin.permissionChildCache[perm]) {
+    return plugin.permissionChildCache[perm].slice();
+  }
 
   const { action, collection } = parsePermissionString(plugin, perm);
 
@@ -29,7 +30,7 @@ export function getPermissionChildren(
 
     const name = formatPermissionType(plugin, {
       action: alt.name,
-      collection: collection
+      collection
     });
 
     const parents = getPermissionParents(plugin, name);
@@ -37,6 +38,6 @@ export function getPermissionChildren(
       children.push(name);
     }
   }
-  plugin._permissionChildCache[perm] = _.uniq(children);
-  return plugin._permissionChildCache[perm].slice();
+  plugin.permissionChildCache[perm] = _.uniq(children);
+  return plugin.permissionChildCache[perm].slice();
 }

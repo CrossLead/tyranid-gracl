@@ -15,8 +15,8 @@ export function createSubject(
     );
   }
 
-  const subjectCollectionName = subjectDocument.$model.def.name,
-    SubjectClass = plugin.graclHierarchy.getSubject(subjectCollectionName);
+  const subjectCollectionName = subjectDocument.$model.def.name;
+  const SubjectClass = plugin.graclHierarchy.getSubject(subjectCollectionName);
 
   if (!SubjectClass) {
     plugin.error(

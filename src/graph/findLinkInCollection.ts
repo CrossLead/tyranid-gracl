@@ -7,8 +7,8 @@ function compareCollectionWithField(
   aCol: Tyr.CollectionInstance,
   bCol: Tyr.FieldInstance
 ) {
-  const a = aCol.def.name,
-    b = bCol.link && bCol.link.def.name;
+  const a = aCol.def.name;
+  const b = bCol.link && bCol.link.def.name;
 
   return baseCompare(a, b);
 }
@@ -26,8 +26,12 @@ export function findLinkInCollection<
   col: Tyr.CollectionInstance<D>,
   linkCollection: Tyr.CollectionInstance<L>
 ): Tyr.FieldInstance {
-  const links = getCollectionLinksSorted(plugin, col),
-    index = binaryIndexOf(links, linkCollection, compareCollectionWithField);
+  const links = getCollectionLinksSorted(plugin, col);
+  const index = binaryIndexOf(
+    links,
+    linkCollection,
+    compareCollectionWithField
+  );
 
   return links[index];
 }

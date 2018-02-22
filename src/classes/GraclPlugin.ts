@@ -1,13 +1,13 @@
-import { Tyr } from 'tyranid';
 import { Graph } from 'gracl';
+import { Tyr } from 'tyranid';
 
 import { PermissionsModel } from '../models/PermissionsModel';
 
 import {
   Hash,
   permissionHierarchy,
-  permissionTypeList,
-  pluginOptions
+  PermissionTypeList,
+  PluginOptions
 } from '../interfaces';
 
 import { query } from '../query/query';
@@ -20,13 +20,13 @@ import { getObjectHierarchy } from '../graph/getObjectHierarchy';
 import { tree, TreeNode } from '../graph/tree';
 
 import { constructPermissionHierarchy } from '../permission/constructPermissionHierarchy';
-import { registerAllowedPermissionsForCollections } from '../permission/registerAllowedPermissionsForCollections';
-import { parsePermissionString } from '../permission/parsePermissionString';
-import { getAllPossiblePermissionTypes } from '../permission/getAllPossiblePermissionTypes';
 import { formatPermissionLabel } from '../permission/formatPermissionLabel';
+import { getAllowedPermissionsForCollection } from '../permission/getAllowedPermissionsForCollection';
+import { getAllPossiblePermissionTypes } from '../permission/getAllPossiblePermissionTypes';
 import { getPermissionChildren } from '../permission/getPermissionChildren';
 import { getPermissionParents } from '../permission/getPermissionParents';
-import { getAllowedPermissionsForCollection } from '../permission/getAllowedPermissionsForCollection';
+import { parsePermissionString } from '../permission/parsePermissionString';
+import { registerAllowedPermissionsForCollections } from '../permission/registerAllowedPermissionsForCollections';
 
 /**
  *  Security plugin for tyranid
@@ -57,35 +57,35 @@ import { getAllowedPermissionsForCollection } from '../permission/getAllowedPerm
 
  */
 export class GraclPlugin {
-  graclHierarchy!: Graph; // prettier-ignore
-  unsecuredCollections = new Set([PermissionsModel.def.name]);
+  public graclHierarchy!: Graph; // prettier-ignore
+  public unsecuredCollections = new Set([PermissionsModel.def.name]);
 
   // some collections may have specific permissions
   // they are restricted to...
-  permissionRestrictions = new Map<string, Set<string>>();
+  public permissionRestrictions = new Map<string, Set<string>>();
 
   // plugin options
-  verbose!: boolean; // prettier-ignore
-  permissionHierarchy!: permissionHierarchy; // prettier-ignore
-  setOfAllPermissions!: Set<string>; // prettier-ignore
-  crudPermissionSet = new Set<string>();
-  permissionsModel = PermissionsModel;
-  resourceChildren = new Map<string, Set<string>>();
+  public verbose!: boolean; // prettier-ignore
+  public permissionHierarchy!: permissionHierarchy; // prettier-ignore
+  public setOfAllPermissions!: Set<string>; // prettier-ignore
+  public crudPermissionSet = new Set<string>();
+  public permissionsModel = PermissionsModel;
+  public resourceChildren = new Map<string, Set<string>>();
 
-  _NO_COLLECTION = 'TYRANID_GRACL_NO_COLLECTION_NAME_FOUND';
+  public _NO_COLLECTION = 'TYRANID_GRACL_NO_COLLECTION_NAME_FOUND';
 
-  permissionTypes: permissionTypeList = [
+  public permissionTypes: PermissionTypeList = [
     { name: 'edit' },
     { name: 'view', parents: ['edit'] },
     { name: 'delete' }
   ];
 
-  _outgoingLinkPaths!: Hash<Hash<string>>; // prettier-ignore
-  _permissionChildCache: Hash<string[]> = {};
-  _allPossiblePermissionsCache!: string[]; // prettier-ignore
-  _sortedLinkCache: Hash<Tyr.FieldInstance[]> = {};
+  public outgoingLinkPaths!: Hash<Hash<string>>; // prettier-ignore
+  public permissionChildCache: Hash<string[]> = {};
+  public allPossiblePermissionsCache!: string[]; // prettier-ignore
+  public sortedLinkCache: Hash<Tyr.FieldInstance[]> = {};
 
-  constructor(opts: pluginOptions = {}) {
+  constructor(opts: PluginOptions = {}) {
     const plugin = this;
 
     if (
@@ -103,7 +103,7 @@ export class GraclPlugin {
     Create Gracl class hierarchy from tyranid schemas,
     needs to be called after all the tyranid collections are validated
    */
-  boot(stage: Tyr.BootStage) {
+  public boot(stage: Tyr.BootStage) {
     if (stage === 'post-link') {
       const plugin = this;
 
@@ -115,15 +115,17 @@ export class GraclPlugin {
       constructPermissionHierarchy(plugin);
       registerAllowedPermissionsForCollections(plugin);
 
-      if (plugin.verbose) plugin.logHierarchy();
+      if (plugin.verbose) {
+        plugin.logHierarchy();
+      }
     }
   }
 
-  createIndexes() {
+  public createIndexes() {
     return PermissionsModel.createIndexes();
   }
 
-  query<T extends Tyr.Document>(
+  public query<T extends Tyr.Document>(
     queriedCollection: Tyr.CollectionInstance<T>,
     permissionType: string,
     subjectDocument?: Tyr.Document
@@ -131,25 +133,29 @@ export class GraclPlugin {
     return query(this, queriedCollection, permissionType, subjectDocument);
   }
 
-  log(message: string) {
-    const plugin = <GraclPlugin>this;
+  public log(message: string) {
+    const plugin = this as GraclPlugin;
     if (plugin.verbose) {
-      console.log(`tyranid-gracl: ${message}`);
+      console.log(`tyranid-gracl: ${message}`); // tslint:disable-line
     }
     return plugin;
   }
 
-  logHierarchy() {
+  public logHierarchy() {
     const plugin = this;
-    const hierarchy = getObjectHierarchy(plugin);
+    const hierarchy = getObjectHierarchy(plugin) as N;
 
-    type N = { [key: string]: N };
+    interface N {
+      [key: string]: N;
+    }
 
     function visit(obj: N): TreeNode[] {
       return Object.keys(obj).map(key => {
         const children = visit(obj[key]);
-        const node = <TreeNode>{ label: key };
-        if (children.length) node.nodes = children;
+        const node = { label: key } as TreeNode;
+        if (children.length) {
+          node.nodes = children;
+        }
         return node;
       });
     }
@@ -157,36 +163,36 @@ export class GraclPlugin {
     plugin.log(
       tree({
         label: 'hierarchy',
-        nodes: visit(<any>hierarchy)
+        nodes: visit(hierarchy)
       })
     );
   }
 
-  error(message: string): never {
+  public error(message: string): never {
     throw new Error(`tyranid-gracl: ${message}`);
   }
 
-  parsePermissionString(perm: string) {
+  public parsePermissionString(perm: string) {
     return parsePermissionString(this, perm);
   }
 
-  getAllPossiblePermissionTypes() {
+  public getAllPossiblePermissionTypes() {
     return getAllPossiblePermissionTypes(this);
   }
 
-  getPermissionParents(perm: string) {
+  public getPermissionParents(perm: string) {
     return getPermissionParents(this, perm);
   }
 
-  getPermissionChildren(perm: string) {
+  public getPermissionChildren(perm: string) {
     return getPermissionChildren(this, perm);
   }
 
-  getAllowedPermissionsForCollection(perm: string) {
+  public getAllowedPermissionsForCollection(perm: string) {
     return getAllowedPermissionsForCollection(this, perm);
   }
 
-  formatPermissionLabel(perm: string) {
+  public formatPermissionLabel(perm: string) {
     return formatPermissionLabel(this, perm);
   }
 }

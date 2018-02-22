@@ -6,8 +6,9 @@ import { formatPermissionType } from './formatPermissionType';
  *  Get a list of all possible permission strings in the plugin
  */
 export function getAllPossiblePermissionTypes(plugin: GraclPlugin): string[] {
-  if (plugin._allPossiblePermissionsCache)
-    return plugin._allPossiblePermissionsCache.slice();
+  if (plugin.allPossiblePermissionsCache) {
+    return plugin.allPossiblePermissionsCache.slice();
+  }
 
   const permissionSchema = plugin.permissionTypes;
   const allPermissions: string[] = [];
@@ -30,5 +31,5 @@ export function getAllPossiblePermissionTypes(plugin: GraclPlugin): string[] {
     }
   }
 
-  return (plugin._allPossiblePermissionsCache = _.uniq(allPermissions)).slice();
+  return (plugin.allPossiblePermissionsCache = _.uniq(allPermissions)).slice();
 }

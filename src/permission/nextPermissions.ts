@@ -15,19 +15,19 @@ export function nextPermissions(
   plugin: GraclPlugin,
   permissionString: string
 ): string[] {
-  const components = parsePermissionString(plugin, permissionString),
-    // get general permissions from action
-    actionParents = _.get(
-      plugin.permissionHierarchy,
-      `${components.action}.parents`,
-      []
-    ) as Array<Hash<string>>,
-    // if a specific action-collection permission is set in the hierarchy
-    permissionStringParents = _.get(
-      plugin.permissionHierarchy,
-      `${permissionString}.parents`,
-      []
-    ) as Array<Hash<string>>;
+  const components = parsePermissionString(plugin, permissionString);
+  // get general permissions from action
+  const actionParents = _.get(
+    plugin.permissionHierarchy,
+    `${components.action}.parents`,
+    []
+  ) as Array<Hash<string>>;
+  // if a specific action-collection permission is set in the hierarchy
+  const permissionStringParents = _.get(
+    plugin.permissionHierarchy,
+    `${permissionString}.parents`,
+    []
+  ) as Array<Hash<string>>;
 
   return _.chain(actionParents)
     .concat(permissionStringParents)

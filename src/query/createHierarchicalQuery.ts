@@ -1,7 +1,7 @@
 import { Tyr } from 'tyranid';
-import { createInQueries } from './createInQueries';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { Hash } from '../interfaces';
+import { createInQueries } from './createInQueries';
 
 /**
  *  Creates mongo query with boolean expression
@@ -29,38 +29,40 @@ export function createHierarchicalQuery(
   plugin: GraclPlugin,
   queryMaps: Hash<Map<string, Set<string>>>,
   queriedCollection: Tyr.CollectionInstance
-): Hash<any> | false {
-  const positiveUids = queryMaps.positive,
-    negativeUids = queryMaps.negative;
+): Hash<{}> | false {
+  const positiveUids = queryMaps.positive;
+  const negativeUids = queryMaps.negative;
 
   const positiveRestriction = createInQueries(
-      plugin,
-      queryMaps.positive,
-      queriedCollection,
-      '$in'
-    ),
-    negativeRestriction = createInQueries(
-      plugin,
-      queryMaps.negative,
-      queriedCollection,
-      '$nin'
-    );
+    plugin,
+    queryMaps.positive,
+    queriedCollection,
+    '$in'
+  );
+  const negativeRestriction = createInQueries(
+    plugin,
+    queryMaps.negative,
+    queriedCollection,
+    '$nin'
+  );
 
-  const resultingQuery: Hash<any> = {},
-    hasPositive = !!positiveRestriction.$or.length,
-    hasNegative = !!negativeRestriction.$and.length;
+  const resultingQuery: Hash<{}> = {};
+  const hasPositive = !!positiveRestriction.$or.length;
+  const hasNegative = !!negativeRestriction.$and.length;
   /**
    * For each collection with negative restrictions, we need to create an OR clause
    * which excludes uids that are lower in the resource hierarchy and exist in the
    * positive list all the OR clauses should be wrapped in an and clause
    */
   if (hasNegative && hasPositive) {
-    const negativeModifiedQuery: Hash<any> = {};
-    const $and: Array<Hash<any>> = (negativeModifiedQuery.$and = []);
+    const negativeModifiedQuery: Hash<{}> = {};
+    const $and: Array<Hash<{}>> = (negativeModifiedQuery.$and = []);
 
     negativeUids.forEach((uids, collectionName) => {
-      if (!uids.size) { return; }
-      const $or: Array<Hash<any>> = [];
+      if (!uids.size) {
+        return;
+      }
+      const $or: Array<Hash<{}>> = [];
       const childCollectionNames = plugin.resourceChildren.get(collectionName);
 
       if (!childCollectionNames) {
@@ -80,9 +82,9 @@ export function createHierarchicalQuery(
 
       const includeMap = new Map<string, Set<string>>();
       childCollectionNames.forEach(name => {
-        const uids = positiveUids.get(name);
-        if (uids && uids.size) {
-          includeMap.set(name, uids);
+        const positiveUidsForName = positiveUids.get(name);
+        if (positiveUidsForName && positiveUidsForName.size) {
+          includeMap.set(name, positiveUidsForName);
         }
       });
 

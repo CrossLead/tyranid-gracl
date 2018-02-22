@@ -1,7 +1,7 @@
-import { Tyr } from 'tyranid';
 import * as _ from 'lodash';
+import { Tyr } from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { schemaGraclConfigObject } from '../interfaces';
+import { SchemaGraclConfigObject } from '../interfaces';
 import { formatPermissionType } from './formatPermissionType';
 
 /**
@@ -20,7 +20,7 @@ export function registerAllowedPermissionsForCollections(plugin: GraclPlugin) {
   const crudPermissions = [...plugin.crudPermissionSet];
 
   Tyr.collections.forEach(col => {
-    const config = <schemaGraclConfigObject>_.get(col, 'def.graclConfig', {});
+    const config = _.get(col, 'def.graclConfig', {}) as SchemaGraclConfigObject;
 
     if (config.permissions) {
       const hasExcludeConfig = !!(
@@ -103,7 +103,7 @@ export function registerAllowedPermissionsForCollections(plugin: GraclPlugin) {
                 return ''; // TODO: strictNullCheck hack
               } else {
                 return formatPermissionType(plugin, {
-                  action: action,
+                  action,
                   collection: col.def.name
                 });
               }

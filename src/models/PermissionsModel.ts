@@ -1,7 +1,8 @@
 import * as _ from 'lodash';
+import { ObjectID } from 'mongodb';
 import { Tyr } from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { Hash, permissionExplaination } from '../interfaces';
+import { Hash, PermissionExplaination, Permission } from '../interfaces';
 
 import { createResource } from '../graph/createResource';
 import { createSubject } from '../graph/createSubject';
@@ -97,22 +98,23 @@ export class PermissionsModel extends PermissionsBaseCollection {
     permissionType?: string,
     direct?: boolean
   ) {
-    const plugin = PermissionsModel.getGraclPlugin(),
-      resource = createResource(plugin, resourceDocument);
+    const plugin = PermissionsModel.getGraclPlugin();
+    const resource = createResource(plugin, resourceDocument);
 
-    const query: { [key: string]: any } = {
+    const query = {
       resourceId: direct
         ? resourceDocument.$uid
         : {
             $in: await resource.getHierarchyIds()
+          },
+      ...(permissionType
+        ? {
+            [`access.${permissionType}`]: {
+              $exists: true
+            }
           }
+        : {})
     };
-
-    if (permissionType) {
-      query[`access.${permissionType}`] = {
-        $exists: true
-      };
-    }
 
     return PermissionsModel.findAll({ query });
   }
@@ -127,22 +129,23 @@ export class PermissionsModel extends PermissionsBaseCollection {
     permissionType?: string,
     direct?: boolean
   ) {
-    const plugin = PermissionsModel.getGraclPlugin(),
-      subject = createSubject(plugin, subjectDocument);
+    const plugin = PermissionsModel.getGraclPlugin();
+    const subject = createSubject(plugin, subjectDocument);
 
-    const query: { [key: string]: any } = {
+    const query = {
       subjectId: direct
         ? subjectDocument.$uid
         : {
             $in: await subject.getHierarchyIds()
+          },
+      ...(permissionType
+        ? {
+            [`access.${permissionType}`]: {
+              $exists: true
+            }
           }
+        : {})
     };
-
-    if (permissionType) {
-      query[`access.${permissionType}`] = {
-        $exists: true
-      };
-    }
 
     return PermissionsModel.findAll({ query });
   }
@@ -208,12 +211,13 @@ export class PermissionsModel extends PermissionsBaseCollection {
     resourceData: Tyr.Document | string,
     permissionType: string,
     subjectData: Tyr.Document | string
-  ): Promise<permissionExplaination> {
-    console.warn(
-      `tyranid-gracl: Warning: results of $explainPermission may be different than $determineAccess / $isAllowed.` +
+  ): Promise<PermissionExplaination> {
+    const plugin = PermissionsModel.getGraclPlugin();
+
+    plugin.log(
+      `Warning: results of $explainPermission may be different than $determineAccess / $isAllowed.` +
         ` $determineAccess should be seen as the main source of truth.`
     );
-    const plugin = PermissionsModel.getGraclPlugin();
     validatePermissionExists(plugin, permissionType);
 
     extractIdAndModel(plugin, resourceData);
@@ -262,8 +266,8 @@ export class PermissionsModel extends PermissionsBaseCollection {
       throw new TypeError(`no subject given to updatePermissions`);
     }
 
-    const resourceComponents = extractIdAndModel(plugin, resourceDocument),
-      subjectComponents = extractIdAndModel(plugin, subjectDocument);
+    const resourceComponents = extractIdAndModel(plugin, resourceDocument);
+    const subjectComponents = extractIdAndModel(plugin, subjectDocument);
 
     validateAsResource(plugin, resourceComponents.$model);
 
@@ -288,20 +292,18 @@ export class PermissionsModel extends PermissionsBaseCollection {
     } catch (error) {
       // hack for https://jira.mongodb.org/browse/SERVER-14322
       if (attempt < 10 && /E11000 duplicate key error/.test(error.message)) {
-        return await new Promise<Tyr.Document | null>(
-          (resolve, reject) => {
-            setTimeout(() => {
-              PermissionsModel.updatePermissions(
-                resourceDocument,
-                permissionChanges,
-                subjectDocument,
-                attempt++
-              )
-                .then(resolve)
-                .catch(reject);
-            }, 100);
-          }
-        ) as Tyr.Document;
+        return (await new Promise<Tyr.Document | null>((resolve, reject) => {
+          setTimeout(() => {
+            PermissionsModel.updatePermissions(
+              resourceDocument,
+              permissionChanges,
+              subjectDocument,
+              attempt++
+            )
+              .then(resolve)
+              .catch(reject);
+          }, 100);
+        })) as Tyr.Document;
       } else if (/E11000 duplicate key error/.test(error.message)) {
         plugin.error(
           `Attempted to update permission 10 times, but recieved "E11000 duplicate key error" on each attempt`
@@ -320,11 +322,15 @@ export class PermissionsModel extends PermissionsBaseCollection {
   /**
    *  Given a uid, remove all permissions relating to that entity in the system
    */
-  public static async deletePermissions(doc: Tyr.Document): Promise<Tyr.Document> {
-    const uid = doc.$uid,
-      plugin = PermissionsModel.getGraclPlugin();
+  public static async deletePermissions(
+    doc: Tyr.Document
+  ): Promise<Tyr.Document> {
+    const uid = doc.$uid;
+    const plugin = PermissionsModel.getGraclPlugin();
 
-    if (!uid) { plugin.error('No $uid property on document!'); }
+    if (!uid) {
+      plugin.error('No $uid property on document!');
+    }
 
     await PermissionsModel.remove({
       query: {
@@ -340,13 +346,13 @@ export class PermissionsModel extends PermissionsBaseCollection {
     permissionsToCheck: string[],
     resourceUidList: string[] | Tyr.Document[]
   ) {
-    const plugin = PermissionsModel.getGraclPlugin(),
-      accessMap = {} as { [k: string]: { [k: string]: boolean } };
+    const plugin = PermissionsModel.getGraclPlugin();
+    const accessMap = {} as { [k: string]: { [k: string]: boolean } };
 
     const uidsToCheck: string[] =
       typeof resourceUidList[0] === 'string'
-        ? resourceUidList as string[]
-        : _.map(resourceUidList as Tyr.Document[], '$uid') as string[];
+        ? (resourceUidList as string[])
+        : (_.map(resourceUidList as Tyr.Document[], '$uid') as string[]);
 
     if (!plugin.graclHierarchy.subjects.has(subject.$model.def.name)) {
       plugin.error(
@@ -368,7 +374,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
     );
 
     // Hacky double cast for promise.all weirdness
-    const retrievedDocumentMatrix = (await retrievedDocumentsPromise as any) as Tyr.Document[][];
+    const retrievedDocumentMatrix = (await retrievedDocumentsPromise) as Tyr.Document[][];
 
     const permissionSetHash = _.reduce(
       retrievedDocumentMatrix,
@@ -449,7 +455,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
       return [formatted, ...getPermissionParents(plugin, formatted)];
     });
 
-    const permissionsAsResource = await plugin.permissionsModel.findAll({
+    const permissionsAsResource = (await plugin.permissionsModel.findAll({
       query: {
         $and: [
           // for the given resource...
@@ -464,24 +470,26 @@ export class PermissionsModel extends PermissionsBaseCollection {
           }
         ]
       }
-    });
+    })) as Permission[];
 
     // get all subjects with direct permissions set for this resource,
     // does not yet include _all_ subjects down the heirarchy
-    const subjectDocuments = await Tyr.byUids(
-      permissionsAsResource.map((p: any) => p.subjectId) as string[]
-    );
+    const subjectDocuments = await Tyr.byUids(permissionsAsResource.map(
+      p => p.subjectId
+    ) as string[]);
 
     const subjectsByCollection: Hash<Tyr.Document[]> = {};
     _.each(subjectDocuments, subject => {
       const colName = subject.$model.def.name;
-      if (!subjectsByCollection[colName]) { subjectsByCollection[colName] = []; }
+      if (!subjectsByCollection[colName]) {
+        subjectsByCollection[colName] = [];
+      }
       subjectsByCollection[colName].push(subject);
     });
 
-    const permsBySubjectId: Hash<Tyr.Document> = {};
-    _.each(permissionsAsResource, (permObj: any) => {
-      permsBySubjectId[permObj.subjectId] = permObj;
+    const permsBySubjectId: Hash<Permission> = {};
+    _.each(permissionsAsResource, perm => {
+      permsBySubjectId[perm.subjectId] = perm;
     });
 
     // test if a given subject satisfies all required permissions
@@ -490,7 +498,9 @@ export class PermissionsModel extends PermissionsBaseCollection {
       const uid = subject.$uid;
       const hashKey = `${uid}-${explicit}`;
 
-      if (hashKey in accessCache) { return accessCache[hashKey]; }
+      if (hashKey in accessCache) {
+        return accessCache[hashKey];
+      }
 
       const perm = permsBySubjectId[uid] || { access: {} };
 
@@ -506,8 +516,12 @@ export class PermissionsModel extends PermissionsBaseCollection {
       }));
     }
 
+    interface Hierarchy {
+      [key: string]: Hierarchy;
+    }
+
     async function traverse(
-      hierarchy: any,
+      hierarchy: Hierarchy,
       parentCollectionNames: string[] = []
     ) {
       const collections = Object.keys(hierarchy);
@@ -530,8 +544,8 @@ export class PermissionsModel extends PermissionsBaseCollection {
             for (const parentCollectionName of _.compact(
               parentCollectionNames
             )) {
-              const parentSubjects = subjectsByCollection[parentCollectionName],
-                parentSubjectIds = _.map(parentSubjects, '$id');
+              const parentSubjects = subjectsByCollection[parentCollectionName];
+              const parentSubjectIds = _.map(parentSubjects, '$id');
 
               const link = findLinkInCollection(
                 plugin,
