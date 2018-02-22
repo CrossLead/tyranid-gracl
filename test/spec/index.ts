@@ -104,7 +104,7 @@ let plugin: GraclPlugin;
 test.before(async t => {
   const db = await mongodb.MongoClient.connect(
     'mongodb://127.0.0.1:27017/tyranid_gracl_test',
-    { poolSize: 50 }
+    { poolSize: 20 }
   );
 
   t.throws(() => {
