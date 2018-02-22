@@ -1,7 +1,7 @@
-import { ContextualTestContext } from 'ava';
+import { TestContext } from 'ava';
 
 export async function expectAsyncToThrow<R>(
-  t: ContextualTestContext,
+  t: TestContext,
   asyncFn: () => Promise<R>,
   expectedMessageRegex: RegExp,
   description = ''

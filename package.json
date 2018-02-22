@@ -38,7 +38,7 @@
     "lodash": "4.17.2"
   },
   "devDependencies": {
-    "ava": "0.17.0",
+    "ava": "0.25.0",
     "mongodb": "2.2.33",
     "prettier": "1.10.2",
     "tslint": "5.9.1",

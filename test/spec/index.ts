@@ -1,6 +1,6 @@
 /// <reference path="./types/server.d.ts" />
 
-import test, { ContextualTestContext } from 'ava';
+import test, { TestContext } from 'ava';
 import * as _ from 'lodash';
 import * as mongodb from 'mongodb';
 import * as path from 'path';
@@ -62,7 +62,7 @@ const secure = new tyranidGracl.GraclPlugin({
 });
 
 const checkStringEq = (
-  t: ContextualTestContext,
+  t: TestContext,
   got: string[],
   want: string[],
   message = ''
@@ -74,10 +74,7 @@ const checkStringEq = (
   );
 };
 
-async function giveBenAccessToChoppedPosts(
-  t: ContextualTestContext,
-  perm = 'view'
-) {
+async function giveBenAccessToChoppedPosts(t: TestContext, perm = 'view') {
   const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
   const chopped = await Tyr.byName.organization.findOne({
     query: { name: 'Chopped' }
