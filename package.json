@@ -16,13 +16,10 @@
     "build": "rm -rf ./dist/ ./test/spec/types && npm run lint && npm run generate-collection-types && npm run tsc && npm run compile-module-test",
     "pretest": "npm run build",
     "prepublish": "npm run test",
-    "test": "nyc ava",
+    "test": "ava",
     "prettier": "prettier --single-quote true --write './{src,test}/**/*.ts'",
-    "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "compile-module-test": "cd ./test/tscompile && tsc --pretty",
     "tsc": "tsc -d --pretty -p ./",
-    "docs": "rm -rf ./docs/ && ./node_modules/typedoc/bin/typedoc --mode file --theme default --target es6 --out ./docs/ ./src/ && touch ./docs/.nojekyll",
-    "gh-pages": "npm run docs && ./node_modules/gh-pages/bin/gh-pages --dotfiles true -d ./docs/",
     "lint": "./node_modules/tslint/bin/tslint -e ./test/spec/types -c ./tslint.json ./{test,lib}/**/*.ts && echo '> \\033[0;32mlinter passed!\\033[0m'",
     "compile-collections": "tsc -p ./test/models",
     "generate-collection-types": "npm run compile-collections && mkdir -p test/spec/types &&  tyranid-tdgen -o './test/spec/types/isomorphic.d.ts' './dist/test/models/**/*.js' && tyranid-tdgen -o './test/spec/types/server.d.ts' -t server './dist/test/models/**/*.js'"
@@ -41,15 +38,9 @@
   },
   "devDependencies": {
     "ava": "0.17.0",
-    "codecov": "1.0.1",
-    "gh-pages": "0.12.0",
-    "gulp": "3.9.1",
     "mongodb": "2.2.33",
-    "npm-watch": "0.1.6",
-    "nyc": "11.0.3",
-    "prettier": "1.5.3",
-    "tslint": "5.5.0",
-    "typedoc": "0.7.1",
+    "prettier": "1.10.2",
+    "tslint": "5.9.1",
     "typescript": "2.7.2",
     "tyranid": "^0.4.53",
     "tyranid-tdgen": "0.4.3"
@@ -60,11 +51,6 @@
   "ava": {
     "files": [
       "dist/test/spec/**/*.js"
-    ]
-  },
-  "nyc": {
-    "include": [
-      "dist/src"
     ]
   }
 }

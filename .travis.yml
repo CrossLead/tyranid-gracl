@@ -22,8 +22,6 @@ before_install:
   - sudo ./mongodb-linux-x86_64-ubuntu1204-3.2.0/bin/mongod --dbpath=./mongo/db --fork --logpath=./mongo/log/test.log
   - sleep 5
   - mongo --eval 'rs.initiate()'
-after_success:
-  - npm run coverage
 cache:
   directories:
     - node_modules
