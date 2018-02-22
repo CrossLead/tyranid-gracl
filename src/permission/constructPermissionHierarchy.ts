@@ -1,7 +1,12 @@
 import { topologicalSort } from 'gracl';
 import * as _ from 'lodash';
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { Hash, permissionHierarchy, PermissionTypeList } from '../interfaces';
+import {
+  Hash,
+  PermissionHierarchy,
+  PermissionTypeList,
+  PermissionHierarchyNode
+} from '../interfaces';
 import { parsePermissionString } from '../permission/parsePermissionString';
 
 /**
@@ -114,7 +119,7 @@ export function constructPermissionHierarchy(plugin: GraclPlugin) {
     );
   }
 
-  const hierarchy: permissionHierarchy = {};
+  const hierarchy: PermissionHierarchy = {};
 
   _.each(sorted, node => {
     const name = node.name;
@@ -170,7 +175,7 @@ export function constructPermissionHierarchy(plugin: GraclPlugin) {
         }
 
         // the non-abstract parent, must itself have a parent in the hierarchy...
-        const subParents: Array<Hash<{}>> = [];
+        const subParents: Array<PermissionHierarchyNode> = [];
         if (action) {
           subParents.push(hierarchy[action]);
         } else {

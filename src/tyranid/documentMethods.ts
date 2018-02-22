@@ -484,7 +484,7 @@ await blog.$allowForThis('view', user);
     const crud =
       typeof permissionAction === 'string'
         ? isCrudPermission(plugin, permissionAction)
-        : permissionAction.every(p => isCrudPermission(plugin, p));
+        : permissionAction.every(p => !!isCrudPermission(plugin, p));
 
     if (!crud) {
       plugin.error(
@@ -532,7 +532,7 @@ await blog.$denyForThis('view', user);
     const crud =
       typeof permissionAction === 'string'
         ? isCrudPermission(plugin, permissionAction)
-        : permissionAction.every(p => isCrudPermission(plugin, p));
+        : permissionAction.every(p => !!isCrudPermission(plugin, p));
 
     if (!crud) {
       plugin.error(

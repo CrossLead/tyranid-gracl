@@ -5,7 +5,7 @@ import { PermissionsModel } from '../models/PermissionsModel';
 
 import {
   Hash,
-  permissionHierarchy,
+  PermissionHierarchy,
   PermissionTypeList,
   PluginOptions
 } from '../interfaces';
@@ -66,7 +66,7 @@ export class GraclPlugin {
 
   // plugin options
   public verbose!: boolean; // prettier-ignore
-  public permissionHierarchy!: permissionHierarchy; // prettier-ignore
+  public permissionHierarchy!: PermissionHierarchy; // prettier-ignore
   public setOfAllPermissions!: Set<string>; // prettier-ignore
   public crudPermissionSet = new Set<string>();
   public permissionsModel = PermissionsModel;

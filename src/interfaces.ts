@@ -24,7 +24,17 @@ export interface PermissionType {
   collection_parents?: string[];
 }
 
-export type permissionHierarchy = Hash<any>;
+export interface PermissionHierarchyNode {
+  name: string;
+  abstract?: boolean;
+  collection?: boolean;
+  format?:
+    | string
+    | ((action: string, collection?: string | undefined) => string);
+  parents: (PermissionHierarchyNode | { name: string; parents: Hash<{}>[] })[];
+}
+
+export type PermissionHierarchy = Hash<PermissionHierarchyNode>;
 
 export interface PermissionExplaination {
   type: string;
