@@ -30,25 +30,25 @@ export function createHierarchicalQuery(
   queryMaps: Hash<Map<string, Set<string>>>,
   queriedCollection: Tyr.CollectionInstance
 ): Hash<any> | false {
-  const positiveUids = queryMaps['positive'],
-    negativeUids = queryMaps['negative'];
+  const positiveUids = queryMaps.positive,
+    negativeUids = queryMaps.negative;
 
   const positiveRestriction = createInQueries(
       plugin,
-      queryMaps['positive'],
+      queryMaps.positive,
       queriedCollection,
       '$in'
     ),
     negativeRestriction = createInQueries(
       plugin,
-      queryMaps['negative'],
+      queryMaps.negative,
       queriedCollection,
       '$nin'
     );
 
   const resultingQuery: Hash<any> = {},
-    hasPositive = !!positiveRestriction['$or'].length,
-    hasNegative = !!negativeRestriction['$and'].length;
+    hasPositive = !!positiveRestriction.$or.length,
+    hasNegative = !!negativeRestriction.$and.length;
   /**
    * For each collection with negative restrictions, we need to create an OR clause
    * which excludes uids that are lower in the resource hierarchy and exist in the
@@ -56,11 +56,11 @@ export function createHierarchicalQuery(
    */
   if (hasNegative && hasPositive) {
     const negativeModifiedQuery: Hash<any> = {};
-    const $and: Hash<any>[] = (negativeModifiedQuery['$and'] = []);
+    const $and: Array<Hash<any>> = (negativeModifiedQuery.$and = []);
 
     negativeUids.forEach((uids, collectionName) => {
-      if (!uids.size) return;
-      const $or: Hash<any>[] = [];
+      if (!uids.size) { return; }
+      const $or: Array<Hash<any>> = [];
       const childCollectionNames = plugin.resourceChildren.get(collectionName);
 
       if (!childCollectionNames) {
@@ -95,7 +95,7 @@ export function createHierarchicalQuery(
       }
     });
 
-    resultingQuery['$and'] = [positiveRestriction, negativeModifiedQuery];
+    resultingQuery.$and = [positiveRestriction, negativeModifiedQuery];
   } else if (hasNegative) {
     /**
      * if there are only negative restrictions set,

@@ -5,14 +5,16 @@ export function captureLogStream(
   const oldWrite = stream.write;
   let buf = '';
 
-  stream.write = function(
+  stream.write = (
     chunk: Buffer | string,
-    encoding?: string | Function,
-    callback?: Function
-  ) {
+    encoding?: string | Function, // tslint:disable-line
+    callback?: Function // tslint:disable-line
+  ) => {
     buf += chunk.toString();
     // chunk is a String or Buffer
-    if (passThrough) oldWrite.apply(stream, [chunk, encoding, callback]);
+    if (passThrough) {
+      oldWrite.apply(stream, [chunk, encoding, callback]);
+    }
     return true;
   };
 
@@ -20,7 +22,7 @@ export function captureLogStream(
     unhook: function unhook() {
       stream.write = oldWrite;
     },
-    captured: function() {
+    captured() {
       return buf;
     }
   };

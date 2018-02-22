@@ -1,8 +1,8 @@
 import * as _ from 'lodash';
 import { GraclPlugin } from '../classes/GraclPlugin';
 import { Hash } from '../interfaces';
-import { parsePermissionString } from './parsePermissionString';
 import { formatPermissionType } from './formatPermissionType';
+import { parsePermissionString } from './parsePermissionString';
 
 /**
  * Recurse up the permissions hierarhcy, by finding the direct parent permissions of
@@ -17,17 +17,17 @@ export function nextPermissions(
 ): string[] {
   const components = parsePermissionString(plugin, permissionString),
     // get general permissions from action
-    actionParents = <Hash<string>[]>_.get(
+    actionParents = _.get(
       plugin.permissionHierarchy,
       `${components.action}.parents`,
       []
-    ),
+    ) as Array<Hash<string>>,
     // if a specific action-collection permission is set in the hierarchy
-    permissionStringParents = <Hash<string>[]>_.get(
+    permissionStringParents = _.get(
       plugin.permissionHierarchy,
       `${permissionString}.parents`,
       []
-    );
+    ) as Array<Hash<string>>;
 
   return _.chain(actionParents)
     .concat(permissionStringParents)

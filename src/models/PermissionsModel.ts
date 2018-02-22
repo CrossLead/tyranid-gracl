@@ -1,20 +1,20 @@
 import * as _ from 'lodash';
 import { Tyr } from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { permissionExplaination, Hash } from '../interfaces';
+import { Hash, permissionExplaination } from '../interfaces';
 
 import { createResource } from '../graph/createResource';
 import { createSubject } from '../graph/createSubject';
-import { getGraclClasses } from '../graph/getGraclClasses';
-import { validateAsResource } from '../graph/validateAsResource';
-import { getObjectHierarchy } from '../graph/getObjectHierarchy';
 import { findLinkInCollection } from '../graph/findLinkInCollection';
+import { getGraclClasses } from '../graph/getGraclClasses';
+import { getObjectHierarchy } from '../graph/getObjectHierarchy';
+import { validateAsResource } from '../graph/validateAsResource';
 
-import { validatePermissionExists } from '../permission/validatePermissionExists';
-import { parsePermissionString } from '../permission/parsePermissionString';
-import { getPermissionParents } from '../permission/getPermissionParents';
 import { formatPermissionType } from '../permission/formatPermissionType';
+import { getPermissionParents } from '../permission/getPermissionParents';
 import { isCrudPermission } from '../permission/isCrudPermission';
+import { parsePermissionString } from '../permission/parsePermissionString';
+import { validatePermissionExists } from '../permission/validatePermissionExists';
 
 import { extractIdAndModel, validate } from '../tyranid/extractIdAndModel';
 
@@ -49,20 +49,22 @@ async function resolveSubjectAndResourceDocuments(
       ? await Tyr.byUid(resourceData)
       : resourceData;
 
-  if (!resourceDocument)
+  if (!resourceDocument) {
     throw new Error(
       `No resourceDocument resolvable given: ${JSON.stringify(resourceData)}`
     );
+  }
 
   const subjectDocument =
     typeof subjectData === 'string'
       ? await Tyr.byUid(subjectData)
       : subjectData;
 
-  if (!subjectDocument)
+  if (!subjectDocument) {
     throw new Error(
       `No subjectDocument resolvable given: ${JSON.stringify(subjectData)}`
     );
+  }
 
   return {
     resourceDocument,
@@ -75,8 +77,8 @@ async function resolveSubjectAndResourceDocuments(
  */
 export class PermissionsModel extends PermissionsBaseCollection {
   // error-checked method for retrieving the plugin instance attached to tyranid
-  static getGraclPlugin(): GraclPlugin {
-    const plugin = <GraclPlugin | undefined>Tyr.secure;
+  public static getGraclPlugin(): GraclPlugin {
+    const plugin = Tyr.secure as GraclPlugin | undefined;
     if (!plugin) {
       return GraclPlugin.prototype.error(
         `No gracl plugin available, must instantiate GraclPlugin and pass to Tyr.config()!`
@@ -90,7 +92,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
    * that have it as the resource. Optionally return only direct (non inherited)
    * permission objects
    */
-  static async getPermissionsOfTypeForResource(
+  public static async getPermissionsOfTypeForResource(
     resourceDocument: Tyr.Document,
     permissionType?: string,
     direct?: boolean
@@ -120,7 +122,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
    * that have it as the subject. Optionally return only direct (non inherited)
    * permission objects
    */
-  static async getPermissionsOfTypeForSubject(
+  public static async getPermissionsOfTypeForSubject(
     subjectDocument: Tyr.Document,
     permissionType?: string,
     direct?: boolean
@@ -153,7 +155,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
    * (see: https://github.com/CrossLead/gracl/blob/master/lib/classes/Resource.ts)
    * and Subject class (https://github.com/CrossLead/gracl/blob/master/lib/classes/Subject.ts)
    */
-  static isAllowed(
+  public static isAllowed(
     resourceData: Tyr.Document | string,
     permissionType: string,
     subjectData: Tyr.Document | string
@@ -166,7 +168,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
   /**
    * Determine access to multiple permissions simultaneously
    */
-  static async determineAccess(
+  public static async determineAccess(
     resourceData: Tyr.Document | string,
     permissionsToCheck: string | string[],
     subjectData: Tyr.Document | string
@@ -202,7 +204,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
    * (see: https://github.com/CrossLead/gracl/blob/master/lib/classes/Resource.ts)
    * and Subject class (https://github.com/CrossLead/gracl/blob/master/lib/classes/Subject.ts)
    */
-  static async explainPermission(
+  public static async explainPermission(
     resourceData: Tyr.Document | string,
     permissionType: string,
     subjectData: Tyr.Document | string
@@ -217,7 +219,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
     extractIdAndModel(plugin, resourceData);
     extractIdAndModel(plugin, subjectData);
 
-    let {
+    const {
       resourceDocument,
       subjectDocument
     } = await resolveSubjectAndResourceDocuments(resourceData, subjectData);
@@ -236,7 +238,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
    * Create/update a permission edge document to
    * set a permission between a given resource and subject
    */
-  static async updatePermissions(
+  public static async updatePermissions(
     resourceDocument: Tyr.Document | string,
     permissionChanges: { [key: string]: boolean },
     subjectDocument: Tyr.Document | string,
@@ -253,10 +255,12 @@ export class PermissionsModel extends PermissionsBaseCollection {
       }
     });
 
-    if (!resourceDocument)
+    if (!resourceDocument) {
       throw new TypeError(`no resource given to updatePermissions`);
-    if (!subjectDocument)
+    }
+    if (!subjectDocument) {
       throw new TypeError(`no subject given to updatePermissions`);
+    }
 
     const resourceComponents = extractIdAndModel(plugin, resourceDocument),
       subjectComponents = extractIdAndModel(plugin, subjectDocument);
@@ -284,7 +288,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
     } catch (error) {
       // hack for https://jira.mongodb.org/browse/SERVER-14322
       if (attempt < 10 && /E11000 duplicate key error/.test(error.message)) {
-        return <Tyr.Document>await new Promise<Tyr.Document | null>(
+        return await new Promise<Tyr.Document | null>(
           (resolve, reject) => {
             setTimeout(() => {
               PermissionsModel.updatePermissions(
@@ -297,7 +301,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
                 .catch(reject);
             }, 100);
           }
-        );
+        ) as Tyr.Document;
       } else if (/E11000 duplicate key error/.test(error.message)) {
         plugin.error(
           `Attempted to update permission 10 times, but recieved "E11000 duplicate key error" on each attempt`
@@ -316,11 +320,11 @@ export class PermissionsModel extends PermissionsBaseCollection {
   /**
    *  Given a uid, remove all permissions relating to that entity in the system
    */
-  static async deletePermissions(doc: Tyr.Document): Promise<Tyr.Document> {
+  public static async deletePermissions(doc: Tyr.Document): Promise<Tyr.Document> {
     const uid = doc.$uid,
       plugin = PermissionsModel.getGraclPlugin();
 
-    if (!uid) plugin.error('No $uid property on document!');
+    if (!uid) { plugin.error('No $uid property on document!'); }
 
     await PermissionsModel.remove({
       query: {
@@ -331,7 +335,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
     return doc;
   }
 
-  static async determineAccesstoAllPermissions(
+  public static async determineAccesstoAllPermissions(
     subject: Tyr.Document,
     permissionsToCheck: string[],
     resourceUidList: string[] | Tyr.Document[]
@@ -341,8 +345,8 @@ export class PermissionsModel extends PermissionsBaseCollection {
 
     const uidsToCheck: string[] =
       typeof resourceUidList[0] === 'string'
-        ? <string[]>resourceUidList
-        : <string[]>_.map(<Tyr.Document[]>resourceUidList, '$uid');
+        ? resourceUidList as string[]
+        : _.map(resourceUidList as Tyr.Document[], '$uid') as string[];
 
     if (!plugin.graclHierarchy.subjects.has(subject.$model.def.name)) {
       plugin.error(
@@ -355,7 +359,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
       _.map(permissionsToCheck, perm => {
         const tyranidOpts = {
           auth: subject,
-          perm: perm,
+          perm,
           fields: { _id: 1 }
         };
 
@@ -364,19 +368,19 @@ export class PermissionsModel extends PermissionsBaseCollection {
     );
 
     // Hacky double cast for promise.all weirdness
-    const retrievedDocumentMatrix = <Tyr.Document[][]>(<any>await retrievedDocumentsPromise);
+    const retrievedDocumentMatrix = (await retrievedDocumentsPromise as any) as Tyr.Document[][];
 
     const permissionSetHash = _.reduce(
       retrievedDocumentMatrix,
       (out, documentList, index) => {
         const permission = permissionsToCheck[index];
-        out[permission] = new Set(<string[]>_.chain(documentList)
+        out[permission] = new Set(_.chain(documentList)
           .map('$uid')
           .compact()
-          .value());
+          .value() as string[]);
         return out;
       },
-      <Hash<Set<string>>>{}
+      {} as Hash<Set<string>>
     );
 
     _.each(uidsToCheck, uid => {
@@ -390,7 +394,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
   }
 
   // create mongodb indexes for the permission edges
-  static async createIndexes() {
+  public static async createIndexes() {
     const plugin = PermissionsModel.getGraclPlugin();
 
     plugin.log(`Creating indexes...`);
@@ -412,7 +416,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
     );
   }
 
-  static async findEntitiesWithPermissionAccessToResource(
+  public static async findEntitiesWithPermissionAccessToResource(
     accessType: 'allow' | 'deny',
     permissions: string[],
     doc: Tyr.Document
@@ -465,19 +469,19 @@ export class PermissionsModel extends PermissionsBaseCollection {
     // get all subjects with direct permissions set for this resource,
     // does not yet include _all_ subjects down the heirarchy
     const subjectDocuments = await Tyr.byUids(
-      <string[]>permissionsAsResource.map((p: any) => p['subjectId'])
+      permissionsAsResource.map((p: any) => p.subjectId) as string[]
     );
 
     const subjectsByCollection: Hash<Tyr.Document[]> = {};
     _.each(subjectDocuments, subject => {
       const colName = subject.$model.def.name;
-      if (!subjectsByCollection[colName]) subjectsByCollection[colName] = [];
+      if (!subjectsByCollection[colName]) { subjectsByCollection[colName] = []; }
       subjectsByCollection[colName].push(subject);
     });
 
     const permsBySubjectId: Hash<Tyr.Document> = {};
     _.each(permissionsAsResource, (permObj: any) => {
-      permsBySubjectId[permObj['subjectId']] = permObj;
+      permsBySubjectId[permObj.subjectId] = permObj;
     });
 
     // test if a given subject satisfies all required permissions
@@ -486,7 +490,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
       const uid = subject.$uid;
       const hashKey = `${uid}-${explicit}`;
 
-      if (hashKey in accessCache) return accessCache[hashKey];
+      if (hashKey in accessCache) { return accessCache[hashKey]; }
 
       const perm = permsBySubjectId[uid] || { access: {} };
 
@@ -544,7 +548,7 @@ export class PermissionsModel extends PermissionsBaseCollection {
               }
             }
 
-            query['$and'].push({ $or });
+            query.$and.push({ $or });
 
             // get all matching docs to query
             const inheritedSubjects = await Tyr.byName[collectionName].findAll({
@@ -573,11 +577,11 @@ export class PermissionsModel extends PermissionsBaseCollection {
 
     await traverse(getObjectHierarchy(plugin).subjects);
 
-    return <Tyr.Document[]>_(subjectsByCollection)
+    return _(subjectsByCollection)
       .values()
       .flatten()
       .uniqBy('$uid')
       .compact()
-      .value();
+      .value() as Tyr.Document[];
   }
 }

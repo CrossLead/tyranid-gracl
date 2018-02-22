@@ -1,38 +1,28 @@
 import { Tyr } from 'tyranid';
 import { Blog } from '../models/Blog';
-import { User } from '../models/User';
-import { Team } from '../models/Team';
 import { Chart } from '../models/Chart';
-import { Inventory } from '../models/Inventory';
-import { Organization } from '../models/Organization';
 import { Comment } from '../models/Comment';
+import { Inventory } from '../models/Inventory';
 import { Item } from '../models/Item';
+import { Organization } from '../models/Organization';
+import { Team } from '../models/Team';
+import { User } from '../models/User';
 
 export async function createTestData() {
-  // nuke old data...
   await Promise.all(Tyr.collections.map(c => c.remove({ query: {} })));
 
-  /**
-    Organiations
-   */
   const [chipotle, chopped, cava] = await Promise.all([
     Organization.insert({ name: 'Chipotle' }),
     Organization.insert({ name: 'Chopped' }),
     Organization.insert({ name: 'Cava' })
   ]);
 
-  /**
-    Organiations
-   */
   const [] = await Promise.all([
     Inventory.insert({ name: 'Chipotle', organizationId: chipotle.$id }),
     Inventory.insert({ name: 'Chopped', organizationId: chopped.$id }),
     Inventory.insert({ name: 'Cava', organizationId: cava.$id })
   ]);
 
-  /**
-    Blogs
-   */
   const [
     chipotleFoodBlog,
     chipotleCorporateBlog,
@@ -45,9 +35,6 @@ export async function createTestData() {
     Blog.insert({ name: 'Spinach + Lentils', organizationId: cava.$id })
   ]);
 
-  /**
-    Posts
-   */
   const [] = await Promise.all([
     Blog.addPost('Why burritos are amazing.', chipotleFoodBlog),
     Blog.addPost('Ecoli challenges.', chipotleFoodBlog),
@@ -62,17 +49,11 @@ export async function createTestData() {
     Blog.addPost('Lentils are great', cavaBlog)
   ]);
 
-  /**
-   *  Comment
-   */
   await Promise.all([
     // comment with no post id but organizationId which links to higher
     Comment.insert({ text: 'TEST_COMMENT', blogId: chipotleCorporateBlog.$id })
   ]);
 
-  /**
-   * Teams
-   */
   const [burritoMakers, chipotleMarketing, cavaEngineers] = await Promise.all([
     Team.insert({ name: 'burritoMakers', organizationId: chipotle.$id }),
     Team.insert({ name: 'chipotleMarketing', organizationId: chipotle.$id }),
@@ -81,9 +62,6 @@ export async function createTestData() {
 
   await Team.insert({ name: 'choppedExec', organizationId: chopped.$id });
 
-  /**
-    Users
-   */
   const [ben, ted] = await Promise.all([
     User.insert({
       name: 'ben',
@@ -98,9 +76,6 @@ export async function createTestData() {
     User.insert({ name: 'noTeams', organizationId: chipotle.$id })
   ]);
 
-  /**
-   * items
-   */
   await Promise.all([
     Item.insert({
       name: 'test-ben-item',

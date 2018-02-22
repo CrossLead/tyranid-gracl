@@ -1,5 +1,5 @@
-import { Tyr } from 'tyranid';
 import * as _ from 'lodash';
+import { Tyr } from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
 
 /**
@@ -17,7 +17,7 @@ export function getCollectionLinksSorted<D extends Tyr.Document>(
       .sort()
       .join(':')}`;
 
-  if (collectionFieldCache[hash]) return collectionFieldCache[hash];
+  if (collectionFieldCache[hash]) { return collectionFieldCache[hash]; }
 
   const linkFields = col.links(opts);
 

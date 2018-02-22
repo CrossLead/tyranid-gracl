@@ -1,6 +1,6 @@
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { parsePermissionString } from './parsePermissionString';
 import { getPermissionObject } from './getPermissionObject';
+import { parsePermissionString } from './parsePermissionString';
 
 // check if a permission is "crud", meaning it applies to all
 // collections. For example, "view" could be crud, and then "view-user",

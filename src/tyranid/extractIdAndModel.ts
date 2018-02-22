@@ -24,13 +24,13 @@ export function extractIdAndModel(
     validate(plugin, doc);
     const components: { [key: string]: any } = Tyr.parseUid(doc) || {};
     return {
-      $uid: <string>doc,
-      $model: <Tyr.CollectionInstance>components['collection']
+      $uid: doc as string,
+      $model: components.collection as Tyr.CollectionInstance
     };
   } else {
     validate(plugin, doc.$uid);
     return {
-      $uid: <string>doc.$uid,
+      $uid: doc.$uid as string,
       $model: doc.$model
     };
   }

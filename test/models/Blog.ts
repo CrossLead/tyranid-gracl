@@ -22,7 +22,7 @@ export const BlogBaseCollection = new Tyr.Collection({
 });
 
 export class Blog extends BlogBaseCollection {
-  static async addPost(text: string, blog: Tyr.Document) {
+  public static async addPost(text: string, blog: Tyr.Document) {
     const post = new Post({ text, blogId: blog.$id });
     await post.$save();
     return post;

@@ -1,5 +1,5 @@
-import { Tyr } from 'tyranid';
 import { Subject } from 'gracl';
+import { Tyr } from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
 
 /**

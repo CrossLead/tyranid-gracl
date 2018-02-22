@@ -1,7 +1,7 @@
 import { Tyr } from 'tyranid';
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { Hash } from '../interfaces';
 import { findLinkInCollection } from '../graph/findLinkInCollection';
+import { Hash } from '../interfaces';
 
 /**
  * Convert a map of collections => { uids } into a mongo $in/$nin query
@@ -13,12 +13,12 @@ export function createInQueries(
   map: Map<string, Set<string>>,
   queriedCollection: Tyr.CollectionInstance,
   key: '$nin' | '$in'
-): Hash<Hash<Hash<string[]>>[]> {
+): Hash<Array<Hash<Hash<string[]>>>> {
   if (!(key === '$in' || key === '$nin')) {
     plugin.error(`key must be $nin or $in!`);
   }
 
-  const conditions: Hash<Hash<string[]>>[] = [];
+  const conditions: Array<Hash<Hash<string[]>>> = [];
 
   map.forEach((idSet, col) => {
     // if the collection is the same as the one being queried, use the primary id field
@@ -50,7 +50,7 @@ export function createInQueries(
       prop = link.spath;
     }
 
-    conditions.push({ [<string>prop]: { [<string>key]: Array.from(idSet) } });
+    conditions.push({ [prop as string]: { [key as string]: Array.from(idSet) } });
   });
 
   return { [key === '$in' ? '$or' : '$and']: conditions };

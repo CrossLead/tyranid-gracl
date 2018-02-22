@@ -15,10 +15,10 @@ export function getPermissionParents(
   let nextPermissionTypes = nextPermissions(plugin, perm);
   while (nextPermissionTypes.length) {
     parents.push.apply(parents, nextPermissionTypes);
-    nextPermissionTypes = <string[]>_.chain(nextPermissionTypes)
+    nextPermissionTypes = _.chain(nextPermissionTypes)
       .map(p => nextPermissions(plugin, p))
       .flatten()
-      .value();
+      .value() as string[];
   }
   return _.uniq(parents);
 }

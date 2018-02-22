@@ -6,7 +6,7 @@ import { parsePermissionString } from './parsePermissionString';
  * exists in the permissions hierarchy
  */
 export function validatePermissionExists(plugin: GraclPlugin, perm: string) {
-  if (!perm) return plugin.error('no permission given!');
+  if (!perm) { return plugin.error('no permission given!'); }
 
   const components = parsePermissionString(plugin, perm);
 

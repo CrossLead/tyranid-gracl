@@ -1,29 +1,29 @@
 /// <reference path="./types/server.d.ts" />
 
-import { Tyr } from 'tyranid';
+import test, { ContextualTestContext } from 'ava';
+import * as _ from 'lodash';
 import * as mongodb from 'mongodb';
 import * as path from 'path';
-import * as _ from 'lodash';
-import test, { ContextualTestContext } from 'ava';
+import { Tyr } from 'tyranid';
 
 import * as tyranidGracl from '../../src/';
 
-import { expectedLinkPaths } from '../helpers/expectedLinkPaths';
+import { captureLogStream } from '../helpers/captureLogStream';
 import { createTestData } from '../helpers/createTestData';
 import { expectAsyncToThrow } from '../helpers/expectAsyncToThrow';
-import { captureLogStream } from '../helpers/captureLogStream';
+import { expectedLinkPaths } from '../helpers/expectedLinkPaths';
 import { Blog } from '../models/';
 
 import { PermissionsModel } from '../../src/models/PermissionsModel';
 
 import { findLinkInCollection } from '../../src/graph/findLinkInCollection';
 import { getCollectionLinksSorted } from '../../src/graph/getCollectionLinksSorted';
-import { stepThroughCollectionPath } from '../../src/graph/stepThroughCollectionPath';
 import { getShortestPath } from '../../src/graph/getShortestPath';
+import { stepThroughCollectionPath } from '../../src/graph/stepThroughCollectionPath';
 
 import { documentMethods } from '../../src/tyranid/documentMethods';
-import { mixInDocumentMethods } from '../../src/tyranid/mixInDocumentMethods';
 import { validate as validateUid } from '../../src/tyranid/extractIdAndModel';
+import { mixInDocumentMethods } from '../../src/tyranid/mixInDocumentMethods';
 
 type GraclPlugin = tyranidGracl.GraclPlugin;
 
@@ -55,11 +55,11 @@ const permissionTypes = [
   }
 ];
 
-const root = __dirname.replace(`${path.sep}test${path.sep}spec`, ''),
-  secure = new tyranidGracl.GraclPlugin({
-    verbose: VERBOSE_LOGGING,
-    permissionTypes: permissionTypes
-  });
+const root = __dirname.replace(`${path.sep}test${path.sep}spec`, '');
+const secure = new tyranidGracl.GraclPlugin({
+  verbose: VERBOSE_LOGGING,
+  permissionTypes
+});
 
 const checkStringEq = (
   t: ContextualTestContext,
@@ -78,12 +78,14 @@ async function giveBenAccessToChoppedPosts(
   t: ContextualTestContext,
   perm = 'view'
 ) {
-  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-    chopped = await Tyr.byName.organization.findOne({
-      query: { name: 'Chopped' }
-    });
+  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+  const chopped = await Tyr.byName.organization.findOne({
+    query: { name: 'Chopped' }
+  });
 
-  if (!chopped || !ben) throw new Error(`No ben or chopped!`);
+  if (!chopped || !ben) {
+    throw new Error(`No ben or chopped!`);
+  }
 
   t.truthy(ben, 'ben should exist');
   t.truthy(chopped, 'chopped should exist');
@@ -94,7 +96,9 @@ async function giveBenAccessToChoppedPosts(
     ben
   );
 
-  if (!updatedChopped) throw new Error(`No updated chopped!`);
+  if (!updatedChopped) {
+    throw new Error(`No updated chopped!`);
+  }
 
   return updatedChopped;
 }
@@ -112,14 +116,14 @@ test.before(async t => {
   });
 
   Tyr.config({
-    db: db,
+    db,
     validate: [
       {
         dir: root + `${path.sep}test${path.sep}models`,
         fileMatch: '.*.js'
       }
     ],
-    secure: secure,
+    secure,
     cls: false,
     permissions: {
       find: 'view',
@@ -131,7 +135,7 @@ test.before(async t => {
 
   await secure.createIndexes();
 
-  plugin = <GraclPlugin>secure;
+  plugin = secure as GraclPlugin;
 
   await createTestData();
   t.pass();
@@ -162,7 +166,7 @@ test.serial('Should produce correctly formatted labels', t => {
 
 test.serial('mixInDocumentMethods should throw when called again', t => {
   t.throws(() => {
-    mixInDocumentMethods(<GraclPlugin>Tyr.secure);
+    mixInDocumentMethods(Tyr.secure as GraclPlugin);
   });
 });
 
@@ -176,9 +180,9 @@ test.serial('Should log formatted log output', t => {
 });
 
 test.serial('should correctly find links using getCollectionLinksSorted', t => {
-  const Chart = Tyr.byName.chart,
-    options = { direction: 'outgoing' },
-    links = getCollectionLinksSorted(secure, Chart, options);
+  const Chart = Tyr.byName.chart;
+  const options = { direction: 'outgoing' };
+  const links = getCollectionLinksSorted(secure, Chart, options);
 
   t.deepEqual(
     links,
@@ -188,9 +192,9 @@ test.serial('should correctly find links using getCollectionLinksSorted', t => {
 });
 
 test.serial('should find specific link using findLinkInCollection', t => {
-  const Chart = Tyr.byName.chart,
-    User = Tyr.byName.user,
-    linkField = findLinkInCollection(secure, Chart, User);
+  const Chart = Tyr.byName.chart;
+  const User = Tyr.byName.user;
+  const linkField = findLinkInCollection(secure, Chart, User);
 
   t.truthy(linkField);
   t.deepEqual(linkField.link && linkField.link.def.name, 'user');
@@ -201,18 +205,18 @@ test.serial(
   'should return correct ids after calling stepThroughCollectionPath',
   async t => {
     const chipotle = await Tyr.byName.organization.findOne({
-        query: { name: 'Chipotle' }
-      }),
-      chipotleBlogs = await Tyr.byName.blog.findAll({
-        query: {
-          organizationId: chipotle ? chipotle.$id : new mongodb.ObjectID()
-        }
-      }),
-      blogIds = <mongodb.ObjectID[]>_.map(chipotleBlogs, '_id'),
-      chipotlePosts = await Tyr.byName.post.findAll({
-        query: { blogId: { $in: blogIds } }
-      }),
-      postIds = <mongodb.ObjectID[]>_.map(chipotlePosts, '_id');
+      query: { name: 'Chipotle' }
+    });
+    const chipotleBlogs = await Tyr.byName.blog.findAll({
+      query: {
+        organizationId: chipotle ? chipotle.$id : new mongodb.ObjectID()
+      }
+    });
+    const blogIds = _.map(chipotleBlogs, '_id') as mongodb.ObjectID[];
+    const chipotlePosts = await Tyr.byName.post.findAll({
+      query: { blogId: { $in: blogIds } }
+    });
+    const postIds = _.map(chipotlePosts, '_id') as mongodb.ObjectID[];
 
     const steppedPostIds = await stepThroughCollectionPath(
       secure,
@@ -245,10 +249,15 @@ test.serial(
 
 test.serial('should correctly produce paths between collections', t => {
   for (const a in expectedLinkPaths) {
+    if (!expectedLinkPaths.hasOwnProperty(a)) {
+      continue;
+    }
     for (const b in expectedLinkPaths[a]) {
-      const path = getShortestPath(secure, Tyr.byName[a], Tyr.byName[b]);
+      if (!expectedLinkPaths[a].hasOwnProperty(b)) {
+        continue;
+      }
       t.deepEqual(
-        path,
+        getShortestPath(secure, Tyr.byName[a], Tyr.byName[b]),
         expectedLinkPaths[a][b] || [],
         `Path from ${a} to ${b}`
       );
@@ -258,10 +267,12 @@ test.serial('should correctly produce paths between collections', t => {
 
 test.serial('should add permissions methods to documents', async t => {
   const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
-  const methods = Object.keys(documentMethods) as (keyof Tyr.Document)[];
+  const methods = Object.keys(documentMethods) as Array<keyof Tyr.Document>;
 
   for (const method of methods) {
-    method && t.truthy(ben && ben[method], `should have method: ${method}`);
+    if (method) {
+      t.truthy(ben && ben[method], `should have method: ${method}`);
+    }
   }
 });
 
@@ -276,23 +287,23 @@ test.serial(
 test.serial(
   'should return all relevant permissions on GraclPlugin.getAllPermissionTypes()',
   t => {
-    const number_of_resources = secure.graclHierarchy.resources.size;
-    const number_of_crud_perms = _.filter(
+    const numOfResources = secure.graclHierarchy.resources.size;
+    const numOfCrudPerms = _.filter(
       permissionTypes,
       (perm: { abstract?: boolean; collection?: boolean }) => {
-        return !perm['abstract'] && !perm['collection'];
+        return !perm.abstract && !perm.collection;
       }
     ).length;
-    const number_of_abstract_perms = _.filter(
+    const numOfAbstractPerms = _.filter(
       permissionTypes,
       (perm: { abstract?: boolean; collection?: boolean }) => {
-        return perm['abstract'];
+        return perm.abstract;
       }
     ).length;
     const allPermissionTypes = secure.getAllPossiblePermissionTypes();
     t.deepEqual(
       allPermissionTypes.length,
-      number_of_abstract_perms + number_of_resources * number_of_crud_perms,
+      numOfAbstractPerms + numOfResources * numOfCrudPerms,
       'should have the correct number'
     );
   }
@@ -301,19 +312,19 @@ test.serial(
 test.serial(
   'should return correct parent permissions on GraclPlugin.getPermissionParents(perm)',
   t => {
-    const view_blog_parents = secure.getPermissionParents('view-blog');
+    const viewBlogParents = secure.getPermissionParents('view-blog');
     t.deepEqual(
-      view_blog_parents.length,
+      viewBlogParents.length,
       3,
       'view-blog should have three parent permissions'
     );
     t.notDeepEqual(
-      view_blog_parents.indexOf('edit-blog'),
+      viewBlogParents.indexOf('edit-blog'),
       -1,
       'view-blog should have edit-blog parent'
     );
     t.notDeepEqual(
-      view_blog_parents.indexOf('view_alignment_triangle_private'),
+      viewBlogParents.indexOf('view_alignment_triangle_private'),
       -1,
       'view-blog should have view_alignment_triangle_private parent'
     );
@@ -323,20 +334,20 @@ test.serial(
 test.serial(
   'should return correct permission children on GraclPlugin.getPermissionChildren(perm)',
   t => {
-    const edit_post_children = secure.getPermissionChildren('edit-post');
-    const edit_children = secure.getPermissionChildren('edit');
+    const editPostChildren = secure.getPermissionChildren('edit-post');
+    const editChildren = secure.getPermissionChildren('edit');
     t.notDeepEqual(
-      edit_children.indexOf('view'),
+      editChildren.indexOf('view'),
       -1,
       'should include crud child'
     );
     t.notDeepEqual(
-      edit_post_children.indexOf('abstract_view_chart'),
+      editPostChildren.indexOf('abstract_view_chart'),
       -1,
       'should include specifically set abstract child'
     );
     t.notDeepEqual(
-      edit_post_children.indexOf('view-post'),
+      editPostChildren.indexOf('view-post'),
       -1,
       'should include collection specific crud child'
     );
@@ -355,24 +366,24 @@ test.serial('should successfully add permissions', async t => {
     undefined,
     'resource'
   )) as Permission[];
-  const existingPermissions = (await Tyr.byName['graclPermission'].findAll({
+  const existingPermissions = (await Tyr.byName.graclPermission.findAll({
     query: {}
   })) as Permission[];
 
   t.deepEqual(existingPermissions.length, 1);
   t.deepEqual(
-    existingPermissions[0]['resourceId'].toString(),
-    choppedPermissions[0]['resourceId'].toString(),
+    existingPermissions[0].resourceId.toString(),
+    choppedPermissions[0].resourceId.toString(),
     'resourceId'
   );
   t.deepEqual(
-    existingPermissions[0]['subjectId'].toString(),
-    choppedPermissions[0]['subjectId'].toString(),
+    existingPermissions[0].subjectId.toString(),
+    choppedPermissions[0].subjectId.toString(),
     'subjectId'
   );
   t.deepEqual(
-    existingPermissions[0]['access']['view-post'],
-    choppedPermissions[0]['access']['view-post'],
+    existingPermissions[0].access['view-post'],
+    choppedPermissions[0].access['view-post'],
     'access'
   );
 });
@@ -380,10 +391,10 @@ test.serial('should successfully add permissions', async t => {
 test.serial('should respect subject / resource hierarchy', async t => {
   await giveBenAccessToChoppedPosts(t);
 
-  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-    choppedBlog = await Tyr.byName.blog.findOne({
-      query: { name: 'Salads are great' }
-    });
+  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+  const choppedBlog = await Tyr.byName.blog.findOne({
+    query: { name: 'Salads are great' }
+  });
 
   t.truthy(ben, 'ben should exist');
   t.truthy(choppedBlog, 'choppedBlog should exist');
@@ -397,10 +408,10 @@ test.serial('should respect subject / resource hierarchy', async t => {
 test.serial('should respect permissions hierarchy', async t => {
   await giveBenAccessToChoppedPosts(t, 'edit');
 
-  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-    choppedBlog = await Tyr.byName.blog.findOne({
-      query: { name: 'Salads are great' }
-    });
+  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+  const choppedBlog = await Tyr.byName.blog.findOne({
+    query: { name: 'Salads are great' }
+  });
 
   t.truthy(ben, 'ben should exist');
   t.truthy(choppedBlog, 'choppedBlog should exist');
@@ -414,23 +425,21 @@ test.serial('should respect permissions hierarchy', async t => {
 test.serial(
   'should correctly respect combined permission/subject/resource hierarchy',
   async t => {
-    /**
-    Set deny view-access for parent subject to parent resource
-    Set allow edit-access for child subject to child resource
+    // Set deny view-access for parent subject to parent resource
+    // Set allow edit-access for child subject to child resource
+    // should return true when checking if child subject can view
 
-    should return true when checking if child subject can view
-   */
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const chipotle = await Tyr.byName.organization.findOne({
+      query: { name: 'Chipotle' }
+    });
+    const chipotleCorporateBlog = await Tyr.byName.blog.findOne({
+      query: { name: 'Mexican Empire' }
+    });
 
-    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      chipotle = await Tyr.byName.organization.findOne({
-        query: { name: 'Chipotle' }
-      }),
-      chipotleCorporateBlog = await Tyr.byName.blog.findOne({
-        query: { name: 'Mexican Empire' }
-      });
-
-    if (!ben || !chipotle || !chipotleCorporateBlog)
+    if (!ben || !chipotle || !chipotleCorporateBlog) {
       throw new Error(`missing docs!`);
+    }
 
     await chipotleCorporateBlog.$allow('edit-post', ben);
     await chipotle.$deny('view-post', chipotle);
@@ -442,12 +451,14 @@ test.serial(
 );
 
 test.serial('should validate permissions', async t => {
-  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-    chipotleCorporateBlog = await Tyr.byName.blog.findOne({
-      query: { name: 'Mexican Empire' }
-    });
+  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+  const chipotleCorporateBlog = await Tyr.byName.blog.findOne({
+    query: { name: 'Mexican Empire' }
+  });
 
-  if (!ben || !chipotleCorporateBlog) throw new Error(`missing docs!`);
+  if (!ben || !chipotleCorporateBlog) {
+    throw new Error(`missing docs!`);
+  }
 
   t.truthy(ben, 'ben should exist');
   t.truthy(chipotleCorporateBlog, 'chipotleCorporateBlog should exist');
@@ -465,12 +476,14 @@ test.serial(
   async t => {
     await giveBenAccessToChoppedPosts(t);
 
-    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      chopped = await Tyr.byName.organization.findOne({
-        query: { name: 'Chopped' }
-      });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const chopped = await Tyr.byName.organization.findOne({
+      query: { name: 'Chopped' }
+    });
 
-    if (!ben || !chopped) throw new Error(`missing docs!`);
+    if (!ben || !chopped) {
+      throw new Error(`missing docs!`);
+    }
 
     const access = await chopped.$isAllowed('abstract_view_chart', ben);
     t.true(access);
@@ -481,7 +494,9 @@ test.serial('should throw error when passing invalid uid', async t => {
   const chopped = await Tyr.byName.organization.findOne({
     query: { name: 'Chopped' }
   });
-  if (!chopped) throw new Error(`missing docs!`);
+  if (!chopped) {
+    throw new Error(`missing docs!`);
+  }
 
   await expectAsyncToThrow(
     t,
@@ -513,16 +528,18 @@ test.serial(
   'should skip a link in the hierarchy chain when no immediate parent ids present',
   async t => {
     const noTeamUser = await Tyr.byName.user.findOne({
-        query: { name: 'noTeams' }
-      }),
-      chopped = await Tyr.byName.organization.findOne({
-        query: { name: 'Chopped' }
-      }),
-      chipotle = await Tyr.byName.organization.findOne({
-        query: { name: 'Chipotle' }
-      });
+      query: { name: 'noTeams' }
+    });
+    const chopped = await Tyr.byName.organization.findOne({
+      query: { name: 'Chopped' }
+    });
+    const chipotle = await Tyr.byName.organization.findOne({
+      query: { name: 'Chipotle' }
+    });
 
-    if (!noTeamUser || !chopped || !chipotle) throw new Error(`missing docs!`);
+    if (!noTeamUser || !chopped || !chipotle) {
+      throw new Error(`missing docs!`);
+    }
 
     chopped.$allow('view-post', chipotle);
 
@@ -538,14 +555,16 @@ test.serial(
   'should skip multiple links in the hierarchy chain when no immediate parent ids present',
   async t => {
     const freeComment = await Tyr.byName.comment.findOne({
-        query: { text: 'TEST_COMMENT' }
-      }),
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      chipotle = await Tyr.byName.organization.findOne({
-        query: { name: 'Chipotle' }
-      });
+      query: { text: 'TEST_COMMENT' }
+    });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const chipotle = await Tyr.byName.organization.findOne({
+      query: { name: 'Chipotle' }
+    });
 
-    if (!ben || !chipotle || !freeComment) throw new Error(`missing docs!`);
+    if (!ben || !chipotle || !freeComment) {
+      throw new Error(`missing docs!`);
+    }
 
     await chipotle.$allow('view-comment', ben);
 
@@ -558,14 +577,16 @@ test.serial(
   'should skip multiple links in the hierarchy chain when no immediate parent ids present, passing uid, using model',
   async t => {
     const freeComment = await Tyr.byName.comment.findOne({
-        query: { text: 'TEST_COMMENT' }
-      }),
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      chipotle = await Tyr.byName.organization.findOne({
-        query: { name: 'Chipotle' }
-      });
+      query: { text: 'TEST_COMMENT' }
+    });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const chipotle = await Tyr.byName.organization.findOne({
+      query: { name: 'Chipotle' }
+    });
 
-    if (!ben || !chipotle || !freeComment) throw new Error(`missing docs!`);
+    if (!ben || !chipotle || !freeComment) {
+      throw new Error(`missing docs!`);
+    }
 
     await PermissionsModel.updatePermissions(
       chipotle.$uid,
@@ -585,12 +606,14 @@ test.serial(
   async t => {
     await giveBenAccessToChoppedPosts(t);
 
-    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      chopped = await Tyr.byName.organization.findOne({
-        query: { name: 'Chopped' }
-      });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const chopped = await Tyr.byName.organization.findOne({
+      query: { name: 'Chopped' }
+    });
 
-    if (!ben || !chopped) throw new Error(`missing docs!`);
+    if (!ben || !chopped) {
+      throw new Error(`missing docs!`);
+    }
 
     t.is(
       (await chopped.$permissions(undefined, 'resource')).length,
@@ -622,29 +645,32 @@ test.serial(
 test.serial(
   'should successfully remove all permissions after secure.deletePermissions()',
   async t => {
-    const ted = await Tyr.byName.user.findOne({ query: { name: 'ted' } }),
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const ted = await Tyr.byName.user.findOne({ query: { name: 'ted' } });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
 
     const chopped = await Tyr.byName.organization.findOne({
-        query: { name: 'Chopped' }
-      }),
-      cava = await Tyr.byName.organization.findOne({ query: { name: 'Cava' } }),
-      post = await Tyr.byName.post.findOne({
-        query: { text: 'Why burritos are amazing.' }
-      }),
-      chipotle = await Tyr.byName.organization.findOne({
-        query: { name: 'Chipotle' }
-      });
+      query: { name: 'Chopped' }
+    });
+    const cava = await Tyr.byName.organization.findOne({
+      query: { name: 'Cava' }
+    });
+    const post = await Tyr.byName.post.findOne({
+      query: { text: 'Why burritos are amazing.' }
+    });
+    const chipotle = await Tyr.byName.organization.findOne({
+      query: { name: 'Chipotle' }
+    });
 
-    if (!chopped || !cava || !post || !chipotle || !ben || !ted)
+    if (!chopped || !cava || !post || !chipotle || !ben || !ted) {
       throw new Error(`Missing documents`);
+    }
 
     t.true(
-      !(await ted['$permissions']()).length,
+      !(await ted.$permissions()).length,
       'initially should have no permissions'
     );
 
-    const permissionsForTed = await Tyr.byName['graclPermission'].findAll({
+    const permissionsForTed = await Tyr.byName.graclPermission.findAll({
       query: {
         $or: [{ subjectId: ted.$uid }, { resourceId: ted.$uid }]
       }
@@ -677,14 +703,12 @@ test.serial(
     ]);
 
     t.is(
-      (await ted['$permissions'](undefined, 'resource', true)).length,
+      (await ted.$permissions(undefined, 'resource', true)).length,
       1,
       'after populating teds permission (as resource), one permission should show up'
     );
 
-    const updatedPermissionsForTed = await Tyr.byName[
-      'graclPermission'
-    ].findAll({
+    const updatedPermissionsForTed = await Tyr.byName.graclPermission.findAll({
       query: {
         $or: [{ subjectId: ted.$uid }, { resourceId: ted.$uid }]
       }
@@ -699,16 +723,16 @@ test.serial(
       ted.$isAllowed('view-user', ben)
     ]);
 
-    const tedSubjectPermissions = await ted['$permissions']();
+    const tedSubjectPermissions = await ted.$permissions();
     t.is(tedSubjectPermissions.length, 4);
 
-    const tedResourcePermissions = await ted['$permissions'](
+    const tedResourcePermissions = await ted.$permissions(
       undefined,
       'resource'
     );
     t.is(tedResourcePermissions.length, 2);
 
-    const tedDirectResourcePermissions = await ted['$permissions'](
+    const tedDirectResourcePermissions = await ted.$permissions(
       undefined,
       'resource',
       true
@@ -730,37 +754,38 @@ test.serial(
     t.false(_.every(postPermissionChecks));
 
     const updatedChopped = await Tyr.byName.organization.findOne({
-        query: { name: 'Chopped' }
-      }),
-      updatedCava = await Tyr.byName.organization.findOne({
-        query: { name: 'Cava' }
-      }),
-      updatedPost = await Tyr.byName.post.findOne({
-        query: { text: 'Why burritos are amazing.' }
-      }),
-      updatedChipotle = await Tyr.byName.organization.findOne({
-        query: { name: 'Chipotle' }
-      });
+      query: { name: 'Chopped' }
+    });
+    const updatedCava = await Tyr.byName.organization.findOne({
+      query: { name: 'Cava' }
+    });
+    const updatedPost = await Tyr.byName.post.findOne({
+      query: { text: 'Why burritos are amazing.' }
+    });
+    const updatedChipotle = await Tyr.byName.organization.findOne({
+      query: { name: 'Chipotle' }
+    });
 
-    if (!updatedChopped || !updatedCava || !updatedPost || !updatedChipotle)
+    if (!updatedChopped || !updatedCava || !updatedPost || !updatedChipotle) {
       throw new Error(`Missing documents`);
+    }
 
     t.falsy((await updatedChopped.$permissions(undefined, 'resource')).length);
-    t.falsy((await updatedCava['$permissions'](undefined, 'resource')).length);
-    t.falsy((await updatedPost['$permissions'](undefined, 'resource')).length);
-    t.falsy(
-      (await updatedChipotle['$permissions'](undefined, 'resource')).length
-    );
+    t.falsy((await updatedCava.$permissions(undefined, 'resource')).length);
+    t.falsy((await updatedPost.$permissions(undefined, 'resource')).length);
+    t.falsy((await updatedChipotle.$permissions(undefined, 'resource')).length);
   }
 );
 
 test.serial('should work if passing uid instead of document', async t => {
-  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-    chopped = await Tyr.byName.organization.findOne({
-      query: { name: 'Chopped' }
-    });
+  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+  const chopped = await Tyr.byName.organization.findOne({
+    query: { name: 'Chopped' }
+  });
 
-  if (!ben || !chopped) throw new Error(`Missing documents`);
+  if (!ben || !chopped) {
+    throw new Error(`Missing documents`);
+  }
 
   await chopped.$allow('view-post', ben.$uid);
   await chopped.$deny('view-blog', ben.$uid);
@@ -784,12 +809,14 @@ test.serial('should work if passing uid instead of document', async t => {
 test.serial('should correctly explain permissions', async t => {
   await giveBenAccessToChoppedPosts(t);
 
-  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-    chopped = await Tyr.byName.organization.findOne({
-      query: { name: 'Chopped' }
-    });
+  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+  const chopped = await Tyr.byName.organization.findOne({
+    query: { name: 'Chopped' }
+  });
 
-  if (!ben || !chopped) throw new Error(`Missing documents`);
+  if (!ben || !chopped) {
+    throw new Error(`Missing documents`);
+  }
 
   const access = await PermissionsModel.explainPermission(
     chopped.$uid,
@@ -805,12 +832,14 @@ test.serial('should correctly explain permissions', async t => {
 test.serial(
   'should remove permissions when using $removePermissionAsSubject',
   async t => {
-    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      chopped = await Tyr.byName.organization.findOne({
-        query: { name: 'Chopped' }
-      });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const chopped = await Tyr.byName.organization.findOne({
+      query: { name: 'Chopped' }
+    });
 
-    if (!ben || !chopped) throw new Error(`Missing documents`);
+    if (!ben || !chopped) {
+      throw new Error(`Missing documents`);
+    }
 
     await chopped.$allow('view-post', ben);
 
@@ -836,12 +865,14 @@ test.serial(
 test.serial(
   'should remove permissions when using $removePermissionAsResource',
   async t => {
-    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      chopped = await Tyr.byName.organization.findOne({
-        query: { name: 'Chopped' }
-      });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const chopped = await Tyr.byName.organization.findOne({
+      query: { name: 'Chopped' }
+    });
 
-    if (!ben || !chopped) throw new Error(`Missing documents`);
+    if (!ben || !chopped) {
+      throw new Error(`Missing documents`);
+    }
 
     await chopped.$allow('view-post', ben);
 
@@ -851,7 +882,7 @@ test.serial(
     t.true(access.access);
     t.is(access.type, 'view-post');
 
-    await chopped['$removePermissionAsResource']('view-post');
+    await chopped.$removePermissionAsResource('view-post');
 
     const accessAfterRemove = await chopped.$explainPermission(
       'view-post',
@@ -867,13 +898,15 @@ test.serial(
 test.serial(
   'should remove permissions for specific access when using $removePermissionAsResource',
   async t => {
-    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      ted = await Tyr.byName.user.findOne({ query: { name: 'ted' } }),
-      chopped = await Tyr.byName.organization.findOne({
-        query: { name: 'Chopped' }
-      });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const ted = await Tyr.byName.user.findOne({ query: { name: 'ted' } });
+    const chopped = await Tyr.byName.organization.findOne({
+      query: { name: 'Chopped' }
+    });
 
-    if (!ben || !chopped || !ted) throw new Error(`Missing documents`);
+    if (!ben || !chopped || !ted) {
+      throw new Error(`Missing documents`);
+    }
 
     await chopped.$allow('view-post', ben);
     await chopped.$deny('view-post', ted);
@@ -890,7 +923,7 @@ test.serial(
     t.false(accessTed.access);
     t.is(accessTed.type, 'view-post');
 
-    await chopped['$removePermissionAsResource']('view-post', 'deny');
+    await chopped.$removePermissionAsResource('view-post', 'deny');
 
     const accessBenAfter = await chopped.$explainPermission('view-post', ben);
 
@@ -909,12 +942,14 @@ test.serial(
 test.serial(
   'should correctly check abstract parent of collection-specific permission',
   async t => {
-    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      chopped = await Tyr.byName.organization.findOne({
-        query: { name: 'Chopped' }
-      });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const chopped = await Tyr.byName.organization.findOne({
+      query: { name: 'Chopped' }
+    });
 
-    if (!ben || !chopped) throw new Error(`Missing documents`);
+    if (!ben || !chopped) {
+      throw new Error(`Missing documents`);
+    }
 
     await chopped.$allow('view_alignment_triangle_private', ben);
     const access = await chopped.$isAllowed('view-blog', ben);
@@ -925,12 +960,14 @@ test.serial(
 test.serial(
   'should correctly check normal crud hierarchy for crud permission with additional abstract permission',
   async t => {
-    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      chopped = await Tyr.byName.organization.findOne({
-        query: { name: 'Chopped' }
-      });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const chopped = await Tyr.byName.organization.findOne({
+      query: { name: 'Chopped' }
+    });
 
-    if (!ben || !chopped) throw new Error(`Missing documents`);
+    if (!ben || !chopped) {
+      throw new Error(`Missing documents`);
+    }
 
     await chopped.$allow('edit-blog', ben);
     const access = await chopped.$isAllowed('view-blog', ben);
@@ -939,16 +976,16 @@ test.serial(
 );
 
 test.serial('should return false with no user', async t => {
-  const Post = Tyr.byName.post,
-    query = await secure.query(Post, 'view');
+  const Post = Tyr.byName.post;
+  const query = await secure.query(Post, 'view');
 
   t.falsy(query, 'query should be false');
 });
 
 test.serial('should return false with no permissions', async t => {
-  const Post = Tyr.byName.post,
-    ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-    query = ben && (await secure.query(Post, 'edit', ben));
+  const Post = Tyr.byName.post;
+  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+  const query = ben && (await secure.query(Post, 'edit', ben));
 
   t.falsy(query, 'query should be false');
 });
@@ -958,9 +995,9 @@ test.serial(
   async t => {
     await giveBenAccessToChoppedPosts(t);
 
-    const Post = Tyr.byName.post,
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      query = ben && (await secure.query(Post, 'edit', ben));
+    const Post = Tyr.byName.post;
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const query = ben && (await secure.query(Post, 'edit', ben));
 
     t.falsy(query, 'query should be false');
   }
@@ -969,9 +1006,9 @@ test.serial(
 test.serial(
   'should return empty object for collection with no permissions hierarchy node',
   async t => {
-    const Chart = Tyr.byName.chart,
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      query = ben && (await secure.query(Chart, 'view', ben));
+    const Chart = Tyr.byName.chart;
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const query = ben && (await secure.query(Chart, 'view', ben));
 
     t.deepEqual(query, {}, 'query should be {}');
   }
@@ -982,13 +1019,14 @@ test.serial(
   async t => {
     await giveBenAccessToChoppedPosts(t);
 
-    const Post = Tyr.byName.post,
-      Blog = Tyr.byName.blog,
-      Org = Tyr.byName.organization,
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      chopped = await Org.findOne({ query: { name: 'Chopped' } });
+    const Post = Tyr.byName.post;
+    const Org = Tyr.byName.organization;
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const chopped = await Org.findOne({ query: { name: 'Chopped' } });
 
-    if (!ben || !chopped) throw new Error(`Missing documents`);
+    if (!ben || !chopped) {
+      throw new Error(`Missing documents`);
+    }
 
     const choppedBlogs = await Blog.findAll({
       query: { organizationId: chopped.$id },
@@ -999,8 +1037,8 @@ test.serial(
 
     checkStringEq(
       t,
-      <string[]>_.get(query, '$or.0.blogId.$in'),
-      _.map(choppedBlogs, '_id').map(id => id.toHexString()),
+      _.get(query, '$or.0.blogId.$in') as string[],
+      _.map(choppedBlogs, '_id').map(id => id.toString()),
       'query should find correct blogs'
     );
   }
@@ -1012,22 +1050,23 @@ test.serial(
     const ted = await Tyr.byName.user.findOne({ query: { name: 'ted' } });
 
     const cava = await Tyr.byName.organization.findOne({
-        query: { name: 'Cava' }
-      }),
-      chipotle = await Tyr.byName.organization.findOne({
-        query: { name: 'Chipotle' }
-      }),
-      chipotleBlogs =
-        chipotle &&
-        (await Tyr.byName.blog.findAll({
-          query: { organizationId: chipotle.$id }
-        })),
-      post = await Tyr.byName.post.findOne({
-        query: { text: 'Why burritos are amazing.' }
-      });
+      query: { name: 'Cava' }
+    });
+    const chipotle = await Tyr.byName.organization.findOne({
+      query: { name: 'Chipotle' }
+    });
+    const chipotleBlogs =
+      chipotle &&
+      (await Tyr.byName.blog.findAll({
+        query: { organizationId: chipotle.$id }
+      }));
+    const post = await Tyr.byName.post.findOne({
+      query: { text: 'Why burritos are amazing.' }
+    });
 
-    if (!ted || !cava || !chipotle || !chipotleBlogs || !post)
+    if (!ted || !cava || !chipotle || !chipotleBlogs || !post) {
       throw new Error(`Missing documents`);
+    }
 
     await Promise.all([
       cava.$allow('edit-post', ted),
@@ -1035,10 +1074,10 @@ test.serial(
       chipotleBlogs[0].$allow('view-post', ted)
     ]);
 
-    const entities = await ted['$entitiesWithPermission']('view-post');
+    const entities = await ted.$entitiesWithPermission('view-post');
 
-    t.not(entities.indexOf(cava['$uid']), -1);
-    t.not(entities.indexOf(chipotleBlogs[0]['$uid']), -1);
+    t.not(entities.indexOf(cava.$uid), -1);
+    t.not(entities.indexOf(chipotleBlogs[0].$uid), -1);
   }
 );
 
@@ -1047,7 +1086,9 @@ test.serial(
   async t => {
     const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
 
-    if (!ben) throw new Error(`Missing documents`);
+    if (!ben) {
+      throw new Error(`Missing documents`);
+    }
 
     const posts = await Tyr.byName.post.findAll({
       query: {},
@@ -1060,7 +1101,9 @@ test.serial(
 
     // make ben owner of one post
     const post = await Tyr.byName.post.findOne({ query: {} });
-    post && (await post.$allow('own-post', ben));
+    if (post) {
+      await post.$allow('own-post', ben);
+    }
 
     const owned = await Tyr.byName.post.findAll({
       query: {},
@@ -1076,23 +1119,21 @@ test.serial(
 test.serial(
   'should correctly respect combined permission/subject/resource hierarchy in query()',
   async t => {
-    /**
-    Set deny view-access for parent subject to parent resource
-    Set allow edit-access for child subject to child resource
+    // Set deny view-access for parent subject to parent resource
+    // Set allow edit-access for child subject to child resource
+    // should return true when checking if child subject can view
 
-    should return true when checking if child subject can view
-   */
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const chipotle = await Tyr.byName.organization.findOne({
+      query: { name: 'Chipotle' }
+    });
+    const chipotleCorporateBlog = await Tyr.byName.blog.findOne({
+      query: { name: 'Mexican Empire' }
+    });
 
-    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      chipotle = await Tyr.byName.organization.findOne({
-        query: { name: 'Chipotle' }
-      }),
-      chipotleCorporateBlog = await Tyr.byName.blog.findOne({
-        query: { name: 'Mexican Empire' }
-      });
-
-    if (!ben || !chipotleCorporateBlog || !chipotle)
+    if (!ben || !chipotleCorporateBlog || !chipotle) {
       throw new Error(`Missing documents`);
+    }
 
     await chipotleCorporateBlog.$allow('edit-post', ben);
     await chipotle.$deny('view-post', chipotle);
@@ -1103,9 +1144,7 @@ test.serial(
 
     t.true(
       _.every(foundPosts, post => {
-        return (
-          post['blogId']!.toString() === chipotleCorporateBlog.$id.toString()
-        );
+        return post.blogId!.toString() === chipotleCorporateBlog.$id.toString();
       }),
       'all found posts should come from the one allowed blog'
     );
@@ -1117,13 +1156,14 @@ test.serial(
   async t => {
     await giveBenAccessToChoppedPosts(t);
 
-    const Post = Tyr.byName.post,
-      User = Tyr.byName.user,
-      Blog = Tyr.byName.blog,
-      Org = Tyr.byName.organization,
-      ben = await User.findOne({ query: { name: 'ben' } });
+    const Post = Tyr.byName.post;
+    const User = Tyr.byName.user;
+    const Org = Tyr.byName.organization;
+    const ben = await User.findOne({ query: { name: 'ben' } });
 
-    if (!ben) throw new Error(`Missing documents`);
+    if (!ben) {
+      throw new Error(`Missing documents`);
+    }
 
     const postsBenCanSee = await Post.findAll({
       query: {},
@@ -1132,7 +1172,9 @@ test.serial(
 
     const chopped = await Org.findOne({ query: { name: 'Chopped' } });
 
-    if (!chopped) throw new Error(`Missing documents`);
+    if (!chopped) {
+      throw new Error(`Missing documents`);
+    }
 
     const choppedBlogs = await Blog.findAll({
       query: { organizationId: chopped.$id },
@@ -1145,8 +1187,8 @@ test.serial(
 
     checkStringEq(
       t,
-      <string[]>_.map(postsBenCanSee, d => d.$id.toHexString()),
-      <string[]>_.map(choppedPosts, d => d.$id.toHexString()),
+      _.map(postsBenCanSee, d => d.$id.toHexString()) as string[],
+      _.map(choppedPosts, d => d.$id.toHexString()) as string[],
       'ben should only see chopped posts'
     );
   }
@@ -1155,13 +1197,15 @@ test.serial(
 test.serial(
   'should filter based on abstract parent access of collection-specific permission',
   async t => {
-    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      blogs = await Tyr.byName.blog.findAll({ query: {} }),
-      chopped = await Tyr.byName.organization.findOne({
-        query: { name: 'Chopped' }
-      });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const blogs = await Tyr.byName.blog.findAll({ query: {} });
+    const chopped = await Tyr.byName.organization.findOne({
+      query: { name: 'Chopped' }
+    });
 
-    if (!ben || !chopped) throw new Error(`Missing documents`);
+    if (!ben || !chopped) {
+      throw new Error(`Missing documents`);
+    }
 
     await chopped.$allow('view_alignment_triangle_private', ben);
 
@@ -1185,12 +1229,14 @@ test.serial(
 test.serial(
   'should filter based on abstract parent access of collection-specific permission',
   async t => {
-    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      chopped = await Tyr.byName.organization.findOne({
-        query: { name: 'Chopped' }
-      });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const chopped = await Tyr.byName.organization.findOne({
+      query: { name: 'Chopped' }
+    });
 
-    if (!ben || !chopped) throw new Error(`Missing documents`);
+    if (!ben || !chopped) {
+      throw new Error(`Missing documents`);
+    }
 
     await chopped.$allow('edit-organization', ben);
 
@@ -1210,7 +1256,9 @@ test.serial(
       query: { name: 'Chipotle' }
     });
 
-    if (!ben || !chipotle) throw new Error(`Missing documents`);
+    if (!ben || !chipotle) {
+      throw new Error(`Missing documents`);
+    }
 
     await chipotle.$allow('view-organization', chipotle);
     const access = await chipotle.$isAllowed('view-organization', ben);
@@ -1219,19 +1267,21 @@ test.serial(
 );
 
 test.serial('should default to lowest hierarchy permission', async t => {
-  const chopped = await giveBenAccessToChoppedPosts(t),
-    ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-    post = await Tyr.byName.post.findOne({
-      query: { text: 'Salads are great, the post.' }
-    }),
-    choppedBlogs = await Tyr.byName.blog.findAll({
-      query: { organizationId: chopped.$id }
-    }),
-    choppedPosts = await Tyr.byName.post.findAll({
-      query: { blogId: { $in: choppedBlogs.map(b => b.$id) } }
-    });
+  const chopped = await giveBenAccessToChoppedPosts(t);
+  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+  const post = await Tyr.byName.post.findOne({
+    query: { text: 'Salads are great, the post.' }
+  });
+  const choppedBlogs = await Tyr.byName.blog.findAll({
+    query: { organizationId: chopped.$id }
+  });
+  const choppedPosts = await Tyr.byName.post.findAll({
+    query: { blogId: { $in: choppedBlogs.map(b => b.$id) } }
+  });
 
-  if (!ben || !chopped || !post) throw new Error(`Missing documents`);
+  if (!ben || !chopped || !post) {
+    throw new Error(`Missing documents`);
+  }
 
   // all chopped posts
   t.is(choppedPosts.length, 2);
@@ -1266,10 +1316,12 @@ test.serial(
 test.serial(
   'Should throw error if attempting to use permission not allowed for collection',
   async t => {
-    const post = await Tyr.byName.post.findOne({ query: {} }),
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const post = await Tyr.byName.post.findOne({ query: {} });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
 
-    if (!ben || !post) throw new Error(`Missing documents`);
+    if (!ben || !post) {
+      throw new Error(`Missing documents`);
+    }
 
     await expectAsyncToThrow(
       t,
@@ -1283,8 +1335,9 @@ test.serial(
 test.serial(
   'Should return correct allowed permissions for given collection',
   t => {
-    const allowed = secure.getAllowedPermissionsForCollection('post'),
-      blogAllowed = secure.getAllowedPermissionsForCollection('blog');
+    const allowed = secure.getAllowedPermissionsForCollection('post');
+    const blogAllowed = secure.getAllowedPermissionsForCollection('blog');
+
     allowed.sort();
     blogAllowed.sort();
 
@@ -1323,10 +1376,12 @@ test.serial(
 );
 
 test.serial('Should throw when trying to set raw crud permission', async t => {
-  const post = await Tyr.byName.post.findOne({ query: {} }),
-    ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+  const post = await Tyr.byName.post.findOne({ query: {} });
+  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
 
-  if (!ben || !post) throw new Error(`Missing documents`);
+  if (!ben || !post) {
+    throw new Error(`Missing documents`);
+  }
 
   await expectAsyncToThrow(
     t,
@@ -1339,10 +1394,12 @@ test.serial('Should throw when trying to set raw crud permission', async t => {
 test.serial(
   'Should return object relating uids to access level for multiple permissions when using $determineAccessToAllPermissionsForResources()',
   async t => {
-    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      posts = await Tyr.byName.post.findAll({ query: {} });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const posts = await Tyr.byName.post.findAll({ query: {} });
 
-    if (!ben) throw new Error(`Missing documents`);
+    if (!ben) {
+      throw new Error(`Missing documents`);
+    }
 
     const accessObj = await ben.$determineAccessToAllPermissionsForResources(
       ['view', 'edit', 'delete'],
@@ -1351,6 +1408,9 @@ test.serial(
 
     for (const post of posts) {
       for (const perm in accessObj[post.$uid]) {
+        if (!accessObj[post.$uid].hasOwnProperty(perm)) {
+          continue;
+        }
         t.deepEqual(
           accessObj[post.$uid][perm],
           await post.$isAllowedForThis(perm, ben)
@@ -1364,9 +1424,9 @@ test.serial(
   'Should allow inclusion / exclusion of all permissions for a given collection',
   t => {
     const inventoryAllowed = secure.getAllowedPermissionsForCollection(
-        'inventory'
-      ),
-      teamAllowed = secure.getAllowedPermissionsForCollection('team');
+      'inventory'
+    );
+    const teamAllowed = secure.getAllowedPermissionsForCollection('team');
 
     const inventoryExpected = [
       'own-inventory',
@@ -1401,10 +1461,12 @@ test.serial(
 test.serial(
   'Should throw when *forThis methods are given non-crud permission',
   async t => {
-    const post = await Tyr.byName.post.findOne({ query: {} }),
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const post = await Tyr.byName.post.findOne({ query: {} });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
 
-    if (!ben || !post) throw new Error(`Missing documents`);
+    if (!ben || !post) {
+      throw new Error(`Missing documents`);
+    }
 
     await expectAsyncToThrow(
       t,
@@ -1439,16 +1501,18 @@ test.serial(
   'Should respect resource hierarchy for deny exception (linked parent deny, child allow)',
   async t => {
     const chipotleBlog = await Tyr.byName.blog.findOne({
-        query: { name: 'Mexican Empire' }
-      }),
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      posts =
-        chipotleBlog &&
-        (await Tyr.byName.post.findAll({
-          query: { blogId: chipotleBlog.$id }
-        }));
+      query: { name: 'Mexican Empire' }
+    });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const posts =
+      chipotleBlog &&
+      (await Tyr.byName.post.findAll({
+        query: { blogId: chipotleBlog.$id }
+      }));
 
-    if (!ben || !chipotleBlog || !posts) throw new Error(`Missing documents`);
+    if (!ben || !chipotleBlog || !posts) {
+      throw new Error(`Missing documents`);
+    }
 
     await chipotleBlog.$deny('view-post', ben);
     await posts[0].$allow('view-post', ben);
@@ -1468,21 +1532,23 @@ test.serial(
   'Should respect resource hierarchy for deny exception (removed parent deny, child allow)',
   async t => {
     const chipotle = await Tyr.byName.organization.findOne({
-        query: { name: 'Chipotle' }
-      }),
-      chipotleBlogs =
-        chipotle &&
-        (await Tyr.byName.blog.findAll({
-          query: { organizationId: chipotle.$id }
-        })),
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      posts =
-        chipotleBlogs &&
-        (await Tyr.byName.post.findAll({
-          query: { blogId: { $in: _.map(chipotleBlogs, '$id') } }
-        }));
+      query: { name: 'Chipotle' }
+    });
+    const chipotleBlogs =
+      chipotle &&
+      (await Tyr.byName.blog.findAll({
+        query: { organizationId: chipotle.$id }
+      }));
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const posts =
+      chipotleBlogs &&
+      (await Tyr.byName.post.findAll({
+        query: { blogId: { $in: _.map(chipotleBlogs, '$id') } }
+      }));
 
-    if (!ben || !chipotle || !posts) throw new Error(`Missing documents`);
+    if (!ben || !chipotle || !posts) {
+      throw new Error(`Missing documents`);
+    }
 
     await chipotle.$deny('view-post', ben);
     await posts[0].$allow('view-post', ben);
@@ -1499,17 +1565,18 @@ test.serial(
 );
 
 test.serial('Should default to deny if conflicting parent access', async t => {
-  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-    ted = await Tyr.byName.user.findOne({ query: { name: 'ted' } }),
-    burritoMakers = await Tyr.byName['team'].findOne({
-      query: { name: 'burritoMakers' }
-    }),
-    chipotleMarketing = await Tyr.byName['team'].findOne({
-      query: { name: 'chipotleMarketing' }
-    });
+  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+  const ted = await Tyr.byName.user.findOne({ query: { name: 'ted' } });
+  const burritoMakers = await Tyr.byName.team.findOne({
+    query: { name: 'burritoMakers' }
+  });
+  const chipotleMarketing = await Tyr.byName.team.findOne({
+    query: { name: 'chipotleMarketing' }
+  });
 
-  if (!ben || !ted || !burritoMakers || !chipotleMarketing)
+  if (!ben || !ted || !burritoMakers || !chipotleMarketing) {
     throw new Error(`Missing documents`);
+  }
 
   await burritoMakers.$allow('view-user', ted);
   await chipotleMarketing.$deny('view-user', ted);
@@ -1526,11 +1593,13 @@ test.serial(
   'Should be able to query collection using perm with alternate collection',
   async t => {
     const chipotle = await Tyr.byName.organization.findOne({
-        query: { name: 'Chipotle' }
-      }),
-      ted = await Tyr.byName.user.findOne({ query: { name: 'ted' } });
+      query: { name: 'Chipotle' }
+    });
+    const ted = await Tyr.byName.user.findOne({ query: { name: 'ted' } });
 
-    if (!ted || !chipotle) throw new Error(`Missing documents`);
+    if (!ted || !chipotle) {
+      throw new Error(`Missing documents`);
+    }
 
     await chipotle.$allow('edit-comment', ted);
 
@@ -1549,7 +1618,9 @@ test.serial(
   async t => {
     const ted = await Tyr.byName.user.findOne({ query: { name: 'ted' } });
 
-    if (!ted) throw new Error(`Missing documents`);
+    if (!ted) {
+      throw new Error(`Missing documents`);
+    }
 
     await expectAsyncToThrow(
       t,
@@ -1569,12 +1640,14 @@ test.serial(
   'Should return correct documents when using $canAccessThis',
   async t => {
     const chipotleBlog = await Tyr.byName.blog.findOne({
-        query: { name: 'Mexican Empire' }
-      }),
-      ted = await Tyr.byName.user.findOne({ query: { name: 'ted' } }),
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+      query: { name: 'Mexican Empire' }
+    });
+    const ted = await Tyr.byName.user.findOne({ query: { name: 'ted' } });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
 
-    if (!ted || !ben || !chipotleBlog) throw new Error(`Missing documents`);
+    if (!ted || !ben || !chipotleBlog) {
+      throw new Error(`Missing documents`);
+    }
 
     await chipotleBlog.$allow('view-blog', ben);
     await chipotleBlog.$allow('edit-blog', ted);
@@ -1609,19 +1682,19 @@ test.serial(
   'Should return correct inherited documents when using $canAccessThis',
   async t => {
     const chipotleBlog = await Tyr.byName.blog.findOne({
-        query: { name: 'Mexican Empire' }
-      }),
-      noTeamUser = await Tyr.byName.user.findOne({
-        query: { name: 'noTeams' }
-      }),
-      chipotle = await Tyr.byName.organization.findOne({
-        query: { name: 'Chipotle' }
-      }),
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      ted = await Tyr.byName.user.findOne({ query: { name: 'ted' } }),
-      chipotleMarketing = await Tyr.byName['team'].findOne({
-        query: { name: 'chipotleMarketing' }
-      });
+      query: { name: 'Mexican Empire' }
+    });
+    const noTeamUser = await Tyr.byName.user.findOne({
+      query: { name: 'noTeams' }
+    });
+    const chipotle = await Tyr.byName.organization.findOne({
+      query: { name: 'Chipotle' }
+    });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const ted = await Tyr.byName.user.findOne({ query: { name: 'ted' } });
+    const chipotleMarketing = await Tyr.byName.team.findOne({
+      query: { name: 'chipotleMarketing' }
+    });
 
     if (
       !ted ||
@@ -1630,8 +1703,9 @@ test.serial(
       !chipotle ||
       !noTeamUser ||
       !chipotleMarketing
-    )
+    ) {
       throw new Error(`Missing documents`);
+    }
 
     await chipotleBlog.$allow('view-blog', chipotle);
     await chipotleBlog.$allow('edit-blog', ted);
@@ -1681,18 +1755,19 @@ test.serial(
   'Should not include explicitly denied documents for $canAccessThis',
   async t => {
     const chipotleBlog = await Tyr.byName.blog.findOne({
-        query: { name: 'Mexican Empire' }
-      }),
-      noTeamUser = await Tyr.byName.user.findOne({
-        query: { name: 'noTeams' }
-      }),
-      chipotle = await Tyr.byName.organization.findOne({
-        query: { name: 'Chipotle' }
-      }),
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+      query: { name: 'Mexican Empire' }
+    });
+    const noTeamUser = await Tyr.byName.user.findOne({
+      query: { name: 'noTeams' }
+    });
+    const chipotle = await Tyr.byName.organization.findOne({
+      query: { name: 'Chipotle' }
+    });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
 
-    if (!ben || !chipotleBlog || !chipotle || !noTeamUser)
+    if (!ben || !chipotleBlog || !chipotle || !noTeamUser) {
       throw new Error(`Missing documents`);
+    }
 
     await chipotleBlog.$allow('view-blog', chipotle);
 
@@ -1722,18 +1797,19 @@ test.serial(
   'Should only return documents that match all permissions provided',
   async t => {
     const chipotleBlog = await Tyr.byName.blog.findOne({
-        query: { name: 'Mexican Empire' }
-      }),
-      noTeamUser = await Tyr.byName.user.findOne({
-        query: { name: 'noTeams' }
-      }),
-      chipotle = await Tyr.byName.organization.findOne({
-        query: { name: 'Chipotle' }
-      }),
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+      query: { name: 'Mexican Empire' }
+    });
+    const noTeamUser = await Tyr.byName.user.findOne({
+      query: { name: 'noTeams' }
+    });
+    const chipotle = await Tyr.byName.organization.findOne({
+      query: { name: 'Chipotle' }
+    });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
 
-    if (!ben || !chipotleBlog || !chipotle || !noTeamUser)
+    if (!ben || !chipotleBlog || !chipotle || !noTeamUser) {
       throw new Error(`Missing documents`);
+    }
 
     await chipotleBlog.$allow('view-blog', chipotle);
     await chipotleBlog.$allow('abstract_view_chart', chipotle);
@@ -1784,21 +1860,22 @@ test.serial(
   'Should only return documents that do not have access to resouce via denies',
   async t => {
     const chipotleBlog = await Tyr.byName.blog.findOne({
-        query: { name: 'Mexican Empire' }
-      }),
-      noTeamUser = await Tyr.byName.user.findOne({
-        query: { name: 'noTeams' }
-      }),
-      chipotle = await Tyr.byName.organization.findOne({
-        query: { name: 'Chipotle' }
-      }),
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      chopped = await Tyr.byName.organization.findOne({
-        query: { name: 'Chopped' }
-      });
+      query: { name: 'Mexican Empire' }
+    });
+    const noTeamUser = await Tyr.byName.user.findOne({
+      query: { name: 'noTeams' }
+    });
+    const chipotle = await Tyr.byName.organization.findOne({
+      query: { name: 'Chipotle' }
+    });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const chopped = await Tyr.byName.organization.findOne({
+      query: { name: 'Chopped' }
+    });
 
-    if (!ben || !chipotleBlog || !chipotle || !noTeamUser || !chopped)
+    if (!ben || !chipotleBlog || !chipotle || !noTeamUser || !chopped) {
       throw new Error(`Missing documents`);
+    }
 
     await chipotleBlog.$allow('view-blog', chopped);
     await chipotleBlog.$deny('view-blog', chipotle);
@@ -1853,7 +1930,9 @@ test.serial(
   'Should throw if passing no permissions to PermissionsModel.findEntitiesWithPermissionAccessToResource',
   async t => {
     const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
-    if (!ben) throw new Error(`Missing documents`);
+    if (!ben) {
+      throw new Error(`Missing documents`);
+    }
 
     await expectAsyncToThrow(
       t,
@@ -1879,15 +1958,17 @@ test.serial(
      * item owned by ben
      */
     const item = await Tyr.byName.item.findOne({
-        query: { name: 'test-ben-item' }
-      }),
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } }),
-      ted = await Tyr.byName.user.findOne({ query: { name: 'ted' } }),
-      cava = await Tyr.byName.organization.findOne({
-        query: { name: 'Cava' }
-      });
+      query: { name: 'test-ben-item' }
+    });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    const ted = await Tyr.byName.user.findOne({ query: { name: 'ted' } });
+    const cava = await Tyr.byName.organization.findOne({
+      query: { name: 'Cava' }
+    });
 
-    if (!item || !ted || !ben || !cava) throw new Error(`missing docs`);
+    if (!item || !ted || !ben || !cava) {
+      throw new Error(`missing docs`);
+    }
 
     /**
      *
@@ -1915,11 +1996,13 @@ test.serial(
   'Should successfully deny multiple permissions when passing array to $deny',
   async t => {
     const chipotle = await Tyr.byName.organization.findOne({
-        query: { name: 'Chipotle' }
-      }),
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+      query: { name: 'Chipotle' }
+    });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
 
-    if (!ben || !chipotle) throw new Error(`Missing documents`);
+    if (!ben || !chipotle) {
+      throw new Error(`Missing documents`);
+    }
 
     const permissions = [
       'view-organization',
@@ -1929,7 +2012,7 @@ test.serial(
 
     await chipotle.$allow(permissions, chipotle);
 
-    const accessResult = await chipotle['$determineAccess'](permissions, ben);
+    const accessResult = await chipotle.$determineAccess(permissions, ben);
     t.true(
       _.every(permissions, p => accessResult[p]),
       'ben should inherit all perms'
@@ -1948,7 +2031,7 @@ test.serial(
     );
     t.false(accessResult2['view-comment'], 'should not have view-comment');
     t.true(
-      accessResult2['view_alignment_triangle_private'],
+      accessResult2.view_alignment_triangle_private,
       'should have view_alignment_triangle_private'
     );
   }
@@ -1958,11 +2041,13 @@ test.serial(
   'should deny all objects if subject only has negative permissions for collection',
   async t => {
     const chipotleBlog = await Tyr.byName.blog.findOne({
-        query: { name: 'Mexican Empire' }
-      }),
-      ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+      query: { name: 'Mexican Empire' }
+    });
+    const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
 
-    if (!ben || !chipotleBlog) throw new Error(`Missing documents`);
+    if (!ben || !chipotleBlog) {
+      throw new Error(`Missing documents`);
+    }
 
     const permissions = await ben.$permissions();
     t.is(permissions.length, 0);
@@ -1979,11 +2064,13 @@ test.serial(
 
 test.serial('Should handle lots of concurrent permissions updates', async t => {
   const chipotleBlog = await Tyr.byName.blog.findOne({
-      query: { name: 'Mexican Empire' }
-    }),
-    ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
+    query: { name: 'Mexican Empire' }
+  });
+  const ben = await Tyr.byName.user.findOne({ query: { name: 'ben' } });
 
-  if (!ben || !chipotleBlog) throw new Error(`Missing documents`);
+  if (!ben || !chipotleBlog) {
+    throw new Error(`Missing documents`);
+  }
 
   await Promise.all(
     _.map(_.range(1000), () =>

@@ -1,8 +1,8 @@
+import { Resource, Subject } from 'gracl';
 import { Tyr } from 'tyranid';
-import { Subject, Resource } from 'gracl';
 import { GraclPlugin } from '../classes/GraclPlugin';
-import { createSubject } from './createSubject';
 import { createResource } from './createResource';
+import { createSubject } from './createSubject';
 
 // given a resource and subject doc, wrap both in `gracl` Instances
 export function getGraclClasses(
