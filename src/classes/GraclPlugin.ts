@@ -57,7 +57,7 @@ import { getAllowedPermissionsForCollection } from '../permission/getAllowedPerm
 
  */
 export class GraclPlugin {
-  graclHierarchy: Graph;
+  graclHierarchy!: Graph; // prettier-ignore
   unsecuredCollections = new Set([PermissionsModel.def.name]);
 
   // some collections may have specific permissions
@@ -65,9 +65,9 @@ export class GraclPlugin {
   permissionRestrictions = new Map<string, Set<string>>();
 
   // plugin options
-  verbose: boolean;
-  permissionHierarchy: permissionHierarchy;
-  setOfAllPermissions: Set<string>;
+  verbose!: boolean; // prettier-ignore
+  permissionHierarchy!: permissionHierarchy; // prettier-ignore
+  setOfAllPermissions!: Set<string>; // prettier-ignore
   crudPermissionSet = new Set<string>();
   permissionsModel = PermissionsModel;
   resourceChildren = new Map<string, Set<string>>();
@@ -80,9 +80,9 @@ export class GraclPlugin {
     { name: 'delete' }
   ];
 
-  _outgoingLinkPaths: Hash<Hash<string>>;
+  _outgoingLinkPaths!: Hash<Hash<string>>; // prettier-ignore
   _permissionChildCache: Hash<string[]> = {};
-  _allPossiblePermissionsCache: string[];
+  _allPossiblePermissionsCache!: string[]; // prettier-ignore
   _sortedLinkCache: Hash<Tyr.FieldInstance[]> = {};
 
   constructor(opts: pluginOptions = {}) {
