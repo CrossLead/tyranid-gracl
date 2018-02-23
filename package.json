@@ -17,7 +17,7 @@
     "pretest": "npm run build",
     "prepublish": "npm run test",
     "test": "ava",
-    "prettier": "prettier --loglevel error --single-quote true --write './{src,test}/**/*.ts'",
+    "prettier": "prettier --loglevel error --single-quote true --write './{src,test,refactor}/**/*.ts'",
     "prettier-test": "echo 'ensuring prettier formatting...' && RESULT=$(npm run prettier > /dev/null && git diff-index --name-only HEAD --) && if [ -n \"$RESULT\" ]; then echo \"Need to format:\n$RESULT\" && exit 1; else exit 0; fi",
     "compile-module-test": "cd ./test/tscompile && tsc --pretty",
     "tsc": "tsc -d --pretty -p ./",
